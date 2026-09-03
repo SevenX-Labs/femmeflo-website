@@ -367,7 +367,7 @@ export function Hero() {
                   </div>
 
                   <Image
-                    src="/femmeflo-withoutbg.webp"
+                    src="/femmeflo-product-nobg.png"
                     alt="Femmeflo XL Sanitary Pads"
                     fill
                     sizes="(max-width: 640px) 260px, 340px"

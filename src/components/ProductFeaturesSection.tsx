@@ -331,7 +331,7 @@ export function ProductFeaturesSection() {
                 className="w-full flex items-center justify-center p-1 mb-3 relative min-h-[180px] sm:min-h-[200px]"
               >
                 <Image
-                  src="/femmeflo-withoutbg.webp"
+                  src="/femmeflo-product-nobg.png"
                   alt="Femmeflo XL Sanitary Pad Showcase"
                   width={320}
                   height={200}
@@ -416,7 +416,7 @@ export function ProductFeaturesSection() {
           <div className="w-full max-w-[340px] bg-white rounded-2xl p-5 shadow-sm border border-rose-100 flex flex-col items-center text-center">
             <div className="w-full flex items-center justify-center p-2 mb-2">
               <Image
-                src="/femmeflo-withoutbg.webp"
+                src="/femmeflo-product-nobg.png"
                 alt="Femmeflo XL Pad Showcase"
                 width={280}
                 height={170}

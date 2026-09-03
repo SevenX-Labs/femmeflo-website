@@ -245,7 +245,7 @@ export function GlobalFloatingProduct() {
           </div>
 
           <Image
-            src="/femmeflo-withoutbg.webp"
+            src="/femmeflo-product-nobg.png"
             alt="Femmeflo XL Sanitary Pads"
             width={800}
             height={800}

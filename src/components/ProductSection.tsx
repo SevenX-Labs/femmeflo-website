@@ -242,7 +242,7 @@ export function ProductSection() {
                       <FairyIcon className="w-14 h-14" />
                     </div>
                     <Image
-                      src="/femmeflo-withoutbg.webp"
+                      src="/femmeflo-product-nobg.png"
                       alt="Femmeflo XL Sanitary Pads"
                       fill
                       sizes="(max-width: 640px) 300px, (max-width: 1024px) 400px, 480px"

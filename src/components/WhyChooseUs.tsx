@@ -133,7 +133,7 @@ export function WhyChooseUs() {
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
           >
             <Image
-              src="/femmeflo-withoutbg.webp"
+              src="/femmeflo-product-nobg.png"
               alt="FemmeFlo XXL Sanitary Pads"
               fill
               sizes="(max-width: 640px) 320px, 420px"

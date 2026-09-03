@@ -125,7 +125,7 @@ export function About() {
                   className="md:hidden relative w-[220px] h-[220px] flex items-center justify-center pointer-events-auto"
                 >
                   <Image
-                    src="/femmeflo-withoutbg.webp"
+                    src="/femmeflo-product-nobg.png"
                     alt="Femmeflo XL Sanitary Pads"
                     width={400}
                     height={400}
