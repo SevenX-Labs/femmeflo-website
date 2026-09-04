@@ -276,7 +276,7 @@ export function HappyCustomers() {
                 )}
                 <video
                   ref={videoRef}
-                  src="/happy-customer.mp4"
+                  src="/WhatsApp Video 2026-09-03 at 5.44.40 PM.mp4"
                   autoPlay
                   loop
                   muted
