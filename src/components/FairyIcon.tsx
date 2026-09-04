@@ -10,10 +10,8 @@ export function FairyIcon({ className = "w-22 h-22 sm:w-30 sm:h-30" }: { classNa
       {/* Main Levitating Fairy Container */}
       <motion.div
         className="w-full h-full relative z-10 flex items-center justify-center scale-[1.08] transform-gpu"
-        style={{ willChange: "transform" }}
         animate={{
           y: [-6, 6, -6],
-          rotate: [-3, 4, -3],
         }}
         transition={{
           duration: 3.2,
