@@ -3,6 +3,7 @@ import { Playfair_Display, Plus_Jakarta_Sans, Outfit, Montserrat, Manrope } from
 import "lenis/dist/lenis.css";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
+import { AuthProvider } from "@/context/AuthContext";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -66,7 +67,9 @@ export default function RootLayout({
       className={`${playfair.variable} ${jakarta.variable} ${outfit.variable} ${montserrat.variable} ${manrope.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-white text-zinc-800 selection:bg-rose-200 selection:text-rose-900">
-        <SmoothScroll>{children}</SmoothScroll>
+        <SmoothScroll>
+          <AuthProvider>{children}</AuthProvider>
+        </SmoothScroll>
       </body>
     </html>
   );

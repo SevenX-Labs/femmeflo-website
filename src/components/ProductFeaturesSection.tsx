@@ -339,6 +339,8 @@ export function ProductFeaturesSection() {
                   loading="lazy"
                   draggable={false}
                   onContextMenu={(e) => e.preventDefault()}
+                  style={{ width: "auto", height: "auto" }}
+                  decoding="async"
                   className="w-auto h-auto max-h-[190px] object-contain drop-shadow-xl hover:scale-105 transition-transform duration-500 select-none"
                 />
               </div>
@@ -422,7 +424,9 @@ export function ProductFeaturesSection() {
                 height={170}
                 sizes="280px"
                 loading="lazy"
-                className="w-auto max-h-[160px] object-contain drop-shadow-md"
+                decoding="async"
+                style={{ width: "auto", height: "auto" }}
+                className="w-auto h-auto max-h-[160px] object-contain drop-shadow-md"
               />
             </div>
 
