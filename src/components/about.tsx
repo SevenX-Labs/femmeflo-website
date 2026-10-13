@@ -131,6 +131,8 @@ export function About() {
                     height={400}
                     sizes="220px"
                     loading="lazy"
+                    decoding="async"
+                    style={{ width: "100%", height: "auto" }}
                     className="w-full h-auto object-contain drop-shadow-xl"
                   />
                 </div>

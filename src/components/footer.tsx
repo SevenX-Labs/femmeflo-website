@@ -62,6 +62,7 @@ export function Footer() {
                 <input
                   type="email"
                   required
+                  suppressHydrationWarning
                   placeholder="Enter your email address..."
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -171,6 +172,7 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
+
           </div>
 
           {/* COLUMN 3: Product Lineup (2 Cols) */}

@@ -1,0 +1,6 @@
+import { OnboardingFormScreen } from "@/components/management/OnboardingFormScreen";
+import { adminNavigation } from "@/components/management/navigation";
+
+export default function AdminAddSellerPage() {
+  return <OnboardingFormScreen role="Super Admin" workspace="Admin workspace" userName="Super Admin" userDetail="Head Office" navigation={adminNavigation} entity="seller" backHref="/admin/sellers" />;
+}

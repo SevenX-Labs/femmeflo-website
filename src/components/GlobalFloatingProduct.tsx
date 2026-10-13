@@ -244,7 +244,7 @@ export function GlobalFloatingProduct() {
             width={800}
             height={800}
             sizes="(max-width: 640px) 300px, (max-width: 1024px) 440px, 500px"
-            loading="lazy"
+            priority
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}
             style={{ width: "100%", height: "auto" }}

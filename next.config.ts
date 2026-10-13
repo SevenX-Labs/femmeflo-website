@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
+    qualities: [75, 100],
     minimumCacheTTL: 86400,
     deviceSizes: [640, 750, 828, 1080, 1200],
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
@@ -37,6 +38,22 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    const rawBackendUrl = (
+      process.env.NEXT_PUBLIC_API_URL || "https://femmeflo-inventory.onrender.com/api/v1"
+    ).trim().replace(/\/+$/, "");
+    const backendUrl = rawBackendUrl.endsWith("/api/v1")
+      ? rawBackendUrl
+      : `${rawBackendUrl}/api/v1`;
+
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${backendUrl}/:path*`,
+      },
+    ];
+  },
+
 };
 
 export default nextConfig;
