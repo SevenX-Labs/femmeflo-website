@@ -22,6 +22,16 @@ type Props = {
   backHref: string;
 };
 
+const ALLOWED_CUSTOMER_CATEGORIES = [
+  "General Store",
+  "Medical & Pharmacy",
+  "Kirana Store",
+  "Supermarket",
+  "Cosmetics & Beauty",
+  "Rural Retail Store",
+  "Wholesale Distributor",
+];
+
 export function OnboardingFormScreen({
   role,
   workspace,
@@ -79,16 +89,33 @@ export function OnboardingFormScreen({
             const catRes = await categoryApi.listCategories();
             const list = catRes?.categories ?? (catRes as any)?.items ?? [];
             if (active && list.length > 0) {
-              const activeCats = list
-                .filter((c: any) => c.active !== false)
-                .sort((a: any, b: any) => a.name.localeCompare(b.name));
-              setCategories(activeCats);
-              const defaultCat =
-                activeCats.find((c: any) =>
-                  ["General Store", "Kirana Store", "Medical & Pharmacy"].includes(c.name)
-                ) || activeCats[0];
-              if (defaultCat) {
-                setSelectedCategoryId(defaultCat.id);
+              // Filter strictly to allowed categories
+              const allowedOnly = list.filter((c: any) =>
+                c.active !== false &&
+                ALLOWED_CUSTOMER_CATEGORIES.some(
+                  (std) => std.toLowerCase() === c.name.toLowerCase()
+                )
+              );
+
+              const targetList = allowedOnly.length > 0 ? allowedOnly : list.filter((c: any) => c.active !== false);
+
+              // Sort in the exact priority sequence requested
+              targetList.sort((a: any, b: any) => {
+                const idxA = ALLOWED_CUSTOMER_CATEGORIES.findIndex(
+                  (std) => std.toLowerCase() === a.name.toLowerCase()
+                );
+                const idxB = ALLOWED_CUSTOMER_CATEGORIES.findIndex(
+                  (std) => std.toLowerCase() === b.name.toLowerCase()
+                );
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return a.name.localeCompare(b.name);
+              });
+
+              setCategories(targetList);
+              if (targetList.length > 0) {
+                setSelectedCategoryId(targetList[0].id);
               }
             }
           } catch (err) {
