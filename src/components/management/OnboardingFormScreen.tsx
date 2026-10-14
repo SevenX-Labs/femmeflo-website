@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Camera, Loader2, MapPin } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2, Image as ImageIcon, Loader2, MapPin, Trash2, Upload } from "lucide-react";
 import { DashboardShell, PageHeading, SectionCard } from "./DashboardShell";
 import type { NavigationItem } from "./DashboardShell";
 import { adminApi } from "@/lib/api/admin";
@@ -50,9 +50,14 @@ export function OnboardingFormScreen({
   // Customer-specific fields
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [isLoadingCategories, setIsLoadingCategories] = useState(!seller);
   const [sellers, setSellers] = useState<SellerItem[]>([]);
   const [selectedSellerId, setSelectedSellerId] = useState("");
-  const [photo, setPhoto] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
+  const [submissionStep, setSubmissionStep] = useState<string>("");
   const [location, setLocation] = useState("");
   const [lat, setLat] = useState<number | undefined>(undefined);
   const [lng, setLng] = useState<number | undefined>(undefined);
@@ -69,10 +74,27 @@ export function OnboardingFormScreen({
     async function loadAuxData() {
       try {
         if (!seller) {
-          const catRes = await categoryApi.listCategories().catch(() => ({ categories: [] }));
-          if (active && catRes.categories.length > 0) {
-            setCategories(catRes.categories);
-            setSelectedCategoryId(catRes.categories[0].id);
+          setIsLoadingCategories(true);
+          try {
+            const catRes = await categoryApi.listCategories();
+            const list = catRes?.categories ?? (catRes as any)?.items ?? [];
+            if (active && list.length > 0) {
+              const activeCats = list
+                .filter((c: any) => c.active !== false)
+                .sort((a: any, b: any) => a.name.localeCompare(b.name));
+              setCategories(activeCats);
+              const defaultCat =
+                activeCats.find((c: any) =>
+                  ["General Store", "Kirana Store", "Medical & Pharmacy"].includes(c.name)
+                ) || activeCats[0];
+              if (defaultCat) {
+                setSelectedCategoryId(defaultCat.id);
+              }
+            }
+          } catch (err) {
+            console.error("Failed to load customer categories:", err);
+          } finally {
+            if (active) setIsLoadingCategories(false);
           }
 
           if (role === "Super Admin") {
@@ -109,6 +131,48 @@ export function OnboardingFormScreen({
     };
   }, [role, seller]);
 
+  // Cleanup preview URL on unmount or change
+  useEffect(() => {
+    return () => {
+      if (photoPreview) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setPhotoError(null);
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setPhotoError("Please select a valid image (JPEG, PNG, or WebP).");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("Image size must be 5 MB or less.");
+      return;
+    }
+
+    if (photoPreview) {
+      URL.revokeObjectURL(photoPreview);
+    }
+
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleRemovePhoto = () => {
+    if (photoPreview) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setPhotoError(null);
+  };
+
   const capture = () => {
     if (!navigator.geolocation) {
       setLocation("Location is not supported by this browser.");
@@ -132,6 +196,7 @@ export function OnboardingFormScreen({
     e.preventDefault();
     setErrorMessage("");
     setIsSubmitting(true);
+    setSubmissionStep("Saving record…");
 
     try {
       if (seller) {
@@ -173,18 +238,49 @@ export function OnboardingFormScreen({
           longitude: lng,
         };
 
+        setSubmissionStep("Saving customer profile…");
+
+        let createdId: string | null = null;
         if (role === "Super Admin") {
-          await adminApi.createCustomer({
+          const res = await adminApi.createCustomer({
             ...customerData,
             sellerId: selectedSellerId || undefined,
           });
+          createdId = res.customer.id;
         } else if (role === "Manager") {
-          await managerApi.createCustomer({
+          const res = await managerApi.createCustomer({
             ...customerData,
             sellerId: selectedSellerId || undefined,
           });
+          createdId = res.customer.id;
         } else {
-          await sellerApi.createCustomer(customerData);
+          const res = await sellerApi.createCustomer(customerData);
+          createdId = res.customer.id;
+        }
+
+        // Upload shop photo if selected
+        if (photoFile && createdId) {
+          setSubmissionStep("Uploading storefront photo…");
+          try {
+            let uploadRes: { customer: unknown; photoUrl: string };
+            if (role === "Super Admin") {
+              uploadRes = await adminApi.uploadCustomerPhoto(createdId, photoFile);
+            } else if (role === "Manager") {
+              uploadRes = await managerApi.uploadCustomerPhoto(createdId, photoFile);
+            } else {
+              uploadRes = await sellerApi.uploadCustomerPhoto(createdId, photoFile);
+            }
+            if (uploadRes?.photoUrl) {
+              setUploadedPhotoUrl(uploadRes.photoUrl);
+            }
+          } catch (uploadErr) {
+            console.warn("Photo upload warning:", uploadErr);
+            setErrorMessage(
+              "Customer record was created, but uploading the shop storefront photo encountered an error. You can retry from the customer details."
+            );
+            setSaved(true);
+            return;
+          }
         }
       }
 
@@ -197,6 +293,7 @@ export function OnboardingFormScreen({
       );
     } finally {
       setIsSubmitting(false);
+      setSubmissionStep("");
     }
   };
 
@@ -318,13 +415,19 @@ export function OnboardingFormScreen({
                   required
                   value={selectedCategoryId}
                   onChange={(e) => setSelectedCategoryId(e.target.value)}
-                  className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
+                  className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300"
                 >
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
+                  {isLoadingCategories ? (
+                    <option value="">Loading categories...</option>
+                  ) : categories.length === 0 ? (
+                    <option value="">No categories available</option>
+                  ) : (
+                    categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))
+                  )}
                 </select>
               </label>
               {sellers.length > 0 && (
@@ -380,33 +483,128 @@ export function OnboardingFormScreen({
           </div>
 
           {!seller && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-rose-200 bg-[#FFF8FA] py-5 text-xs font-bold text-[#E61C5D] transition hover:bg-rose-50">
-                <Camera className="h-4 w-4" />
-                {photo || "Upload or capture shop photo"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="sr-only"
-                  onChange={(e) => setPhoto(e.target.files?.[0]?.name ?? "")}
-                />
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-zinc-700">
+                Storefront Photo & GPS Coordinates
               </label>
-              <button
-                type="button"
-                onClick={capture}
-                className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-rose-200 bg-[#FFF8FA] py-5 text-xs font-bold text-[#E61C5D] transition hover:bg-rose-50"
-              >
-                <MapPin className="h-4 w-4" />
-                {location || "Detect current GPS coordinates"}
-              </button>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {/* Photo Upload Card */}
+                <div className="flex flex-col justify-between rounded-xl border border-zinc-200 bg-[#FAF8F5] p-3">
+                  {photoPreview ? (
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-rose-200 bg-white">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={photoPreview}
+                          alt="Shop storefront preview"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                          <p className="truncate text-xs font-bold text-zinc-800">
+                            {photoFile?.name}
+                          </p>
+                        </div>
+                        <p className="text-[11px] text-zinc-500">
+                          {photoFile ? `${(photoFile.size / (1024 * 1024)).toFixed(2)} MB · Ready to upload` : ""}
+                        </p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <label className="cursor-pointer text-[11px] font-bold text-[#E61C5D] hover:underline">
+                            Change
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              capture="environment"
+                              className="sr-only"
+                              onChange={handleFileChange}
+                            />
+                          </label>
+                          <span className="text-zinc-300">·</span>
+                          <button
+                            type="button"
+                            onClick={handleRemovePhoto}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-zinc-500 hover:text-rose-600"
+                          >
+                            <Trash2 className="h-3 w-3" /> Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex h-full min-h-[88px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-rose-200 bg-[#FFF8FA] p-3 text-center transition hover:bg-rose-50">
+                      <div className="flex items-center gap-1.5 text-[#E61C5D]">
+                        <Camera className="h-4 w-4" />
+                        <span className="text-xs font-bold">Upload / capture shop photo</span>
+                      </div>
+                      <span className="text-[11px] text-zinc-400">
+                        JPEG, PNG, WebP up to 5 MB
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        capture="environment"
+                        className="sr-only"
+                        onChange={handleFileChange}
+                      />
+                    </label>
+                  )}
+                  {photoError && (
+                    <p className="mt-2 text-xs font-medium text-rose-600">{photoError}</p>
+                  )}
+                </div>
+
+                {/* GPS Coordinates Card */}
+                <div className="flex flex-col justify-center rounded-xl border border-zinc-200 bg-[#FAF8F5] p-3">
+                  <button
+                    type="button"
+                    onClick={capture}
+                    className="flex h-full min-h-[88px] flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-rose-200 bg-[#FFF8FA] p-3 text-center transition hover:bg-rose-50"
+                  >
+                    <div className="flex items-center gap-1.5 text-[#E61C5D]">
+                      <MapPin className="h-4 w-4" />
+                      <span className="text-xs font-bold">
+                        {location || "Detect current GPS coordinates"}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-zinc-400">
+                      {lat !== undefined && lng !== undefined
+                        ? "✓ Verified storefront coordinates"
+                        : "Tap to record shop location"}
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
           {saved ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="rounded-xl bg-emerald-50 p-4 text-sm font-bold text-[#157347]">
-                ✓ {seller ? "Seller successfully created!" : "Customer record successfully saved!"}
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-[#157347]" />
+                  <span>
+                    {seller
+                      ? "Seller successfully created!"
+                      : "Customer record and storefront photo successfully saved!"}
+                  </span>
+                </div>
+                {(uploadedPhotoUrl || photoPreview) && (
+                  <div className="mt-3 flex items-center gap-3 rounded-xl border border-emerald-200 bg-white/80 p-2.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={uploadedPhotoUrl || photoPreview || ""}
+                      alt="Uploaded storefront"
+                      className="h-14 w-14 rounded-lg object-cover border border-emerald-100 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="font-bold text-zinc-900 truncate">{name}</p>
+                      <p className="text-xs text-emerald-700 font-semibold">✓ Storefront photo verified</p>
+                      <p className="text-[11px] text-zinc-500 truncate">{village}, {district}</p>
+                    </div>
+                  </div>
+                )}
               </div>
               <Link
                 href={backHref}
@@ -423,7 +621,7 @@ export function OnboardingFormScreen({
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving record...
+                  <Loader2 className="h-4 w-4 animate-spin" /> {submissionStep || "Saving record..."}
                 </>
               ) : (
                 `Save ${seller ? "seller" : "customer"}`
@@ -432,7 +630,12 @@ export function OnboardingFormScreen({
           )}
 
           <p className="text-xs text-zinc-400">
-            Connected to endpoint <code className="rounded bg-rose-50 px-1 py-0.5 font-mono text-[11px] text-[#E61C5D]">{seller ? "POST /api/v1/admin/sellers" : "POST /api/v1/admin/customers"}</code>
+            Connected to endpoint{" "}
+            <code className="rounded bg-rose-50 px-1 py-0.5 font-mono text-[11px] text-[#E61C5D]">
+              {seller
+                ? `POST /api/v1/${role === "Super Admin" ? "admin" : "manager"}/sellers`
+                : `POST /api/v1/${role === "Super Admin" ? "admin" : role === "Manager" ? "manager" : "seller"}/customers & /photo`}
+            </code>
           </p>
         </form>
       </SectionCard>

@@ -21,6 +21,7 @@ export default function SellerCustomersPage() {
       category: c.category?.name || "General trade",
       location: [c.village, c.district].filter(Boolean).join(", ") || "Diva",
       status: c.active ? "Active" : "Inactive",
+      photoPath: c.photoPath,
     }));
   }, []);
 

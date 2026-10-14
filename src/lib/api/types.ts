@@ -497,6 +497,8 @@ export interface DashboardFilterOptions {
   states: string[];
   districts: Array<{ state: string; district: string }>;
   villages?: Array<{ state: string; district: string; village: string }>;
+  managers?: Array<{ id: string; name: string; state?: string | null; district?: string | null }>;
+  sellers?: Array<{ id: string; name: string; managerId?: string | null; state?: string | null; district?: string | null }>;
 }
 
 export interface ManagerDashboardData {

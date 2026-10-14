@@ -18,6 +18,9 @@ export default function AdminInvoicesPage() {
       delivery: inv.deliveries?.map((d) => d.channel).join(" · ") || "Email · WhatsApp",
       status: inv.sale?.paymentMode === "PENDING" ? "Pending payment" : "Paid",
       date: new Date(inv.createdAt).toLocaleDateString("en-IN"),
+      invoiceId: inv.id,
+      invoiceNumber: inv.number,
+      pdfPath: inv.pdfPath,
     }));
   }, []);
 

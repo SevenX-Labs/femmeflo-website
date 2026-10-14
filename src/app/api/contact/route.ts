@@ -1,8 +1,29 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { contactFormRateLimiter, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = contactFormRateLimiter.check(`contact:${ip}`);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        {
+          error: `Too many submissions from this connection. Please wait ${rateCheck.retryAfterSec} seconds before submitting again.`,
+          retryAfter: rateCheck.retryAfterSec,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateCheck.retryAfterSec),
+            "X-RateLimit-Limit": String(rateCheck.limit),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": String(rateCheck.reset),
+          },
+        }
+      );
+    }
+
     const body = await req.json();
     const { name, email, phone, queryType, message } = body;
 

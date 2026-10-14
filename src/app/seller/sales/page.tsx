@@ -27,6 +27,8 @@ export default function SellerSalesPage() {
           : s.status === "PENDING_APPROVAL"
           ? "Approval required"
           : "Rejected",
+      invoiceId: s.invoice?.id,
+      invoiceNumber: s.invoice?.number,
     }));
   }, []);
 

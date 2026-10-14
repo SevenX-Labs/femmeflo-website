@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, API_BASE_URL, tokenStorage } from "./client";
 import type {
   CollectPaymentPayload,
   CreateCustomerPayload,
@@ -83,6 +83,18 @@ export const sellerApi = {
     return apiRequest<{ customer: CustomerItem }>(`seller/customers/${id}`, {
       method: "PATCH",
       body: payload,
+    });
+  },
+
+  async uploadCustomerPhoto(
+    id: string,
+    file: File | Blob
+  ): Promise<{ customer: CustomerItem; photoUrl: string }> {
+    const formData = new FormData();
+    formData.append("photo", file);
+    return apiRequest<{ customer: CustomerItem; photoUrl: string }>(`seller/customers/${id}/photo`, {
+      method: "POST",
+      body: formData,
     });
   },
 
@@ -217,6 +229,17 @@ export const sellerApi = {
     return apiRequest<{ user: PublicUser }>("seller/profile", {
       method: "PATCH",
       body: payload,
+    });
+  },
+
+  getInvoicePdfUrl(id: string, download = false): string {
+    const token = tokenStorage.getToken();
+    return `${API_BASE_URL}/invoices/${id}/pdf?download=${download ? "true" : "false"}${token ? `&token=${encodeURIComponent(token)}` : ""}`;
+  },
+
+  async downloadInvoicePdf(id: string, download = false): Promise<Blob> {
+    return apiRequest<Blob>(`invoices/${id}/pdf?download=${download ? "true" : "false"}`, {
+      method: "GET",
     });
   },
 };

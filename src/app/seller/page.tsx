@@ -8,6 +8,9 @@ import {
   CheckCircle2,
   Clock3,
   DollarSign,
+  Download,
+  Eye,
+  Loader2,
   Package,
   PackageCheck,
   Plus,
@@ -28,7 +31,32 @@ export default function SellerOverviewDashboard() {
   const [data, setData] = useState<SellerDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
   const { user } = useAuth();
+
+  const handleInvoicePdf = async (invoiceId: string, invoiceNumber?: string, mode: "view" | "download" = "view") => {
+    setPdfLoadingId(`${invoiceId}-${mode}`);
+    try {
+      const blob = await sellerApi.downloadInvoicePdf(invoiceId, mode === "download");
+      const blobUrl = URL.createObjectURL(blob);
+      if (mode === "view") {
+        window.open(blobUrl, "_blank");
+      } else {
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `Invoice-${invoiceNumber || invoiceId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      }
+    } catch {
+      const directUrl = sellerApi.getInvoicePdfUrl(invoiceId, mode === "download");
+      window.open(directUrl, "_blank");
+    } finally {
+      setPdfLoadingId(null);
+    }
+  };
 
   const fetchDashboard = async () => {
     setLoading(true);
@@ -244,25 +272,59 @@ export default function SellerOverviewDashboard() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-[#156035]">
-                      ₹{(s.totalPaise / 100).toLocaleString("en-IN")}
-                    </p>
-                    <span
-                      className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                        s.status === "CONFIRMED"
-                          ? "bg-emerald-50 text-[#157347]"
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-[#156035]">
+                        ₹{(s.totalPaise / 100).toLocaleString("en-IN")}
+                      </p>
+                      <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          s.status === "CONFIRMED"
+                            ? "bg-emerald-50 text-[#157347]"
+                            : s.status === "PENDING_APPROVAL"
+                            ? "bg-amber-50 text-amber-700"
+                            : "bg-rose-50 text-[#E61C5D]"
+                        }`}
+                      >
+                        {s.status === "CONFIRMED"
+                          ? "Confirmed"
                           : s.status === "PENDING_APPROVAL"
-                          ? "bg-amber-50 text-amber-700"
-                          : "bg-rose-50 text-[#E61C5D]"
-                      }`}
-                    >
-                      {s.status === "CONFIRMED"
-                        ? "Confirmed"
-                        : s.status === "PENDING_APPROVAL"
-                        ? "Pending approval"
-                        : "Rejected"}
-                    </span>
+                          ? "Pending approval"
+                          : "Rejected"}
+                      </span>
+                    </div>
+
+                    {s.invoice?.id && (
+                      <div className="flex items-center gap-1 border-l border-zinc-200 pl-2">
+                        <button
+                          type="button"
+                          onClick={() => handleInvoicePdf(s.invoice!.id, s.invoice?.number, "view")}
+                          disabled={Boolean(pdfLoadingId)}
+                          title="View Tax Invoice PDF"
+                          className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
+                        >
+                          {pdfLoadingId === `${s.invoice.id}-view` ? (
+                            <Loader2 className="h-3 w-3 animate-spin text-emerald-700" />
+                          ) : (
+                            <Eye className="h-3 w-3 text-emerald-700" />
+                          )}
+                          PDF
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleInvoicePdf(s.invoice!.id, s.invoice?.number, "download")}
+                          disabled={Boolean(pdfLoadingId)}
+                          title="Download Invoice PDF"
+                          className="rounded-lg p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50"
+                        >
+                          {pdfLoadingId === `${s.invoice.id}-download` ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-[#E61C5D]" />
+                          ) : (
+                            <Download className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))

@@ -22,20 +22,21 @@ export const categoryApi = {
     page?: number;
     pageSize?: number;
   }): Promise<CategoryListResponse & { items: Category[] }> {
+    // Note: Backend /categories schema is strictObject({ search, active }).
+    // Do not pass page or pageSize as query parameters to avoid 400 Bad Request.
+    const queryParams: Record<string, string | boolean | undefined> = {};
+    if (params?.search) queryParams.search = params.search;
+    if (params?.active !== undefined) queryParams.active = params.active;
+
     const raw = await apiRequest<{ categories?: Category[]; items?: Category[]; pagination?: PaginationMeta }>("categories", {
       method: "GET",
-      params: {
-        search: params?.search,
-        active: params?.active,
-        page: params?.page,
-        pageSize: params?.pageSize ?? 100,
-      },
+      params: queryParams,
     });
     const list = raw?.categories ?? raw?.items ?? [];
     return {
       categories: list,
       items: list,
-      pagination: raw?.pagination ?? { page: 1, pageSize: params?.pageSize ?? 100, total: list.length, totalPages: 1 },
+      pagination: raw?.pagination ?? { page: 1, pageSize: list.length || 100, total: list.length, totalPages: 1 },
     };
   },
 

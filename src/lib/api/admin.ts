@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, API_BASE_URL, tokenStorage } from "./client";
 import type {
   AdminDashboardData,
   BusinessSettings,
@@ -245,6 +245,18 @@ export const adminApi = {
     });
   },
 
+  async uploadCustomerPhoto(
+    id: string,
+    file: File | Blob
+  ): Promise<{ customer: CustomerItem; photoUrl: string }> {
+    const formData = new FormData();
+    formData.append("photo", file);
+    return apiRequest<{ customer: CustomerItem; photoUrl: string }>(`admin/customers/${id}/photo`, {
+      method: "POST",
+      body: formData,
+    });
+  },
+
   // ----------------------------------------------------
   // Inventory
   // ----------------------------------------------------
@@ -456,6 +468,17 @@ export const adminApi = {
 
   async getInvoice(id: string): Promise<{ invoice: InvoiceItem }> {
     return apiRequest<{ invoice: InvoiceItem }>(`admin/invoices/${id}`, {
+      method: "GET",
+    });
+  },
+
+  getInvoicePdfUrl(id: string, download = false): string {
+    const token = tokenStorage.getToken();
+    return `${API_BASE_URL}/admin/invoices/${id}/pdf?download=${download ? "true" : "false"}${token ? `&token=${encodeURIComponent(token)}` : ""}`;
+  },
+
+  async downloadInvoicePdf(id: string, download = false): Promise<Blob> {
+    return apiRequest<Blob>(`admin/invoices/${id}/pdf?download=${download ? "true" : "false"}`, {
       method: "GET",
     });
   },

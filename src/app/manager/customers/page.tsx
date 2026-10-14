@@ -22,6 +22,7 @@ export default function ManagerCustomersPage() {
       village: c.village || "Territory",
       category: c.category?.name || "General trade",
       status: c.active ? "Active" : "Inactive",
+      photoPath: c.photoPath,
     }));
   }, []);
 

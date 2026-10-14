@@ -73,13 +73,24 @@ export class ApiError extends Error {
   statusCode: number;
   data?: unknown;
   isNetworkError: boolean;
+  isRateLimited: boolean;
+  retryAfterSeconds?: number;
 
-  constructor(message: string, statusCode = 500, data?: unknown, isNetworkError = false) {
+  constructor(
+    message: string,
+    statusCode = 500,
+    data?: unknown,
+    isNetworkError = false,
+    isRateLimited = false,
+    retryAfterSeconds?: number
+  ) {
     super(message);
     this.name = "ApiError";
     this.statusCode = statusCode;
     this.data = data;
     this.isNetworkError = isNetworkError;
+    this.isRateLimited = isRateLimited || statusCode === 429;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
@@ -88,7 +99,12 @@ export interface RequestOptions extends Omit<RequestInit, "body"> {
   params?: Record<string, string | number | boolean | undefined | null>;
   skipAuth?: boolean;
   timeoutMs?: number;
+  skipClientThrottle?: boolean;
 }
+
+// Client-side mutation deduplication tracker to prevent rapid duplicate clicks
+const activeMutations = new Set<string>();
+const recentMutationTimestamps = new Map<string, number>();
 
 /**
  * Core HTTP Request Wrapper
@@ -102,9 +118,50 @@ export async function apiRequest<T = unknown>(
     params,
     skipAuth = false,
     timeoutMs = 15000,
+    skipClientThrottle = false,
     headers: customHeaders = {},
     ...fetchOptions
   } = options;
+
+  const method = (fetchOptions.method || "GET").toUpperCase();
+
+  // Client-side rate-limit / debounce on mutating actions (POST, PUT, PATCH, DELETE)
+  const isMutation = method !== "GET" && method !== "HEAD";
+  const mutationKey = isMutation
+    ? `${method}:${endpoint}:${typeof body === "string" ? body : body instanceof FormData ? "formdata" : JSON.stringify(body ?? "")}`
+    : "";
+
+  if (isMutation && !skipClientThrottle && mutationKey) {
+    const now = Date.now();
+    const lastTime = recentMutationTimestamps.get(mutationKey);
+
+    // Prevent immediate double-submission within 600ms
+    if (lastTime && now - lastTime < 600) {
+      throw new ApiError(
+        "Please wait a moment before resubmitting.",
+        429,
+        null,
+        false,
+        true,
+        1
+      );
+    }
+
+    // Prevent duplicate in-flight requests
+    if (activeMutations.has(mutationKey)) {
+      throw new ApiError(
+        "A matching request is already in progress. Please wait.",
+        429,
+        null,
+        false,
+        true,
+        2
+      );
+    }
+
+    activeMutations.add(mutationKey);
+    recentMutationTimestamps.set(mutationKey, now);
+  }
 
   // Build query string
   let url = endpoint.startsWith("http")
@@ -156,25 +213,46 @@ export async function apiRequest<T = unknown>(
 
     clearTimeout(timeoutId);
 
-    // Parse JSON
+    // Parse response
     const contentType = response.headers.get("content-type");
     let responseData: unknown = null;
     if (contentType && contentType.includes("application/json")) {
       responseData = await response.json().catch(() => null);
+    } else if (
+      contentType &&
+      (contentType.includes("application/pdf") ||
+        contentType.includes("application/octet-stream") ||
+        contentType.includes("image/"))
+    ) {
+      if (response.ok) {
+        return (await response.blob()) as T;
+      }
+      const text = await response.text().catch(() => "");
+      responseData = { message: text };
     } else {
       const text = await response.text().catch(() => "");
       responseData = { message: text };
     }
 
     if (!response.ok) {
-      const errorData = responseData as { message?: string } | null;
-      const message =
+      const errorData = responseData as { message?: string; error?: string } | null;
+      let message =
         errorData?.message ||
+        errorData?.error ||
         `Request failed with status ${response.status} (${response.statusText})`;
 
       if (response.status === 401) {
         // Token expired or invalid
         tokenStorage.clearToken();
+      }
+
+      if (response.status === 429) {
+        const retryHeader = response.headers.get("retry-after") || response.headers.get("Retry-After");
+        const retrySec = retryHeader ? parseInt(retryHeader, 10) || 15 : 15;
+        if (!errorData?.message && !errorData?.error) {
+          message = `Too many requests. Please wait ${retrySec} seconds before trying again.`;
+        }
+        throw new ApiError(message, 429, responseData, false, true, retrySec);
       }
 
       throw new ApiError(message, response.status, responseData);
@@ -188,8 +266,6 @@ export async function apiRequest<T = unknown>(
 
     return responseData as T;
   } catch (error: unknown) {
-    clearTimeout(timeoutId);
-
     if (error instanceof ApiError) {
       throw error;
     }
@@ -204,6 +280,11 @@ export async function apiRequest<T = unknown>(
         : "Failed to connect to Femmeflo server. Check that the backend is running.";
 
     throw new ApiError(message, 503, null, true);
+  } finally {
+    clearTimeout(timeoutId);
+    if (mutationKey) {
+      activeMutations.delete(mutationKey);
+    }
   }
 }
 

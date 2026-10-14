@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { chatAssistantRateLimiter, getClientIp } from "@/lib/rate-limit";
 
 const FEMMEFLO_SYSTEM_PROMPT = `
 You are the official Femmeflo Customer Support Specialist.
@@ -34,6 +35,26 @@ FORMATTING & RESPONSE RULES:
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = chatAssistantRateLimiter.check(`chat:${ip}`);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        {
+          reply: `You're sending messages a bit too fast! 🌸 Please wait ${rateCheck.retryAfterSec} seconds before sending another message.`,
+          retryAfter: rateCheck.retryAfterSec,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateCheck.retryAfterSec),
+            "X-RateLimit-Limit": String(rateCheck.limit),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": String(rateCheck.reset),
+          },
+        }
+      );
+    }
+
     const apiKey = process.env.MISTRAL_API_KEY;
 
     if (!apiKey) {

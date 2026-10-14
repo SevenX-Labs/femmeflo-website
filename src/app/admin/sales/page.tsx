@@ -23,6 +23,8 @@ export default function AdminSalesPage() {
           ? "Approval required"
           : "Rejected",
       date: new Date(s.createdAt).toLocaleDateString("en-IN"),
+      invoiceId: s.invoice?.id,
+      invoiceNumber: s.invoice?.number,
     }));
   }, []);
 

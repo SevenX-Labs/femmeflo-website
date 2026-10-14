@@ -18,6 +18,7 @@ export default function AdminCustomersPage() {
       phone: c.phone || "—",
       category: c.category?.name || "General trade",
       status: c.active ? "Active" : "Inactive",
+      photoPath: c.photoPath,
     }));
   }, []);
 

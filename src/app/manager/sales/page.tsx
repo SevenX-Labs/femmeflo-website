@@ -28,6 +28,8 @@ export default function ManagerSalesPage() {
           : s.status === "PENDING_APPROVAL"
           ? "Approval required"
           : "Rejected",
+      invoiceId: s.invoice?.id,
+      invoiceNumber: s.invoice?.number,
     }));
   }, []);
 
