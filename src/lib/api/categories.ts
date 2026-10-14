@@ -55,9 +55,11 @@ export const categoryApi = {
    * POST /api/v1/admin/categories
    */
   async createCategory(payload: CreateCategoryPayload): Promise<{ category: Category }> {
+    // Note: Backend /admin/categories schema is strictObject({ name }).
+    // Omit active or description from payload to avoid 400 Bad Request.
     return apiRequest<{ category: Category }>("admin/categories", {
       method: "POST",
-      body: payload,
+      body: { name: payload.name.trim() },
     });
   },
 

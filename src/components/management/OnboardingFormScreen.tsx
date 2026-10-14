@@ -89,17 +89,13 @@ export function OnboardingFormScreen({
             const catRes = await categoryApi.listCategories();
             const list = catRes?.categories ?? (catRes as any)?.items ?? [];
             if (active && list.length > 0) {
-              // Filter strictly to allowed categories
-              const allowedOnly = list.filter((c: any) =>
-                c.active !== false &&
-                ALLOWED_CUSTOMER_CATEGORIES.some(
-                  (std) => std.toLowerCase() === c.name.toLowerCase()
-                )
-              );
+              // Exclude automated test categories while allowing standard & admin-added categories
+              const isTestCategory = (catName: string) =>
+                /^(Cat_\d+|Inc Category|InvPay Category|Retail Store \d+|Sales Category \d+)/i.test(catName.trim());
 
-              const targetList = allowedOnly.length > 0 ? allowedOnly : list.filter((c: any) => c.active !== false);
+              const targetList = list.filter((c: any) => c.active !== false && !isTestCategory(c.name));
 
-              // Sort in the exact priority sequence requested
+              // Sort in the exact priority sequence (standard categories first, then custom admin categories)
               targetList.sort((a: any, b: any) => {
                 const idxA = ALLOWED_CUSTOMER_CATEGORIES.findIndex(
                   (std) => std.toLowerCase() === a.name.toLowerCase()

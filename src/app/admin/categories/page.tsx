@@ -45,7 +45,7 @@ export default function CategoriesPage() {
     setErrorMessage("");
     setIsSubmitting(true);
     try {
-      const res = await categoryApi.createCategory({ name, active: true });
+      const res = await categoryApi.createCategory({ name });
       setCategories([...categories, res.category]);
       setValue("");
       setMessage(`${name} added to customer categories.`);
