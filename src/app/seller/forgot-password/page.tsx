@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, Loader2, MailCheck } from "lucide-react";
-import { Navbar } from "@/components/navbar";
 import { authApi } from "@/lib/api/auth";
 
 export default function SellerForgotPasswordPage() {
@@ -26,7 +25,6 @@ export default function SellerForgotPasswordPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] px-5 py-12 font-jakarta">
-      <div className="absolute left-0 top-0 w-full"><Navbar hideNavigation /></div>
       <section className="w-full max-w-lg rounded-3xl border border-rose-100 bg-white p-7 shadow-xl sm:p-10">
         <Link href="/seller/auth/login" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-[#E61C5D]">
           <ArrowLeft className="h-4 w-4" />Back to login

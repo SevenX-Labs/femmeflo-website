@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowLeft, Eye, EyeOff, Loader2, LockKeyhole, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Navbar } from "@/components/navbar";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/lib/api/client";
 
@@ -71,7 +70,6 @@ export function RoleLoginScreen({ role, subtitle, dashboardHref }: RoleLoginScre
 
   return (
     <main className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#FAF8F5] font-jakarta text-zinc-800">
-      <div className="relative z-20 w-full shrink-0"><Navbar hideNavigation /></div>
       <div className="pointer-events-none absolute -left-32 top-10 h-80 w-80 rounded-full bg-rose-100/70 blur-3xl" />
       <div className="pointer-events-none absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-emerald-100/60 blur-3xl" />
       

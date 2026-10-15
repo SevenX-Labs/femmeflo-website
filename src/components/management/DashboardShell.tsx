@@ -3,9 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { BarChart3, Bell, ChevronDown, CircleUserRound, ClipboardCheck, FileText, IndianRupee, LayoutDashboard, Menu, Package, PackageCheck, ReceiptIndianRupee, ScrollText, ShoppingBag, Store, Tags, TrendingUp, Truck, Users, X } from "lucide-react";
+import { BarChart3, Bell, ChevronDown, CircleUserRound, ClipboardCheck, FileText, IndianRupee, LayoutDashboard, Menu, Package, PackageCheck, ReceiptIndianRupee, ScrollText, Settings, ShoppingBag, Store, Tags, TrendingUp, Truck, Users, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import Navbar from "@/components/navbar";
 import { useAuth } from "@/context/AuthContext";
 
 import type { LucideIcon } from "lucide-react";
@@ -31,6 +30,7 @@ const navigationIconMap: Record<NavigationIcon, LucideIcon> = {
   permissions: ScrollText,
   notifications: Bell,
   categories: Tags,
+  settings: Settings,
 };
 
 type MetricIcon = "rupee" | "packages" | "trend" | "chart" | "truck" | "package";
@@ -55,7 +55,7 @@ type DashboardShellProps = {
 
 export function DashboardShell({ role, workspace, userName, userDetail, navigation, children }: DashboardShellProps) {
   const pathname = usePathname();
-  const { user, isBackendOnline } = useAuth();
+  const { user, isBackendOnline, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
@@ -78,7 +78,6 @@ export function DashboardShell({ role, workspace, userName, userDetail, navigati
 
   return (
     <main className="min-h-screen bg-[#FAF8F5] font-jakarta text-zinc-800">
-      <Navbar hideNavigation userName={displayName} userDetail={displayDetail} dashboardHref={role === "Super Admin" ? "/admin" : role === "Manager" ? "/manager" : "/seller"} />
       <div className="flex min-h-screen">
         <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r border-rose-100 bg-white px-5 py-6 transition-transform duration-300 lg:static lg:translate-x-0 ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="flex items-start justify-between px-2">
@@ -109,15 +108,36 @@ export function DashboardShell({ role, workspace, userName, userDetail, navigati
               return <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} aria-current={active ? "page" : undefined} className={`group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-rose-300 ${active ? "bg-rose-50 text-[#E61C5D]" : "text-zinc-500 hover:bg-rose-50/60 hover:text-[#156035]"}`}><Icon className="h-4.5 w-4.5 transition-transform group-hover:scale-105" />{item.label}{active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E61C5D]" />}</Link>;
             })}
           </nav>
-          <div className="mt-auto rounded-2xl bg-[#156035] p-4 text-white">
-            <p className="text-xs font-semibold text-emerald-100">{role === "Seller" ? "Your daily rhythm" : "Workspace pulse"}</p>
-            <p className="mt-1 text-sm font-bold leading-snug">{role === "Seller" ? "Check stock & record your sales." : "Everything is moving today."}</p>
-            <Link href={navigation[1]?.href ?? navigation[0].href} className="mt-3 inline-block text-xs font-bold text-[#FDE047]">Open next &rarr;</Link>
+          <div className="mt-auto pt-6 space-y-3">
+            <div className="rounded-2xl bg-[#156035] p-4 text-white">
+              <p className="text-xs font-semibold text-emerald-100">{role === "Seller" ? "Your daily rhythm" : "Workspace pulse"}</p>
+              <p className="mt-1 text-sm font-bold leading-snug">{role === "Seller" ? "Check stock & record your sales." : "Everything is moving today."}</p>
+              <Link href={navigation[1]?.href ?? navigation[0].href} className="mt-3 inline-block text-xs font-bold text-[#FDE047]">Open next &rarr;</Link>
+            </div>
+            <div className="flex items-center justify-between rounded-xl border border-rose-100 bg-[#FFF8FA] p-3">
+              <div className="min-w-0 pr-2">
+                <p className="truncate text-xs font-bold text-zinc-800">{displayName}</p>
+                <p className="truncate text-[10px] text-zinc-400">{displayDetail}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="shrink-0 rounded-lg bg-rose-50 px-2.5 py-1 text-xs font-bold text-[#E61C5D] transition hover:bg-rose-100"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
         </aside>
         {menuOpen && <button onClick={() => setMenuOpen(false)} className="fixed inset-0 z-30 bg-zinc-900/20 lg:hidden" aria-label="Close navigation overlay" />}
         <section className="relative min-w-0 flex-1">
-          <button onClick={() => setMenuOpen(true)} className="fixed left-4 top-24 z-20 flex h-10 w-10 items-center justify-center rounded-xl border border-rose-100 bg-white text-[#E61C5D] shadow-lg transition hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 lg:hidden" aria-label="Open workspace navigation"><Menu className="h-5 w-5" /></button>
+          <div className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-rose-100/80 bg-white/90 px-4 backdrop-blur-md lg:hidden">
+            <div className="flex items-center gap-2.5">
+              <button onClick={() => setMenuOpen(true)} className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-100 bg-white text-[#E61C5D] shadow-xs transition hover:bg-rose-50" aria-label="Open workspace navigation"><Menu className="h-5 w-5" /></button>
+              <span className="text-xs font-bold text-zinc-800">{workspace}</span>
+            </div>
+            <button onClick={() => logout()} className="text-xs font-bold text-[#E61C5D]">Sign out</button>
+          </div>
           <div className="mx-auto max-w-360 px-5 py-8 sm:px-8 lg:px-10 lg:py-10">{children}</div>
         </section>
       </div>

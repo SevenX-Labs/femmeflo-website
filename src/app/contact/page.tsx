@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Navbar } from "@/components/navbar";
+import Link from "next/link";
 import { Footer } from "@/components/footer";
 import { BackgroundParticles } from "@/components/BackgroundParticles";
 import {
+  ArrowLeft,
   MapPin,
   Phone,
   Mail,
@@ -124,7 +125,15 @@ export default function ContactPage() {
   return (
     <main className="min-h-screen bg-white font-[family-name:var(--font-jakarta)] flex flex-col justify-between overflow-x-hidden">
       <div>
-        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-[#E61C5D] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Link>
+        </div>
 
         {/* Hero Header Section with Floating Background Elements */}
         <section className="relative w-full bg-gradient-to-b from-[#FFF9F7] via-[#FDF3F5] to-white pt-10 sm:pt-16 pb-16 px-4 sm:px-6 lg:px-8 border-b border-rose-100/60 overflow-hidden">

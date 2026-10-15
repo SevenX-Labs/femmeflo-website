@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, Loader2, MailCheck } from "lucide-react";
-import { Navbar } from "@/components/navbar";
 import { authApi } from "@/lib/api/auth";
 
 export default function AdminForgotPasswordPage() {
@@ -29,7 +28,6 @@ export default function AdminForgotPasswordPage() {
 
   return (
     <main className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#FAF8F5] font-jakarta text-zinc-800">
-      <div className="relative z-20 w-full shrink-0"><Navbar hideNavigation /></div>
       <div className="relative z-10 grid flex-1 place-items-center px-5 py-8">
         <section className="w-full max-w-lg rounded-3xl border border-rose-100 bg-white p-6 shadow-[0_24px_80px_rgba(104,48,66,0.12)] sm:p-10">
           <Link href="/admin/auth/login" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-[#E61C5D]">

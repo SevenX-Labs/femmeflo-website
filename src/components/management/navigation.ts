@@ -11,7 +11,8 @@ export type NavigationIcon =
   | "incentives"
   | "permissions"
   | "notifications"
-  | "categories";
+  | "categories"
+  | "settings";
 
 export type NavigationItem = {
   label: string;
@@ -33,6 +34,7 @@ export const adminNavigation: NavigationItem[] = [
   { label: "Incentives", href: "/admin/incentives", icon: "incentives" },
   { label: "Permissions", href: "/admin/permissions", icon: "permissions" },
   { label: "Notifications", href: "/admin/notifications", icon: "notifications" },
+  { label: "Settings", href: "/admin/settings", icon: "settings" },
 ];
 
 export const managerNavigation: NavigationItem[] = [
