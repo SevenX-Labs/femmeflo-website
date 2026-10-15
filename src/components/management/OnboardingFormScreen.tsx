@@ -305,6 +305,19 @@ export function OnboardingFormScreen({
           });
         }
       } else {
+        // If Manager or Admin, sellerId is required
+        if (role === "Super Admin" || role === "Manager") {
+          if (!selectedSellerId) {
+            if (sellers.length === 0) {
+              setErrorMessage("No field sellers exist in the system yet. Please onboard at least one Seller before adding customer shops.");
+            } else {
+              setErrorMessage("Please select an assigned field seller for this customer.");
+            }
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
         // Submitting Customer with Photo & Location (Single Request multipart/form-data)
         const formattedPhone = phone.startsWith("+") ? phone : `+91${phone.replace(/\D/g, "")}`;
         const formData = new FormData();
@@ -400,6 +413,25 @@ export function OnboardingFormScreen({
           {errorMessage && (
             <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-[#B4234D]">
               {errorMessage}
+            </div>
+          )}
+
+          {!seller && (role === "Super Admin" || role === "Manager") && sellers.length === 0 && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-medium text-amber-900">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-bold text-sm text-amber-950">Prerequisite Step Required: Onboard a Field Seller First</p>
+                  <p className="mt-0.5 text-xs text-amber-850">
+                    Every customer shop must be linked to an active field seller for delivery and commission. Currently, zero sellers exist in your system.
+                  </p>
+                </div>
+                <Link
+                  href={role === "Super Admin" ? "/admin/sellers/new" : "/manager/sellers/new"}
+                  className="inline-flex items-center gap-1 rounded-lg bg-[#E61C5D] px-3.5 py-2 font-bold text-white shadow-sm hover:bg-[#c91550] shrink-0"
+                >
+                  + Add Seller First
+                </Link>
+              </div>
             </div>
           )}
 
@@ -585,21 +617,41 @@ export function OnboardingFormScreen({
                   </label>
                 </div>
 
-                {sellers.length > 0 && (
-                  <label className="block text-xs font-bold text-zinc-700">
-                    Assigned seller
-                    <select
-                      value={selectedSellerId}
-                      onChange={(e) => setSelectedSellerId(e.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
-                    >
-                      {sellers.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name} ({s.village || s.district || "Field operations"})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                {(role === "Super Admin" || role === "Manager") && (
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-zinc-700">
+                      Assigned Field Seller *
+                    </label>
+                    {sellers.length > 0 ? (
+                      <select
+                        required
+                        value={selectedSellerId}
+                        onChange={(e) => setSelectedSellerId(e.target.value)}
+                        className="h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      >
+                        <option value="">Select a field seller...</option>
+                        {sellers.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} ({s.village || s.district || "Field operations"})
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <span>
+                            ⚠️ <strong>No field sellers found.</strong> Every customer must be assigned to an active field seller.
+                          </span>
+                          <Link
+                            href={role === "Super Admin" ? "/admin/sellers/new" : "/manager/sellers/new"}
+                            className="inline-flex items-center gap-1 rounded-lg bg-[#E61C5D] px-2.5 py-1 text-xs font-bold text-white hover:bg-[#c91550] shrink-0"
+                          >
+                            + Onboard Seller First
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -927,8 +979,8 @@ export function OnboardingFormScreen({
           ) : (
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="flex h-12 items-center justify-center gap-2 rounded-xl bg-[#E61C5D] px-6 text-sm font-bold text-white shadow-[0_8px_20px_rgba(230,28,93,0.18)] transition hover:bg-[#c91550] disabled:opacity-70"
+              disabled={isSubmitting || (!seller && (role === "Super Admin" || role === "Manager") && sellers.length === 0)}
+              className="flex h-12 items-center justify-center gap-2 rounded-xl bg-[#E61C5D] px-6 text-sm font-bold text-white shadow-[0_8px_20px_rgba(230,28,93,0.18)] transition hover:bg-[#c91550] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>

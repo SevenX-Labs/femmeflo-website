@@ -292,6 +292,7 @@ export interface InventorySummaryData {
   warehouseStock: number;
   sellerStock: number;
   warehouses: WarehouseItem[];
+  locations?: WarehouseItem[];
   sellers?: Array<{
     id: string;
     name: string;

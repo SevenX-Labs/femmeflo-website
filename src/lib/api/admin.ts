@@ -305,12 +305,14 @@ export const adminApi = {
     const raw = await apiRequest<any>("admin/inventory", {
       method: "GET",
     });
+    const allLocations: WarehouseItem[] = raw?.locations ?? raw?.warehouses ?? [];
     return {
       totalInventory: raw?.totalInventory ?? raw?.totalStock ?? 0,
       hqStock: raw?.hqStock ?? 0,
       warehouseStock: raw?.warehouseStock ?? 0,
       sellerStock: raw?.sellerStock ?? 0,
-      warehouses: raw?.warehouses ?? raw?.locations ?? [],
+      warehouses: allLocations,
+      locations: allLocations,
       sellers: raw?.sellers ?? [],
     };
   },
