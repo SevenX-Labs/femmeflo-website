@@ -106,7 +106,7 @@ export default function NewSellerSalePage() {
         />
       </div>
 
-      <SectionCard title="Sale information" description="Connected to POST /api/v1/seller/sales" className="mt-8">
+      <SectionCard title="Sale information" description="Enter retail customer sale details and payment receipt" className="mt-8">
         <form className="max-w-2xl space-y-5" onSubmit={handleSubmit}>
           {error && (
             <p className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-[#B4234D]">
@@ -122,11 +122,16 @@ export default function NewSellerSalePage() {
               onChange={(e) => setSelectedCustomerId(e.target.value)}
               className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300"
             >
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.shopName} ({c.contactName || c.village || "Diva"})
-                </option>
-              ))}
+              {customers.length === 0 ? (
+                <option value="">No registered stores found</option>
+              ) : (
+                // Deduplicate by ID just in case
+                Array.from(new Map(customers.map((c) => [c.id, c])).values()).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.shopName} ({c.contactName || c.village || "Store"})
+                  </option>
+                ))
+              )}
             </select>
           </label>
 

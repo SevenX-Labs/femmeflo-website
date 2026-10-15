@@ -156,3 +156,21 @@
   content-visibility: auto;
   contain-intrinsic-size: 1px 600px;
 }
+
+/* Global clickable pointer rule */
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+select,
+summary,
+a {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}

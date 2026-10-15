@@ -85,7 +85,7 @@ export default function AdminAddManagerPage() {
         />
       </div>
 
-      <SectionCard title="Manager credentials & territory" description="Connected to POST /api/v1/admin/managers" className="mt-8">
+      <SectionCard title="Manager credentials & territory" description="Add and provision regional depot manager accounts" className="mt-8">
         <form className="max-w-2xl space-y-5" onSubmit={handleSubmit}>
           {error && (
             <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-[#B4234D]">

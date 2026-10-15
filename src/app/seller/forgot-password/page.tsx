@@ -64,7 +64,7 @@ export default function SellerForgotPasswordPage() {
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send recovery instructions"}
             </button>
             <p className="text-center text-[11px] text-zinc-400">
-              Endpoint: <code className="text-[#E61C5D]">POST /api/v1/auth/forgot-password</code>
+              
             </p>
           </form>
         )}

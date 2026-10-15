@@ -991,15 +991,6 @@ export function OnboardingFormScreen({
               )}
             </button>
           )}
-
-          <p className="text-xs text-zinc-400">
-            Connected to endpoint{" "}
-            <code className="rounded bg-rose-50 px-1 py-0.5 font-mono text-[11px] text-[#E61C5D]">
-              {seller
-                ? `POST /api/v1/${role === "Super Admin" ? "admin" : "manager"}/sellers`
-                : `POST /api/v1/${role === "Super Admin" ? "admin" : role === "Manager" ? "manager" : "seller"}/customers (multipart/form-data with photo & GPS)`}
-            </code>
-          </p>
         </form>
       </SectionCard>
     </DashboardShell>

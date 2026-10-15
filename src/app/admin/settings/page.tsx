@@ -373,9 +373,6 @@ export default function AdminSettingsPage() {
                     "Update Password & Re-authenticate"
                   )}
                 </button>
-                <p className="mt-3 text-center text-[11px] text-zinc-400">
-                  Connected to endpoint <code className="rounded bg-rose-50 px-1 py-0.5 font-mono text-[#E61C5D]">PATCH /api/v1/auth/password</code>
-                </p>
               </div>
             </form>
           </SectionCard>

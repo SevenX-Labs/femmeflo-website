@@ -4,6 +4,7 @@ import "lenis/dist/lenis.css";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 import { AuthProvider } from "@/context/AuthContext";
+import { SessionExpiredModal } from "@/components/auth/SessionExpiredModal";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -68,7 +69,10 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans bg-white text-zinc-800 selection:bg-rose-200 selection:text-rose-900">
         <SmoothScroll>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            {children}
+            <SessionExpiredModal />
+          </AuthProvider>
         </SmoothScroll>
       </body>
     </html>

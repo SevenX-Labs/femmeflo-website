@@ -244,6 +244,16 @@ export async function apiRequest<T = unknown>(
       if (response.status === 401) {
         // Token expired or invalid
         tokenStorage.clearToken();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("femmeflo:unauthorized", {
+              detail: {
+                message,
+                endpoint,
+              },
+            })
+          );
+        }
       }
 
       if (response.status === 429) {

@@ -219,11 +219,6 @@ function AdminLoginForm() {
                 </button>
               </form>
             </div>
-            <div className="mt-4 max-w-md rounded-xl bg-[#FFF8FA] p-3 text-center">
-              <p className="text-[11px] leading-relaxed text-zinc-500">
-                Connected to endpoint <code className="rounded bg-rose-100/70 px-1 py-0.5 font-mono text-[10px] text-[#E61C5D]">POST /api/v1/admin/auth/login</code>
-              </p>
-            </div>
           </section>
         </div>
       </div>

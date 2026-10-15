@@ -108,8 +108,7 @@ export default function CategoriesPage() {
 
           {errorMessage && <p className="mt-3 text-xs font-semibold text-[#B4234D]">{errorMessage}</p>}
           {message && <p className="mt-3 text-xs font-semibold text-emerald-700">{message}</p>}
-          <p className="mt-4 text-xs text-zinc-400">Endpoint: POST /api/v1/admin/categories</p>
-        </SectionCard>
+                  </SectionCard>
 
         <SectionCard
           title="Active categories"

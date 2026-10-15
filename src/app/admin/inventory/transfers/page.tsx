@@ -128,7 +128,7 @@ export default function TransfersPage() {
             </div>
             <div className="flex items-center gap-2">
               <Link
-                href="/admin/inventory"
+                href="/admin/inventory?action=add-warehouse"
                 className="inline-flex items-center gap-1 rounded-lg bg-amber-200 px-3 py-1.5 font-bold text-amber-900 hover:bg-amber-300"
               >
                 <Plus className="h-3.5 w-3.5" /> Add Warehouse
@@ -281,7 +281,7 @@ export default function TransfersPage() {
 
             {notice && <p className="text-xs font-semibold text-emerald-700">{notice}</p>}
             <p className="text-[11px] text-zinc-400">
-              Endpoint: <code className="text-[#E61C5D]">POST /api/v1/admin/inventory/transfers</code>
+              
             </p>
           </form>
         </SectionCard>

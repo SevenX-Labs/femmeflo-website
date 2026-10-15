@@ -87,19 +87,7 @@ export function DashboardShell({ role, workspace, userName, userDetail, navigati
             </Link>
             <button onClick={() => setMenuOpen(false)} className="rounded-lg p-2 text-zinc-500 hover:bg-rose-50 lg:hidden" aria-label="Close navigation"><X className="h-5 w-5" /></button>
           </div>
-          <div className="mt-8 rounded-xl border border-rose-100 bg-[#FFF8FA] px-3.5 py-3">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#E61C5D]">Today</p>
-              {isBackendOnline !== null && (
-                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${isBackendOnline ? "bg-emerald-100/80 text-[#156035]" : "bg-amber-100/80 text-amber-800"}`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${isBackendOnline ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
-                  {isBackendOnline ? "API Live" : "Offline"}
-                </span>
-              )}
-            </div>
-            <p className="mt-1 text-xs font-bold text-zinc-700">{currentTime ? currentTime.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) : "Loading date..."}</p>
-            <p className="mt-1 text-[11px] text-zinc-400">{currentTime ? currentTime.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "--:--"}</p>
-          </div>
+          
           <p className="mt-10 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">Main menu</p>
           <nav className="mt-3 space-y-1">
             {navigation.map((item) => {
