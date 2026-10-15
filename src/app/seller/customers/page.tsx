@@ -19,9 +19,15 @@ export default function SellerCustomersPage() {
       name: c.shopName,
       contact: c.phone || c.contactName || "—",
       category: c.category?.name || "General trade",
-      location: [c.village, c.district].filter(Boolean).join(", ") || "Diva",
+      location: [c.village, c.district].filter(Boolean).join(", ") || "Field",
+      address:
+        c.address ||
+        [c.shopNumber, c.streetName, c.village, c.district, c.state, c.pincode].filter(Boolean).join(", ") ||
+        [c.village, c.district, c.state].filter(Boolean).join(", "),
       status: c.active ? "Active" : "Inactive",
       photoPath: c.photoPath,
+      latitude: c.latitude,
+      longitude: c.longitude,
     }));
   }, []);
 

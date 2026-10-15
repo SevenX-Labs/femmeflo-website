@@ -5,6 +5,7 @@ import type {
   CustomerItem,
   ManagerDashboardData,
   PaginationMeta,
+  PincodeLookupResponse,
   SaleItem,
   SellerItem,
   UpdateCustomerPayload,
@@ -103,8 +104,48 @@ export const managerApi = {
     });
   },
 
-  async createCustomer(payload: CreateCustomerPayload): Promise<{ customer: CustomerItem }> {
-    return apiRequest<{ customer: CustomerItem }>("manager/customers", {
+  async lookupPincode(pincode: string): Promise<PincodeLookupResponse> {
+    try {
+      const res = await apiRequest<{ pincode: string; state: string; district: string; village: string; villages?: string[] }>(
+        `manager/customers/pincode/${pincode}`,
+        { method: "GET" }
+      );
+      if (res && res.state) {
+        return res;
+      }
+    } catch {
+      // Fallback below
+    }
+    try {
+      const postalRes = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const data = await postalRes.json();
+      if (Array.isArray(data) && data[0]?.Status === "Success" && data[0].PostOffice?.length) {
+        const poList = data[0].PostOffice;
+        const state = poList[0].State || "";
+        const district = poList[0].District || "";
+        const villages: string[] = Array.from(new Set(poList.map((p: any) => String(p.Name || "")).filter(Boolean))) as string[];
+        return {
+          pincode,
+          state,
+          district,
+          village: villages[0] || "",
+          villages,
+        };
+      }
+    } catch {
+      // Ignored
+    }
+    return {
+      pincode,
+      state: "",
+      district: "",
+      village: "",
+      villages: [],
+    };
+  },
+
+  async createCustomer(payload: CreateCustomerPayload | FormData): Promise<{ customer: CustomerItem; photoUrl?: string }> {
+    return apiRequest<{ customer: CustomerItem; photoUrl?: string }>("manager/customers", {
       method: "POST",
       body: payload,
     });

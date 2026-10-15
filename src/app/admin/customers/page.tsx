@@ -15,10 +15,16 @@ export default function AdminCustomersPage() {
       contact: c.contactName,
       seller: c.seller?.name || "Assigned Seller",
       location: [c.village, c.district, c.state].filter(Boolean).join(", ") || "Field",
+      address:
+        c.address ||
+        [c.shopNumber, c.streetName, c.village, c.district, c.state, c.pincode].filter(Boolean).join(", ") ||
+        [c.village, c.district, c.state].filter(Boolean).join(", "),
       phone: c.phone || "—",
       category: c.category?.name || "General trade",
       status: c.active ? "Active" : "Inactive",
       photoPath: c.photoPath,
+      latitude: c.latitude,
+      longitude: c.longitude,
     }));
   }, []);
 

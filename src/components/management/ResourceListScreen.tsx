@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, CheckCircle2, Download, Eye, ExternalLink, FileText, Image as ImageIcon, Loader2, RefreshCw, Search, SlidersHorizontal, Upload, X } from "lucide-react";
+import { Camera, CheckCircle2, Download, Eye, ExternalLink, FileText, Image as ImageIcon, Loader2, MapPin, RefreshCw, Search, SlidersHorizontal, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DashboardShell, NavigationItem, PageHeading, SectionCard } from "./DashboardShell";
@@ -452,6 +452,19 @@ export function ResourceListScreen({
                             ) : null}
                             <span className="font-bold text-zinc-800">{String(row[column.key] ?? "—")}</span>
                           </div>
+                        ) : (column.key === "location" || column.key === "village" || column.key === "address") && row.latitude && row.longitude ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span>{String(row[column.key] ?? "—")}</span>
+                            <a
+                              href={`https://www.google.com/maps?q=${row.latitude},${row.longitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline"
+                            >
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              <span>View Map</span>
+                            </a>
+                          </div>
                         ) : (
                           String(row[column.key] ?? "—")
                         )}
@@ -543,6 +556,11 @@ export function ResourceListScreen({
                 <h2 className="mt-2 font-playfair text-3xl font-bold text-[#156035]">
                   {String(selectedRow[columns[0].key] ?? "Item")}
                 </h2>
+                {selectedRow.address ? (
+                  <p className="mt-1 text-xs text-zinc-600 leading-relaxed">
+                    {String(selectedRow.address)}
+                  </p>
+                ) : null}
               </div>
               <button
                 onClick={() => setSelectedRow(null)}
@@ -710,6 +728,34 @@ export function ResourceListScreen({
                 )}
               </div>
             )}
+
+            {/* Live Map Pin section for records with GPS coordinates */}
+            {selectedRow.latitude && selectedRow.longitude ? (
+              <div className="mt-3 flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/70 p-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700 shrink-0">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-blue-900">
+                      Storefront GPS Location
+                    </p>
+                    <p className="font-mono text-xs text-zinc-600 truncate">
+                      {String(selectedRow.latitude)}, {String(selectedRow.longitude)}
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={`https://www.google.com/maps?q=${selectedRow.latitude},${selectedRow.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700"
+                >
+                  <span>📍 View on Google Maps</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            ) : null}
 
             <div className="mt-5 divide-y divide-zinc-100">
               {columns.map((col) => (

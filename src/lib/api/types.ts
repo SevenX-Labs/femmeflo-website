@@ -221,6 +221,10 @@ export interface CustomerItem {
     name: string;
     phone?: string | null;
   };
+  shopNumber?: string | null;
+  streetName?: string | null;
+  pincode?: string | null;
+  address?: string | null;
   state: string;
   district: string;
   village: string;
@@ -242,6 +246,10 @@ export interface CreateCustomerPayload {
   email?: string;
   categoryId: string;
   sellerId?: string;
+  shopNumber?: string;
+  streetName?: string;
+  pincode?: string;
+  address?: string;
   state: string;
   district: string;
   village: string;
@@ -250,6 +258,14 @@ export interface CreateCustomerPayload {
   imageUrl?: string;
   latitude?: number;
   longitude?: number;
+}
+
+export interface PincodeLookupResponse {
+  pincode: string;
+  state: string;
+  district: string;
+  village: string;
+  villages?: string[];
 }
 
 export interface UpdateCustomerPayload extends Partial<CreateCustomerPayload> {

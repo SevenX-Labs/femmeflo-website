@@ -43,7 +43,7 @@ export default function AdminOverviewDashboard() {
   const [selectedSellerId, setSelectedSellerId] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
 
-  const [filtersExpanded, setFiltersExpanded] = useState(true);
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
 
   // Fetch filter options on mount
   useEffect(() => {

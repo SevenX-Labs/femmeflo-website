@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Camera, CheckCircle2, Image as ImageIcon, Loader2, MapPin, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2, ExternalLink, Image as ImageIcon, Loader2, MapPin, Sparkles, Trash2, Upload } from "lucide-react";
 import { DashboardShell, PageHeading, SectionCard } from "./DashboardShell";
 import type { NavigationItem } from "./DashboardShell";
 import { adminApi } from "@/lib/api/admin";
 import { managerApi } from "@/lib/api/manager";
 import { sellerApi } from "@/lib/api/seller";
 import { categoryApi } from "@/lib/api/categories";
-import type { Category, ManagerItem, SellerItem } from "@/lib/api/types";
+import type { Category, ManagerItem, PincodeLookupResponse, SellerItem } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
 
 type Props = {
@@ -61,6 +61,16 @@ export function OnboardingFormScreen({
   const [location, setLocation] = useState("");
   const [lat, setLat] = useState<number | undefined>(undefined);
   const [lng, setLng] = useState<number | undefined>(undefined);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  // Address & Pincode Auto-lookup states
+  const [pincode, setPincode] = useState("");
+  const [shopNumber, setShopNumber] = useState("");
+  const [streetName, setStreetName] = useState("");
+  const [isPincodeLoading, setIsPincodeLoading] = useState(false);
+  const [pincodeMessage, setPincodeMessage] = useState<string | null>(null);
+  const [availableVillages, setAvailableVillages] = useState<string[]>([]);
 
   // Status
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -171,23 +181,96 @@ export function OnboardingFormScreen({
     setPhotoError(null);
   };
 
-  const capture = () => {
+  // Capturing Live GPS Location in Frontend
+  const handleGetCurrentLocation = () => {
     if (!navigator.geolocation) {
-      setLocation("Location is not supported by this browser.");
+      alert("Geolocation is not supported by your browser/device.");
+      setLocationError("Geolocation is not supported by your browser/device.");
       return;
     }
-    setLocation("Getting location…");
+
+    setIsLocating(true);
+    setLocationError(null);
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLat(pos.coords.latitude);
-        setLng(pos.coords.longitude);
-        setLocation(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`);
+      (position) => {
+        const latitude = Number(position.coords.latitude.toFixed(6));
+        const longitude = Number(position.coords.longitude.toFixed(6));
+
+        setLat(latitude);
+        setLng(longitude);
+        setLocation(`${latitude}, ${longitude}`);
+        setIsLocating(false);
+
+        console.log("Captured Location:", { latitude, longitude });
       },
-      () => {
-        setLocation("Location permission denied. You can proceed without coordinates.");
+      (error) => {
+        setIsLocating(false);
+        let errorMsg = "An unknown error occurred while retrieving location.";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMsg = "Location permission denied. Please allow location access in your browser settings.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMsg = "Location information is unavailable. Ensure device GPS is on.";
+            break;
+          case error.TIMEOUT:
+            errorMsg = "Location request timed out.";
+            break;
+          default:
+            errorMsg = "An unknown error occurred while retrieving location.";
+            break;
+        }
+        setLocationError(errorMsg);
+        alert(errorMsg);
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
     );
+  };
+
+  // Automatic PIN Code Lookup Helper
+  const handlePincodeChange = async (value: string) => {
+    const cleaned = value.replace(/\D/g, "").slice(0, 6);
+    setPincode(cleaned);
+    setPincodeMessage(null);
+
+    if (cleaned.length === 6 && /^[1-9][0-9]{5}$/.test(cleaned)) {
+      try {
+        setIsPincodeLoading(true);
+        let res: PincodeLookupResponse;
+        if (role === "Super Admin") {
+          res = await adminApi.lookupPincode(cleaned);
+        } else if (role === "Manager") {
+          res = await managerApi.lookupPincode(cleaned);
+        } else {
+          res = await sellerApi.lookupPincode(cleaned);
+        }
+
+        if (res.state || res.district) {
+          if (res.state) setState(res.state);
+          if (res.district) setDistrict(res.district);
+          if (res.village) setVillage(res.village);
+          if (res.villages && res.villages.length > 0) {
+            setAvailableVillages(res.villages);
+          } else {
+            setAvailableVillages([]);
+          }
+          setPincodeMessage(`✓ Autofilled: ${res.village || res.district}, ${res.state}`);
+        } else {
+          setPincodeMessage("PIN code details not found. Enter address manually.");
+        }
+      } catch (err) {
+        console.warn("Pincode lookup failed:", err);
+      } finally {
+        setIsPincodeLoading(false);
+      }
+    } else {
+      setAvailableVillages([]);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -222,63 +305,52 @@ export function OnboardingFormScreen({
           });
         }
       } else {
-        // Create Customer
-        const customerData = {
-          shopName: name,
-          contactName: contactName || name,
-          phone: phone.startsWith("+") ? phone : `+91${phone.replace(/\D/g, "")}`,
-          email: email || undefined,
-          categoryId: selectedCategoryId,
-          state,
-          district,
-          village,
-          latitude: lat,
-          longitude: lng,
-        };
+        // Submitting Customer with Photo & Location (Single Request multipart/form-data)
+        const formattedPhone = phone.startsWith("+") ? phone : `+91${phone.replace(/\D/g, "")}`;
+        const formData = new FormData();
 
-        setSubmissionStep("Saving customer profile…");
+        // Text fields
+        formData.append("shopName", name);
+        formData.append("contactName", contactName || name);
+        formData.append("phone", formattedPhone);
+        if (email) formData.append("email", email);
+        formData.append("categoryId", selectedCategoryId);
 
-        let createdId: string | null = null;
-        if (role === "Super Admin") {
-          const res = await adminApi.createCustomer({
-            ...customerData,
-            sellerId: selectedSellerId || undefined,
-          });
-          createdId = res.customer.id;
-        } else if (role === "Manager") {
-          const res = await managerApi.createCustomer({
-            ...customerData,
-            sellerId: selectedSellerId || undefined,
-          });
-          createdId = res.customer.id;
-        } else {
-          const res = await sellerApi.createCustomer(customerData);
-          createdId = res.customer.id;
+        // Address fields
+        if (shopNumber) formData.append("shopNumber", shopNumber);
+        if (streetName) formData.append("streetName", streetName);
+        if (pincode) formData.append("pincode", pincode);
+        formData.append("state", state);
+        formData.append("district", district);
+        formData.append("village", village);
+
+        // GPS Coordinates (from Get Current Location)
+        if (lat !== undefined) formData.append("latitude", lat.toString());
+        if (lng !== undefined) formData.append("longitude", lng.toString());
+
+        // Storefront Photo File (Captured via camera or file picker)
+        if (photoFile) {
+          formData.append("photo", photoFile);
         }
 
-        // Upload shop photo if selected
-        if (photoFile && createdId) {
-          setSubmissionStep("Uploading storefront photo…");
-          try {
-            let uploadRes: { customer: unknown; photoUrl: string };
-            if (role === "Super Admin") {
-              uploadRes = await adminApi.uploadCustomerPhoto(createdId, photoFile);
-            } else if (role === "Manager") {
-              uploadRes = await managerApi.uploadCustomerPhoto(createdId, photoFile);
-            } else {
-              uploadRes = await sellerApi.uploadCustomerPhoto(createdId, photoFile);
-            }
-            if (uploadRes?.photoUrl) {
-              setUploadedPhotoUrl(uploadRes.photoUrl);
-            }
-          } catch (uploadErr) {
-            console.warn("Photo upload warning:", uploadErr);
-            setErrorMessage(
-              "Customer record was created, but uploading the shop storefront photo encountered an error. You can retry from the customer details."
-            );
-            setSaved(true);
-            return;
-          }
+        if ((role === "Super Admin" || role === "Manager") && selectedSellerId) {
+          formData.append("sellerId", selectedSellerId);
+        }
+
+        setSubmissionStep(photoFile ? "Uploading storefront photo & saving customer…" : "Saving customer profile…");
+
+        let res: { customer: unknown; photoUrl?: string };
+        if (role === "Super Admin") {
+          res = await adminApi.createCustomer(formData);
+        } else if (role === "Manager") {
+          res = await managerApi.createCustomer(formData);
+        } else {
+          res = await sellerApi.createCustomer(formData);
+        }
+
+        const finalPhotoUrl = res.photoUrl || (res.customer as any)?.photoPath;
+        if (finalPhotoUrl) {
+          setUploadedPhotoUrl(finalPhotoUrl);
         }
       }
 
@@ -331,160 +403,347 @@ export function OnboardingFormScreen({
             </div>
           )}
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <label className="block text-xs font-bold text-zinc-700">
-              {seller ? "Seller name *" : "Shop / customer name *"}
-              <input
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                placeholder={seller ? "Ananya Deshmukh" : "ABC General Store"}
-              />
-            </label>
-            <label className="block text-xs font-bold text-zinc-700">
-              {seller ? "Contact number (with country code) *" : "Shopkeeper / contact person name *"}
-              <input
-                required
-                value={seller ? phone : contactName}
-                onChange={(e) => (seller ? setPhone(e.target.value) : setContactName(e.target.value))}
-                className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                placeholder={seller ? "+919876542108" : "Ramesh Patel"}
-              />
-            </label>
-          </div>
-
           {seller ? (
-            <div className="grid gap-5 sm:grid-cols-3">
-              <label className="block text-xs font-bold text-zinc-700">
-                Login email
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                  placeholder="seller@femmeflo.com"
-                />
-              </label>
-              <label className="block text-xs font-bold text-zinc-700">
-                Temporary password *
-                <input
-                  type="text"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                  placeholder="At least 12 chars"
-                />
-              </label>
-              {role === "Super Admin" && managers.length > 0 && (
+            <>
+              <div className="grid gap-5 sm:grid-cols-2">
                 <label className="block text-xs font-bold text-zinc-700">
-                  Reporting manager
-                  <select
-                    value={selectedManagerId}
-                    onChange={(e) => setSelectedManagerId(e.target.value)}
-                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
-                  >
-                    {managers.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} ({m.district || "Territory"})
-                      </option>
-                    ))}
-                  </select>
+                  Seller name *
+                  <input
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                    placeholder="Ananya Deshmukh"
+                  />
                 </label>
-              )}
-            </div>
+                <label className="block text-xs font-bold text-zinc-700">
+                  Contact number (with country code) *
+                  <input
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                    placeholder="+919876542108"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-3">
+                <label className="block text-xs font-bold text-zinc-700">
+                  Login email
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                    placeholder="seller@femmeflo.com"
+                  />
+                </label>
+                <label className="block text-xs font-bold text-zinc-700">
+                  Temporary password *
+                  <input
+                    type="text"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                    placeholder="At least 12 chars"
+                  />
+                </label>
+                {role === "Super Admin" && managers.length > 0 && (
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Reporting manager
+                    <select
+                      value={selectedManagerId}
+                      onChange={(e) => setSelectedManagerId(e.target.value)}
+                      className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
+                    >
+                      {managers.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} ({m.district || "Territory"})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-3">
+                <label className="block text-xs font-bold text-zinc-700">
+                  State *
+                  <input
+                    required
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
+                    placeholder="Maharashtra"
+                  />
+                </label>
+                <label className="block text-xs font-bold text-zinc-700">
+                  District *
+                  <input
+                    required
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
+                    placeholder="Thane"
+                  />
+                </label>
+                <label className="block text-xs font-bold text-zinc-700">
+                  Village / town *
+                  <input
+                    required
+                    value={village}
+                    onChange={(e) => setVillage(e.target.value)}
+                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
+                    placeholder="Diva"
+                  />
+                </label>
+              </div>
+            </>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-3">
-              <label className="block text-xs font-bold text-zinc-700">
-                Phone number *
-                <input
-                  required
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                  placeholder="+919876542108"
-                />
-              </label>
-              <label className="block text-xs font-bold text-zinc-700">
-                Customer category *
-                <select
-                  required
-                  value={selectedCategoryId}
-                  onChange={(e) => setSelectedCategoryId(e.target.value)}
-                  className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300"
-                >
-                  {isLoadingCategories ? (
-                    <option value="">Loading categories...</option>
-                  ) : categories.length === 0 ? (
-                    <option value="">No categories available</option>
-                  ) : (
-                    categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))
+            <>
+              {/* Section A: Shopkeeper & Store Details */}
+              <div className="space-y-4">
+                <div className="border-b border-zinc-200/60 pb-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#E61C5D]">
+                    A. Shopkeeper &amp; Store Details
+                  </h3>
+                  <p className="text-[11px] text-zinc-500">
+                    Core retail shopkeeper credentials and category classification
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Store name *
+                    <input
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="Sai Krupa General Store"
+                    />
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Shopkeeper name *
+                    <input
+                      required
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="Sanjay Gupta"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Contact phone *
+                    <input
+                      required
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="+919876549911"
+                    />
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Category *
+                    <select
+                      required
+                      value={selectedCategoryId}
+                      onChange={(e) => setSelectedCategoryId(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300"
+                    >
+                      {isLoadingCategories ? (
+                        <option value="">Loading categories...</option>
+                      ) : categories.length === 0 ? (
+                        <option value="">No categories available</option>
+                      ) : (
+                        categories.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Email address (optional)
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="shop@example.com"
+                    />
+                  </label>
+                </div>
+
+                {sellers.length > 0 && (
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Assigned seller
+                    <select
+                      value={selectedSellerId}
+                      onChange={(e) => setSelectedSellerId(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
+                    >
+                      {sellers.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({s.village || s.district || "Field operations"})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+
+              {/* Section B: Address & Auto-Fetch by Pincode */}
+              <div className="space-y-4 pt-2">
+                <div className="flex items-center justify-between border-b border-zinc-200/60 pb-2">
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#E61C5D]">
+                      B. Address &amp; Auto-Fetch by PIN Code
+                    </h3>
+                    <p className="text-[11px] text-zinc-500">
+                      Enter 6-digit Indian PIN code to automatically retrieve State, District &amp; Village
+                    </p>
+                  </div>
+                  {isPincodeLoading && (
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-bold text-[#E61C5D]">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span>Fetching location...</span>
+                    </div>
                   )}
-                </select>
-              </label>
-              {sellers.length > 0 && (
-                <label className="block text-xs font-bold text-zinc-700">
-                  Assigned seller
-                  <select
-                    value={selectedSellerId}
-                    onChange={(e) => setSelectedSellerId(e.target.value)}
-                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
-                  >
-                    {sellers.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.village || s.district || "Field"})
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-            </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <label className="block text-xs font-bold text-zinc-700 sm:col-span-1">
+                    PIN code (6 digits) *
+                    <div className="relative mt-1.5">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={pincode}
+                        onChange={(e) => handlePincodeChange(e.target.value)}
+                        onBlur={() => {
+                          if (pincode.length === 6 && !state) {
+                            handlePincodeChange(pincode);
+                          }
+                        }}
+                        className="h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-mono tracking-wider outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                        placeholder="400053"
+                      />
+                      {isPincodeLoading && (
+                        <div className="absolute right-3 top-3">
+                          <Loader2 className="h-4 w-4 animate-spin text-[#E61C5D]" />
+                        </div>
+                      )}
+                    </div>
+                    {pincodeMessage && (
+                      <p className="mt-1 text-[11px] font-medium text-emerald-700">{pincodeMessage}</p>
+                    )}
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700 sm:col-span-1">
+                    Shop / Unit number (optional)
+                    <input
+                      value={shopNumber}
+                      onChange={(e) => setShopNumber(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="Shop No. 12, Ground Floor"
+                    />
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700 sm:col-span-1">
+                    Street name / landmark (optional)
+                    <input
+                      value={streetName}
+                      onChange={(e) => setStreetName(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="Station Road / Opposite Bank"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <label className="block text-xs font-bold text-zinc-700">
+                    State *
+                    <input
+                      required
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
+                      placeholder="Maharashtra"
+                    />
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    District *
+                    <input
+                      required
+                      value={district}
+                      onChange={(e) => setDistrict(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
+                      placeholder="Mumbai"
+                    />
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Village / locality *
+                    <input
+                      required
+                      value={village}
+                      onChange={(e) => setVillage(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
+                      placeholder="Andheri"
+                    />
+                  </label>
+                </div>
+
+                {availableVillages.length > 1 && (
+                  <div className="rounded-xl border border-rose-100 bg-[#FFF8FA] p-2.5">
+                    <p className="text-[11px] font-bold text-[#E61C5D]">
+                      Multiple localities detected for PIN {pincode}. Tap to select:
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {availableVillages.map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setVillage(v)}
+                          className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
+                            village === v
+                              ? "bg-[#E61C5D] text-white shadow-xs"
+                              : "bg-white border border-rose-200 text-zinc-700 hover:border-[#E61C5D]"
+                          }`}
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
-          <div className="grid gap-5 sm:grid-cols-3">
-            <label className="block text-xs font-bold text-zinc-700">
-              State *
-              <input
-                required
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
-                placeholder="Maharashtra"
-              />
-            </label>
-            <label className="block text-xs font-bold text-zinc-700">
-              District *
-              <input
-                required
-                value={district}
-                onChange={(e) => setDistrict(e.target.value)}
-                className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
-                placeholder="Thane"
-              />
-            </label>
-            <label className="block text-xs font-bold text-zinc-700">
-              Village / town *
-              <input
-                required
-                value={village}
-                onChange={(e) => setVillage(e.target.value)}
-                className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
-                placeholder="Diva"
-              />
-            </label>
-          </div>
-
           {!seller && (
-            <div className="space-y-2">
-              <label className="block text-xs font-bold text-zinc-700">
-                Storefront Photo & GPS Coordinates
-              </label>
+            <div className="space-y-4 pt-2">
+              <div className="border-b border-zinc-200/60 pb-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#E61C5D]">
+                  C. Live Location &amp; Storefront Photo
+                </h3>
+                <p className="text-[11px] text-zinc-500">
+                  Record real-time device GPS coordinates and attach storefront photo
+                </p>
+              </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 {/* Photo Upload Card */}
                 <div className="flex flex-col justify-between rounded-xl border border-zinc-200 bg-[#FAF8F5] p-3">
@@ -554,24 +813,65 @@ export function OnboardingFormScreen({
                 </div>
 
                 {/* GPS Coordinates Card */}
-                <div className="flex flex-col justify-center rounded-xl border border-zinc-200 bg-[#FAF8F5] p-3">
-                  <button
-                    type="button"
-                    onClick={capture}
-                    className="flex h-full min-h-[88px] flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-rose-200 bg-[#FFF8FA] p-3 text-center transition hover:bg-rose-50"
-                  >
-                    <div className="flex items-center gap-1.5 text-[#E61C5D]">
-                      <MapPin className="h-4 w-4" />
-                      <span className="text-xs font-bold">
-                        {location || "Detect current GPS coordinates"}
-                      </span>
-                    </div>
-                    <span className="text-[11px] text-zinc-400">
-                      {lat !== undefined && lng !== undefined
-                        ? "✓ Verified storefront coordinates"
-                        : "Tap to record shop location"}
+                <div className="flex flex-col justify-between rounded-xl border border-zinc-200 bg-[#FAF8F5] p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                      Live GPS Location
                     </span>
-                  </button>
+                    {lat !== undefined && lng !== undefined && (
+                      <span className="text-[11px] font-semibold text-emerald-700">✓ Coordinates Acquired</span>
+                    )}
+                  </div>
+
+                  <div className="mt-2 space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleGetCurrentLocation}
+                      disabled={isLocating}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-rose-300 bg-[#FFF8FA] py-2.5 px-3 text-xs font-bold text-[#E61C5D] transition hover:bg-rose-50 disabled:opacity-50 cursor-pointer"
+                    >
+                      {isLocating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin text-[#E61C5D]" />
+                          <span>Fetching live GPS...</span>
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="h-4 w-4 text-[#E61C5D]" />
+                          <span>{lat !== undefined && lng !== undefined ? "Update GPS Location" : "Get Current Location"}</span>
+                        </>
+                      )}
+                    </button>
+
+                    {lat !== undefined && lng !== undefined ? (
+                      <div className="rounded-lg border border-emerald-200 bg-white p-2.5 text-xs shadow-xs">
+                        <div className="flex items-center justify-between font-mono text-[11px] text-zinc-700">
+                          <span>Lat: <strong>{lat.toFixed(6)}</strong></span>
+                          <span>Lng: <strong>{lng.toFixed(6)}</strong></span>
+                        </div>
+                        <div className="mt-1.5 flex items-center justify-between">
+                          <a
+                            href={`https://www.google.com/maps?q=${lat},${lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline"
+                          >
+                            📍 View on Google Maps
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                          <span className="text-[10px] text-zinc-400 font-mono">6-decimal GPS</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="block text-[11px] text-zinc-400 text-center">
+                        Tap &apos;Get Current Location&apos; to capture device GPS
+                      </span>
+                    )}
+
+                    {locationError && (
+                      <p className="text-[11px] font-medium text-rose-600">{locationError}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -599,7 +899,20 @@ export function OnboardingFormScreen({
                     <div className="min-w-0">
                       <p className="font-bold text-zinc-900 truncate">{name}</p>
                       <p className="text-xs text-emerald-700 font-semibold">✓ Storefront photo verified</p>
-                      <p className="text-[11px] text-zinc-500 truncate">{village}, {district}</p>
+                      <p className="text-[11px] text-zinc-600 truncate">
+                        {[shopNumber, streetName, village, district, state, pincode].filter(Boolean).join(", ") || `${village}, ${district}`}
+                      </p>
+                      {lat !== undefined && lng !== undefined && (
+                        <a
+                          href={`https://www.google.com/maps?q=${lat},${lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline"
+                        >
+                          📍 View on Google Maps ({lat}, {lng})
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
                     </div>
                   </div>
                 )}
@@ -632,7 +945,7 @@ export function OnboardingFormScreen({
             <code className="rounded bg-rose-50 px-1 py-0.5 font-mono text-[11px] text-[#E61C5D]">
               {seller
                 ? `POST /api/v1/${role === "Super Admin" ? "admin" : "manager"}/sellers`
-                : `POST /api/v1/${role === "Super Admin" ? "admin" : role === "Manager" ? "manager" : "seller"}/customers & /photo`}
+                : `POST /api/v1/${role === "Super Admin" ? "admin" : role === "Manager" ? "manager" : "seller"}/customers (multipart/form-data with photo & GPS)`}
             </code>
           </p>
         </form>

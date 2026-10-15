@@ -20,9 +20,15 @@ export default function ManagerCustomersPage() {
       contact: c.contactName || c.phone || "—",
       seller: c.seller?.name || "Assigned Seller",
       village: c.village || "Territory",
+      address:
+        c.address ||
+        [c.shopNumber, c.streetName, c.village, c.district, c.state, c.pincode].filter(Boolean).join(", ") ||
+        [c.village, c.district, c.state].filter(Boolean).join(", "),
       category: c.category?.name || "General trade",
       status: c.active ? "Active" : "Inactive",
       photoPath: c.photoPath,
+      latitude: c.latitude,
+      longitude: c.longitude,
     }));
   }, []);
 
