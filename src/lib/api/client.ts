@@ -18,6 +18,7 @@ export const API_BASE_URL = rawApiUrl.endsWith("/api/v1")
 
 const TOKEN_KEY = "femmeflo_auth_token";
 const USER_KEY = "femmeflo_auth_user";
+const LAST_USER_KEY = "femmeflo_last_user";
 
 // Token & User Persistence
 export const tokenStorage = {
@@ -59,10 +60,21 @@ export const tokenStorage = {
     }
   },
 
+  getLastUser<T>(): T | null {
+    if (typeof window === "undefined") return null;
+    try {
+      const data = localStorage.getItem(LAST_USER_KEY) || localStorage.getItem(USER_KEY);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  },
+
   setCachedUser<T>(user: T): void {
     if (typeof window === "undefined") return;
     try {
       localStorage.setItem(USER_KEY, JSON.stringify(user));
+      localStorage.setItem(LAST_USER_KEY, JSON.stringify(user));
     } catch {
       // Ignored
     }

@@ -307,16 +307,30 @@ export interface WarehouseItem {
   type: StockLocationType;
   name: string;
   balance: number;
+  received?: number;
+  transferredIn?: number;
+  transferredOut?: number;
+  sold?: number;
+  lastMovementAt?: string | null;
   sellerId?: string | null;
+  seller?: {
+    id: string;
+    name: string;
+    phone?: string | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface InventorySummaryData {
   totalInventory: number;
+  totalStock?: number;
   hqStock: number;
   warehouseStock: number;
   sellerStock: number;
+  totalReceived?: number;
+  totalTransferred?: number;
+  totalSold?: number;
   warehouses: WarehouseItem[];
   locations?: WarehouseItem[];
   sellers?: Array<{
@@ -365,6 +379,15 @@ export interface StockTransactionItem {
     role: Role;
   };
   saleId?: string | null;
+  sale?: {
+    id: string;
+    paymentMode?: PaymentMode;
+    totalPaise?: number;
+    customer?: {
+      shopName?: string;
+      contactName?: string;
+    } | null;
+  } | null;
   createdAt: string;
 }
 

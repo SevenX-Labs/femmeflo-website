@@ -328,9 +328,13 @@ export const adminApi = {
     const allLocations: WarehouseItem[] = raw?.locations ?? raw?.warehouses ?? [];
     return {
       totalInventory: raw?.totalInventory ?? raw?.totalStock ?? 0,
+      totalStock: raw?.totalStock ?? raw?.totalInventory ?? 0,
       hqStock: raw?.hqStock ?? 0,
       warehouseStock: raw?.warehouseStock ?? 0,
       sellerStock: raw?.sellerStock ?? 0,
+      totalReceived: raw?.totalReceived ?? 0,
+      totalTransferred: raw?.totalTransferred ?? 0,
+      totalSold: raw?.totalSold ?? 0,
       warehouses: allLocations,
       locations: allLocations,
       sellers: raw?.sellers ?? [],
