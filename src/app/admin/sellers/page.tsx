@@ -29,15 +29,15 @@ export default function AdminSellersPage() {
       userName="Super Admin"
       userDetail="Head Office"
       navigation={adminNavigation}
-      eyebrow="Seller management"
-      title="Sellers"
-      description="Manage seller access, territory coverage, manager links, and packet distribution across the full field network."
-      primaryAction="Add seller"
+      eyebrow="Field Team & Officers"
+      title="Field Officers"
+      description="Manage field officer personnel, territory coverage, reporting managers, and packet distribution across the organization."
+      primaryAction="Onboard Officer"
       primaryHref="/admin/sellers/new"
-      searchPlaceholder="Search by seller name, territory or phone"
+      searchPlaceholder="Search by officer name, territory or phone"
       columns={[
-        { key: "name", label: "Seller" },
-        { key: "code", label: "Seller code" },
+        { key: "name", label: "Field Officer" },
+        { key: "code", label: "Officer Code" },
         { key: "territory", label: "Territory" },
         { key: "phone", label: "Phone" },
         { key: "manager", label: "Reporting manager" },

@@ -167,12 +167,12 @@ export default function AdminPermissionsPage() {
         </SectionCard>
 
         <SectionCard
-          title="Seller role boundary"
+          title="Field Officer & Executive Role Scope"
           description="Fixed access rules enforced by the backend API"
         >
           <div className="space-y-2">
             {[
-              "Restricted strictly to owned customers",
+              "Restricted strictly to assigned territory customers",
               "Permitted to record sales inside stock allocation",
               "Real-time visibility into personal packet balance",
               "Personal monthly incentive computation view",

@@ -23,7 +23,7 @@ export type NavigationItem = {
 export const adminNavigation: NavigationItem[] = [
   { label: "Overview", href: "/admin", icon: "dashboard" },
   { label: "Managers", href: "/admin/managers", icon: "users" },
-  { label: "Sellers", href: "/admin/sellers", icon: "store" },
+  { label: "Field Officers", href: "/admin/sellers", icon: "store" },
   { label: "Customers", href: "/admin/customers", icon: "customers" },
   { label: "Inventory", href: "/admin/inventory", icon: "inventory" },
   { label: "Categories", href: "/admin/categories", icon: "categories" },
@@ -39,7 +39,7 @@ export const adminNavigation: NavigationItem[] = [
 
 export const managerNavigation: NavigationItem[] = [
   { label: "Overview", href: "/manager", icon: "dashboard" },
-  { label: "Sellers", href: "/manager/sellers", icon: "users" },
+  { label: "Field Officers", href: "/manager/sellers", icon: "users" },
   { label: "Customers", href: "/manager/customers", icon: "store" },
   { label: "Sales", href: "/manager/sales", icon: "sales" },
   { label: "Inventory", href: "/manager/inventory", icon: "inventory" },

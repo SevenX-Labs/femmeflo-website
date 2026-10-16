@@ -345,11 +345,11 @@ export default function AdminInventoryPage() {
           </div>
         </div>
 
-        {/* Field Seller Custody */}
+        {/* Field Officer Custody */}
         <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-600">
-              Field Seller Custody
+              Field Officer Custody
             </span>
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-[#E61C5D]">
               <Store className="h-5 w-5" />
@@ -364,7 +364,7 @@ export default function AdminInventoryPage() {
             </span>
           </div>
           <p className="mt-1 text-xs text-zinc-600">
-            Across {sellerWarehouses.length} field representative{sellerWarehouses.length === 1 ? "" : "s"}
+            Across {sellerWarehouses.length} field officer{sellerWarehouses.length === 1 ? "" : "s"}
           </p>
           <div className="mt-4 h-1.5 w-full rounded-full bg-zinc-100 overflow-hidden">
             <div
@@ -394,7 +394,7 @@ export default function AdminInventoryPage() {
               <span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Regional Depots ({whPercent}%)
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#E61C5D]" /> Field Sellers ({slPercent}%)
+              <span className="h-2.5 w-2.5 rounded-full bg-[#E61C5D]" /> Field Officers ({slPercent}%)
             </span>
           </div>
         </div>
@@ -413,7 +413,7 @@ export default function AdminInventoryPage() {
           />
           <div
             style={{ width: `${slPercent}%` }}
-            title={`Field Sellers: ${slStock} pkts (${slPercent}%)`}
+            title={`Field Officers: ${slStock} pkts (${slPercent}%)`}
             className="h-full bg-[#E61C5D] first:rounded-l-full last:rounded-r-full transition-all duration-500"
           />
         </div>
@@ -484,7 +484,7 @@ export default function AdminInventoryPage() {
                   activeTab === "sellers" ? "bg-white text-zinc-950 shadow-xs" : "hover:text-zinc-950"
                 }`}
               >
-                Sellers ({sellerWarehouses.length})
+                Field Officers ({sellerWarehouses.length})
               </button>
             </div>
           </div>
@@ -575,7 +575,7 @@ export default function AdminInventoryPage() {
                             ? "Central Headquarters"
                             : isWarehouse
                             ? "Regional Depot"
-                            : "Field Seller"}
+                            : "Field Officer"}
                         </span>
                       </td>
 
