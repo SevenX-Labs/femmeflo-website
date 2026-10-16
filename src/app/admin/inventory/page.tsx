@@ -353,145 +353,224 @@ export default function AdminInventoryPage() {
       {/* 1. PRIMARY STOCK METRICS CARDS (CARDS 1 - 4) */}
       {/* ======================================================== */}
       <div className="mt-8">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-            Primary Inventory Ledger Position
-          </h2>
-          <span className="text-[11px] font-medium text-zinc-500">
-            Accounting: Inward Receipts − Confirmed Sales = Available Stock
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100/80 text-[#156035]">
+              <Package className="h-3.5 w-3.5" />
+            </span>
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-900">
+                Primary Inventory Ledger Position
+              </h2>
+              <p className="text-[11px] text-zinc-500">Live authoritative stock metrics & balance flow</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-[11px] font-semibold text-zinc-600 bg-white px-3.5 py-1.5 rounded-full border border-zinc-200/80 shadow-xs">
+            <span className="inline-flex items-center gap-1 text-[#156035] font-bold">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#156035]" /> Inward Intake
+            </span>
+            <span className="text-zinc-300">−</span>
+            <span className="inline-flex items-center gap-1 text-[#E61C5D] font-bold">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#E61C5D]" /> Confirmed Sales
+            </span>
+            <span className="text-zinc-300">=</span>
+            <span className="inline-flex items-center gap-1 text-zinc-900 font-bold">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Available Stock
+            </span>
+          </div>
         </div>
 
         {loading ? (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-36 rounded-2xl border border-zinc-200 bg-white p-5 animate-pulse">
-                <div className="h-4 w-28 bg-zinc-200 rounded" />
-                <div className="mt-4 h-8 w-24 bg-zinc-200 rounded" />
-                <div className="mt-3 h-3 w-36 bg-zinc-100 rounded" />
+              <div key={i} className="h-44 rounded-3xl border border-zinc-200 bg-white p-5 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-28 bg-zinc-200 rounded-md" />
+                  <div className="h-10 w-10 bg-zinc-200 rounded-xl" />
+                </div>
+                <div className="mt-6 h-9 w-32 bg-zinc-200 rounded-lg" />
+                <div className="mt-3 h-3 w-44 bg-zinc-100 rounded" />
               </div>
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {/* CARD 1 — Total Stock Received */}
             <div
               onClick={() => scrollToHistory("RECEIPT")}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:border-emerald-300 hover:shadow-md"
-              title="Click to view all stock inward receipts in movement history"
+              className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-emerald-100/90 bg-gradient-to-br from-emerald-500/[0.04] via-emerald-500/[0.01] to-white p-5 sm:p-5.5 shadow-sm hover:shadow-xl hover:border-emerald-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 group-hover:text-emerald-700 transition">
-                  Total Stock Received
-                </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-[#156035]">
-                  <PackagePlus className="h-5 w-5" />
-                </span>
+              <div className="absolute top-0 right-0 -mr-6 -mt-6 h-24 w-24 rounded-full bg-emerald-500/[0.06] blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+              
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase text-emerald-800 border border-emerald-200/60 shadow-xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                    Inward Intake
+                  </span>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/80 text-[#156035] shadow-xs border border-emerald-200/50 group-hover:scale-110 group-hover:bg-[#156035] group-hover:text-white transition-all duration-300">
+                    <PackagePlus className="h-5 w-5" />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                    Total Stock Received
+                  </span>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="font-playfair text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950">
+                      {totalReceived.toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-xs font-bold text-zinc-500">packets</span>
+                  </div>
+                </div>
+
+                <p className="mt-2 text-xs text-zinc-600 leading-relaxed">
+                  Cumulative verified intake through official supplier receipts
+                </p>
               </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-zinc-950">
-                  {totalReceived.toLocaleString("en-IN")}
+
+              <div className="mt-4 pt-3.5 border-t border-emerald-100/70 flex items-center justify-between text-xs font-bold text-emerald-800">
+                <span className="group-hover:underline">View receipt history</span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 group-hover:bg-[#156035] group-hover:text-white transition-colors">
+                  <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </span>
-                <span className="text-xs font-bold text-zinc-600">packets</span>
-              </div>
-              <p className="mt-1 text-xs text-zinc-600">
-                Cumulative inward intake through official supplier receipts
-              </p>
-              <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-emerald-800">
-                <span>View receipt history</span>
-                <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition" />
               </div>
             </div>
 
-            {/* CARD 2 — Total Stock Available */}
+            {/* CARD 2 — Total Stock Available (HERO METRIC) */}
             <div
               onClick={() => scrollToLedger("all")}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:border-indigo-300 hover:shadow-md"
-              title="Click to view all stock location balances in the ledger"
+              className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border-2 border-[#156035]/35 bg-gradient-to-br from-[#156035]/[0.08] via-emerald-600/[0.02] to-white p-5 sm:p-5.5 shadow-md shadow-[#156035]/5 hover:shadow-2xl hover:border-[#156035] hover:-translate-y-1 transition-all duration-300 cursor-pointer ring-1 ring-[#156035]/20"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 group-hover:text-indigo-700 transition">
-                  Total Stock Available
-                </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
-                  <Boxes className="h-5 w-5" />
-                </span>
-              </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-zinc-950">
-                  {totalStock.toLocaleString("en-IN")}
-                </span>
-                <span className="text-xs font-bold text-zinc-600">packets</span>
-                {remainingPercent && (
-                  <span className="text-xs font-bold text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded-full ml-auto">
-                    {remainingPercent}% retained
+              <div className="absolute top-0 right-0 -mr-8 -mt-8 h-28 w-28 rounded-full bg-[#156035]/10 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+              
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#156035] px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase text-white shadow-xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                    Available Stock
                   </span>
-                )}
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#156035] text-white shadow-md shadow-[#156035]/30 group-hover:scale-110 group-hover:bg-[#0f4e2b] transition-all duration-300">
+                    <Boxes className="h-5 w-5" />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-900">
+                      Total Network Stock
+                    </span>
+                    {remainingPercent && (
+                      <span className="rounded-full bg-emerald-100/90 px-2 py-0.5 text-[10px] font-bold text-[#156035] border border-emerald-200">
+                        {remainingPercent}% retained
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="font-playfair text-3xl sm:text-4xl font-extrabold tracking-tight text-[#156035]">
+                      {totalStock.toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-xs font-bold text-emerald-800">packets live</span>
+                  </div>
+                </div>
+
+                <p className="mt-2 text-xs text-zinc-600 leading-relaxed">
+                  Current physical stock held across HQ, regional depots & sellers
+                </p>
               </div>
-              <p className="mt-1 text-xs text-zinc-600">
-                Current physical stock held across HQ, depots & sellers
-              </p>
-              <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-indigo-700">
-                <span>Inspect location balances</span>
-                <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition" />
+
+              <div className="mt-4 pt-3.5 border-t border-emerald-200/70 flex items-center justify-between text-xs font-bold text-[#156035]">
+                <span className="group-hover:underline">Inspect location balances</span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#156035]/10 group-hover:bg-[#156035] group-hover:text-white transition-colors">
+                  <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </span>
               </div>
             </div>
 
-            {/* CARD 3 — Stock Transferred / Allocated */}
+            {/* CARD 3 — Stock Transferred */}
             <div
               onClick={() => scrollToHistory("TRANSFER")}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:border-sky-300 hover:shadow-md"
-              title="Click to view all internal transfers in movement history"
+              className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-sky-100/90 bg-gradient-to-br from-sky-500/[0.04] via-blue-500/[0.01] to-white p-5 sm:p-5.5 shadow-sm hover:shadow-xl hover:border-sky-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 group-hover:text-sky-700 transition">
-                  Stock Transferred
-                </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
-                  <ArrowRightLeft className="h-5 w-5" />
-                </span>
+              <div className="absolute top-0 right-0 -mr-6 -mt-6 h-24 w-24 rounded-full bg-sky-500/[0.06] blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+              
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase text-sky-800 border border-sky-200/60 shadow-xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-sky-600" />
+                    Internal Transit
+                  </span>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-50 to-sky-100/80 text-sky-700 shadow-xs border border-sky-200/50 group-hover:scale-110 group-hover:bg-sky-600 group-hover:text-white transition-all duration-300">
+                    <ArrowRightLeft className="h-5 w-5" />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                    Stock Transferred
+                  </span>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="font-playfair text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950">
+                      {totalTransferred.toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-xs font-bold text-zinc-500">packets</span>
+                  </div>
+                </div>
+
+                <p className="mt-2 text-xs text-zinc-600 leading-relaxed">
+                  Cumulative internal dispatches between HQ, depots & field sellers
+                </p>
               </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-zinc-950">
-                  {totalTransferred.toLocaleString("en-IN")}
+
+              <div className="mt-4 pt-3.5 border-t border-sky-100/70 flex items-center justify-between text-xs font-bold text-sky-800">
+                <span className="group-hover:underline">View transfer trail</span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-50 group-hover:bg-sky-600 group-hover:text-white transition-colors">
+                  <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </span>
-                <span className="text-xs font-bold text-zinc-600">packets</span>
-              </div>
-              <p className="mt-1 text-xs text-zinc-600">
-                Cumulative internal dispatches between HQ, depots & field sellers
-              </p>
-              <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-sky-700">
-                <span>View transfer trail</span>
-                <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition" />
               </div>
             </div>
 
             {/* CARD 4 — Total Packets Sold */}
             <Link
               href="/admin/sales"
-              className="group relative block overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:border-purple-300 hover:shadow-md"
-              title="Click to open verified customer sales orders"
+              className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-rose-100/90 bg-gradient-to-br from-rose-500/[0.04] via-pink-500/[0.01] to-white p-5 sm:p-5.5 shadow-sm hover:shadow-xl hover:border-rose-300 hover:-translate-y-1 transition-all duration-300 block"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 group-hover:text-purple-700 transition">
-                  Total Packets Sold
-                </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-700">
-                  <PackageCheck className="h-5 w-5" />
-                </span>
+              <div className="absolute top-0 right-0 -mr-6 -mt-6 h-24 w-24 rounded-full bg-rose-500/[0.06] blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+              
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase text-[#E61C5D] border border-rose-200/60 shadow-xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#E61C5D]" />
+                    Realized Sales
+                  </span>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-50 to-rose-100/80 text-[#E61C5D] shadow-xs border border-rose-200/50 group-hover:scale-110 group-hover:bg-[#E61C5D] group-hover:text-white transition-all duration-300">
+                    <PackageCheck className="h-5 w-5" />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                    Total Packets Sold
+                  </span>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="font-playfair text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950">
+                      {totalSold.toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-xs font-bold text-zinc-500">packets</span>
+                  </div>
+                </div>
+
+                <p className="mt-2 text-xs text-zinc-600 leading-relaxed">
+                  Deducted strictly through verified & confirmed retail customer sales
+                </p>
               </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-zinc-950">
-                  {totalSold.toLocaleString("en-IN")}
+
+              <div className="mt-4 pt-3.5 border-t border-rose-100/70 flex items-center justify-between text-xs font-bold text-[#E61C5D]">
+                <span className="group-hover:underline">Open confirmed sales</span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-50 group-hover:bg-[#E61C5D] group-hover:text-white transition-colors">
+                  <ExternalLink className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </span>
-                <span className="text-xs font-bold text-zinc-600">packets</span>
-              </div>
-              <p className="mt-1 text-xs text-zinc-600">
-                Deducted strictly through verified & confirmed retail sales
-              </p>
-              <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-purple-700">
-                <span>Open confirmed sales</span>
-                <ExternalLink className="h-3 w-3 group-hover:translate-x-0.5 transition" />
               </div>
             </Link>
           </div>
@@ -501,173 +580,360 @@ export default function AdminInventoryPage() {
       {/* ======================================================== */}
       {/* 2. OPERATIONAL DISTRIBUTION BREAKDOWN (CARDS 5 - 8) */}
       {/* ======================================================== */}
-      <div className="mt-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-            Current Tier-Wise Custody & Allocation
-          </h2>
-          <span className="text-[11px] font-medium text-zinc-500">
-            Real-time physical location breakdown
-          </span>
+      <div className="mt-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100/80 text-amber-800">
+              <Building2 className="h-3.5 w-3.5" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-900">
+                  Current Tier-Wise Custody & Allocation
+                </h2>
+                <span className="rounded-full bg-zinc-100 px-2 py-0.2 text-[10px] font-bold text-zinc-600 border border-zinc-200/80">
+                  Interactive Filters
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-500">Physical custody breakdown across storage tiers</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {activeTab !== "all" && (
+              <button
+                type="button"
+                onClick={() => scrollToLedger("all")}
+                className="inline-flex items-center gap-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 px-3 py-1 text-[11px] font-bold text-white shadow-xs transition cursor-pointer"
+              >
+                <span>Filter Active</span>
+                <span className="text-zinc-400 font-normal">|</span>
+                <span className="text-emerald-300">Reset to All</span>
+                <X className="h-3 w-3 ml-0.5" />
+              </button>
+            )}
+            <span className="text-[11px] text-zinc-500 hidden sm:inline-block">
+              Click any card to filter ledger
+            </span>
+          </div>
         </div>
 
         {loading ? (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {[5, 6, 7, 8].map((i) => (
-              <div key={i} className="h-36 rounded-2xl border border-zinc-200 bg-white p-5 animate-pulse">
-                <div className="h-4 w-28 bg-zinc-200 rounded" />
-                <div className="mt-4 h-8 w-24 bg-zinc-200 rounded" />
-                <div className="mt-3 h-3 w-36 bg-zinc-100 rounded" />
+              <div key={i} className="h-44 rounded-3xl border border-zinc-200 bg-white p-5 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-28 bg-zinc-200 rounded-md" />
+                  <div className="h-10 w-10 bg-zinc-200 rounded-xl" />
+                </div>
+                <div className="mt-6 h-9 w-32 bg-zinc-200 rounded-lg" />
+                <div className="mt-3 h-3 w-44 bg-zinc-100 rounded" />
               </div>
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {/* CARD 5 — Stock at HQ */}
-            <div
-              onClick={() => scrollToLedger("hq")}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:border-emerald-300 hover:shadow-md"
-              title="Click to filter ledger to HQ Central Reserve"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 group-hover:text-emerald-700 transition">
-                  Stock at HQ (Central)
-                </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-[#156035]">
-                  <WarehouseIcon className="h-5 w-5" />
-                </span>
-              </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-zinc-950">
-                  {hqStock.toLocaleString("en-IN")}
-                </span>
-                <span className="text-xs font-bold text-zinc-600">packets</span>
-                {totalStock > 0 && (
-                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full ml-auto">
-                    {hqPercent}%
-                  </span>
-                )}
-              </div>
-              <p className="mt-1 text-xs text-zinc-600">Primary central depot reserve</p>
-              <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-emerald-800">
-                <span>View HQ record</span>
-                <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition" />
-              </div>
-            </div>
+            {(() => {
+              const isSelected = activeTab === "hq";
+              return (
+                <div
+                  onClick={() => scrollToLedger(isSelected ? "all" : "hq")}
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-3xl p-5 sm:p-5.5 transition-all duration-300 cursor-pointer ${
+                    isSelected
+                      ? "border-2 border-[#156035] bg-gradient-to-br from-emerald-500/[0.12] via-emerald-500/[0.04] to-white shadow-lg shadow-[#156035]/10 ring-2 ring-[#156035]/30 -translate-y-1"
+                      : "border border-zinc-200/90 bg-white hover:border-emerald-300 hover:shadow-xl hover:-translate-y-1"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase transition-colors ${
+                          isSelected
+                            ? "bg-[#156035] text-white shadow-xs"
+                            : "bg-emerald-50 text-emerald-800 border border-emerald-200/60"
+                        }`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-white" : "bg-emerald-600"}`} />
+                        {isSelected ? "Filter Applied" : "Central Reserve"}
+                      </span>
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${
+                          isSelected
+                            ? "bg-[#156035] text-white shadow-md shadow-[#156035]/30"
+                            : "bg-emerald-50 text-[#156035] border border-emerald-100 group-hover:scale-110 group-hover:bg-[#156035] group-hover:text-white"
+                        }`}
+                      >
+                        <WarehouseIcon className="h-5 w-5" />
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                          Stock at HQ (Central)
+                        </span>
+                        {totalStock > 0 && (
+                          <span className="rounded-full bg-emerald-100/90 px-2 py-0.5 text-[10px] font-bold text-[#156035] border border-emerald-200">
+                            {hqPercent}%
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1 flex items-baseline gap-2">
+                        <span className="font-playfair text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950">
+                          {hqStock.toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-xs font-bold text-zinc-500">packets</span>
+                      </div>
+                    </div>
+
+                    <p className="mt-2 text-xs text-zinc-600 leading-relaxed">
+                      Primary central warehouse reserve and intake depot
+                    </p>
+                  </div>
+
+                  <div
+                    className={`mt-4 pt-3.5 border-t flex items-center justify-between text-xs font-bold transition-colors ${
+                      isSelected
+                        ? "border-emerald-200 text-[#156035]"
+                        : "border-zinc-100 text-emerald-800 group-hover:text-[#156035]"
+                    }`}
+                  >
+                    <span>{isSelected ? "Showing HQ in Ledger ✓" : "Filter ledger to HQ"}</span>
+                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* CARD 6 — Stock at Regional Depots */}
-            <div
-              onClick={() => scrollToLedger("warehouses")}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:border-amber-300 hover:shadow-md"
-              title="Click to filter ledger to regional warehouses"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 group-hover:text-amber-700 transition">
-                  Stock in Regional Depots
-                </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
-                  <Building2 className="h-5 w-5" />
-                </span>
-              </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-zinc-950">
-                  {whStock.toLocaleString("en-IN")}
-                </span>
-                <span className="text-xs font-bold text-zinc-600">packets</span>
-                {totalStock > 0 && (
-                  <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full ml-auto">
-                    {whPercent}%
-                  </span>
-                )}
-              </div>
-              <p className="mt-1 text-xs text-zinc-600">
-                In {regionalWarehouses.length} active regional depot{regionalWarehouses.length === 1 ? "" : "s"}
-              </p>
-              <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-amber-800">
-                <span>Filter to regional depots</span>
-                <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition" />
-              </div>
-            </div>
+            {(() => {
+              const isSelected = activeTab === "warehouses";
+              return (
+                <div
+                  onClick={() => scrollToLedger(isSelected ? "all" : "warehouses")}
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-3xl p-5 sm:p-5.5 transition-all duration-300 cursor-pointer ${
+                    isSelected
+                      ? "border-2 border-amber-500 bg-gradient-to-br from-amber-500/[0.12] via-amber-500/[0.04] to-white shadow-lg shadow-amber-500/10 ring-2 ring-amber-500/30 -translate-y-1"
+                      : "border border-zinc-200/90 bg-white hover:border-amber-300 hover:shadow-xl hover:-translate-y-1"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase transition-colors ${
+                          isSelected
+                            ? "bg-amber-600 text-white shadow-xs"
+                            : "bg-amber-50 text-amber-800 border border-amber-200/60"
+                        }`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-white" : "bg-amber-600"}`} />
+                        {isSelected ? "Filter Applied" : `${regionalWarehouses.length} Active Depots`}
+                      </span>
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${
+                          isSelected
+                            ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
+                            : "bg-amber-50 text-amber-700 border border-amber-100 group-hover:scale-110 group-hover:bg-amber-600 group-hover:text-white"
+                        }`}
+                      >
+                        <Building2 className="h-5 w-5" />
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                          Regional Depots
+                        </span>
+                        {totalStock > 0 && (
+                          <span className="rounded-full bg-amber-100/90 px-2 py-0.5 text-[10px] font-bold text-amber-900 border border-amber-200">
+                            {whPercent}%
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1 flex items-baseline gap-2">
+                        <span className="font-playfair text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950">
+                          {whStock.toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-xs font-bold text-zinc-500">packets</span>
+                      </div>
+                    </div>
+
+                    <p className="mt-2 text-xs text-zinc-600 leading-relaxed">
+                      In {regionalWarehouses.length} active regional depot{regionalWarehouses.length === 1 ? "" : "s"} under regional managers
+                    </p>
+                  </div>
+
+                  <div
+                    className={`mt-4 pt-3.5 border-t flex items-center justify-between text-xs font-bold transition-colors ${
+                      isSelected
+                        ? "border-amber-200 text-amber-800"
+                        : "border-zinc-100 text-amber-700 group-hover:text-amber-900"
+                    }`}
+                  >
+                    <span>{isSelected ? "Showing Depots in Ledger ✓" : "Filter to regional depots"}</span>
+                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* CARD 7 — Stock With Field Officers */}
-            <div
-              onClick={() => scrollToLedger("sellers")}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:border-rose-300 hover:shadow-md"
-              title="Click to filter ledger to field officers"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 group-hover:text-rose-700 transition">
-                  Stock With Field Officers
-                </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-[#E61C5D]">
-                  <Store className="h-5 w-5" />
-                </span>
-              </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-zinc-950">
-                  {slStock.toLocaleString("en-IN")}
-                </span>
-                <span className="text-xs font-bold text-zinc-600">packets</span>
-                {totalStock > 0 && (
-                  <span className="text-xs font-bold text-rose-800 bg-rose-50 px-2 py-0.5 rounded-full ml-auto">
-                    {slPercent}%
-                  </span>
-                )}
-              </div>
-              <p className="mt-1 text-xs text-zinc-600">
-                Across {sellerWarehouses.length} field seller{sellerWarehouses.length === 1 ? "" : "s"} on the ground
-              </p>
-              <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-rose-700">
-                <span>Filter to field officers</span>
-                <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition" />
-              </div>
-            </div>
+            {(() => {
+              const isSelected = activeTab === "sellers";
+              return (
+                <div
+                  onClick={() => scrollToLedger(isSelected ? "all" : "sellers")}
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-3xl p-5 sm:p-5.5 transition-all duration-300 cursor-pointer ${
+                    isSelected
+                      ? "border-2 border-[#E61C5D] bg-gradient-to-br from-rose-500/[0.12] via-rose-500/[0.04] to-white shadow-lg shadow-rose-500/10 ring-2 ring-[#E61C5D]/30 -translate-y-1"
+                      : "border border-zinc-200/90 bg-white hover:border-rose-300 hover:shadow-xl hover:-translate-y-1"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase transition-colors ${
+                          isSelected
+                            ? "bg-[#E61C5D] text-white shadow-xs"
+                            : "bg-rose-50 text-[#E61C5D] border border-rose-200/60"
+                        }`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-white" : "bg-[#E61C5D]"}`} />
+                        {isSelected ? "Filter Applied" : `${sellerWarehouses.length} Field Officers`}
+                      </span>
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${
+                          isSelected
+                            ? "bg-[#E61C5D] text-white shadow-md shadow-rose-500/30"
+                            : "bg-rose-50 text-[#E61C5D] border border-rose-100 group-hover:scale-110 group-hover:bg-[#E61C5D] group-hover:text-white"
+                        }`}
+                      >
+                        <Store className="h-5 w-5" />
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                          Field Officers Custody
+                        </span>
+                        {totalStock > 0 && (
+                          <span className="rounded-full bg-rose-100/90 px-2 py-0.5 text-[10px] font-bold text-rose-900 border border-rose-200">
+                            {slPercent}%
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1 flex items-baseline gap-2">
+                        <span className="font-playfair text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950">
+                          {slStock.toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-xs font-bold text-zinc-500">packets</span>
+                      </div>
+                    </div>
+
+                    <p className="mt-2 text-xs text-zinc-600 leading-relaxed">
+                      Across {sellerWarehouses.length} field seller{sellerWarehouses.length === 1 ? "" : "s"} on the ground
+                    </p>
+                  </div>
+
+                  <div
+                    className={`mt-4 pt-3.5 border-t flex items-center justify-between text-xs font-bold transition-colors ${
+                      isSelected
+                        ? "border-rose-200 text-[#E61C5D]"
+                        : "border-zinc-100 text-[#E61C5D] group-hover:text-[#c91550]"
+                    }`}
+                  >
+                    <span>{isSelected ? "Showing Officers in Ledger ✓" : "Filter to field officers"}</span>
+                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* CARD 8 — Zero Stock Locations */}
-            <div
-              onClick={() => scrollToLedger("zero")}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs transition hover:border-zinc-400 hover:shadow-md"
-              title="Click to view locations with 0 packets remaining"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 group-hover:text-zinc-900 transition">
-                  Zero Stock Locations
-                </span>
-                <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                    zeroStockLocations.length === 0
-                      ? "bg-emerald-50 text-[#156035]"
-                      : "bg-amber-50 text-amber-700"
+            {(() => {
+              const isSelected = activeTab === "zero";
+              const isClean = zeroStockLocations.length === 0;
+              return (
+                <div
+                  onClick={() => scrollToLedger(isSelected ? "all" : "zero")}
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-3xl p-5 sm:p-5.5 transition-all duration-300 cursor-pointer ${
+                    isSelected
+                      ? "border-2 border-zinc-900 bg-gradient-to-br from-zinc-200/50 via-zinc-100/30 to-white shadow-lg ring-2 ring-zinc-900/30 -translate-y-1"
+                      : "border border-zinc-200/90 bg-white hover:border-zinc-400 hover:shadow-xl hover:-translate-y-1"
                   }`}
                 >
-                  <PackageMinus className="h-5 w-5" />
-                </span>
-              </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-zinc-950">
-                  {zeroStockLocations.length}
-                </span>
-                <span className="text-xs font-bold text-zinc-600">
-                  {zeroStockLocations.length === 1 ? "location" : "locations"}
-                </span>
-                <span
-                  className={`text-xs font-bold px-2 py-0.5 rounded-full ml-auto ${
-                    zeroStockLocations.length === 0
-                      ? "text-emerald-800 bg-emerald-50"
-                      : "text-amber-800 bg-amber-50"
-                  }`}
-                >
-                  {zeroStockLocations.length === 0 ? "Fully Stocked" : "Needs Stock"}
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-zinc-600">
-                Depots or field sellers currently with 0 packet balance
-              </p>
-              <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-zinc-700">
-                <span>View empty locations</span>
-                <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition" />
-              </div>
-            </div>
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase transition-colors ${
+                          isSelected
+                            ? "bg-zinc-900 text-white shadow-xs"
+                            : isClean
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                            : "bg-amber-50 text-amber-800 border border-amber-200"
+                        }`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            isSelected ? "bg-white" : isClean ? "bg-emerald-600" : "bg-amber-600 animate-pulse"
+                          }`}
+                        />
+                        {isSelected
+                          ? "Filter Applied"
+                          : isClean
+                          ? "Fully Stocked"
+                          : `${zeroStockLocations.length} Needs Stock`}
+                      </span>
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${
+                          isSelected
+                            ? "bg-zinc-900 text-white shadow-md"
+                            : isClean
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100 group-hover:scale-110 group-hover:bg-emerald-700 group-hover:text-white"
+                            : "bg-amber-50 text-amber-700 border border-amber-100 group-hover:scale-110 group-hover:bg-amber-600 group-hover:text-white"
+                        }`}
+                      >
+                        <PackageMinus className="h-5 w-5" />
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                        Zero Stock Locations
+                      </span>
+                      <div className="mt-1 flex items-baseline gap-2">
+                        <span className="font-playfair text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950">
+                          {zeroStockLocations.length}
+                        </span>
+                        <span className="text-xs font-bold text-zinc-500">
+                          {zeroStockLocations.length === 1 ? "location" : "locations"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="mt-2 text-xs text-zinc-600 leading-relaxed">
+                      {isClean
+                        ? "All warehouses and field sellers currently hold active stock"
+                        : "Depots or field sellers currently with 0 packet balance"}
+                    </p>
+                  </div>
+
+                  <div
+                    className={`mt-4 pt-3.5 border-t flex items-center justify-between text-xs font-bold transition-colors ${
+                      isSelected
+                        ? "border-zinc-300 text-zinc-950"
+                        : "border-zinc-100 text-zinc-700 group-hover:text-zinc-950"
+                    }`}
+                  >
+                    <span>{isSelected ? "Showing Empty in Ledger ✓" : "View empty locations"}</span>
+                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
