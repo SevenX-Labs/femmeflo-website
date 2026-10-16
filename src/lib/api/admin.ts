@@ -124,6 +124,15 @@ export const adminApi = {
     });
   },
 
+  async updateOverallPermissions(
+    permissions: string[]
+  ): Promise<{ count: number; managers?: ManagerItem[] }> {
+    return apiRequest<{ count: number; managers?: ManagerItem[] }>("admin/permissions/overall", {
+      method: "PATCH",
+      body: { permissions },
+    });
+  },
+
   // ----------------------------------------------------
   // Sellers
   // ----------------------------------------------------

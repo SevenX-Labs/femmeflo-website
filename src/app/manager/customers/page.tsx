@@ -5,11 +5,13 @@ import { ResourceListScreen, type ResourceRow } from "@/components/management/Re
 import { managerNavigation } from "@/components/management/navigation";
 import { managerApi } from "@/lib/api/manager";
 import { useAuth } from "@/context/AuthContext";
+import { canOnboardCustomers } from "@/lib/permissions";
 
 export default function ManagerCustomersPage() {
   const { user } = useAuth();
   const userName = user?.name ?? "Manager";
   const userDetail = [user?.district, user?.state].filter(Boolean).join(", ") || "Territory";
+  const canOnboard = canOnboardCustomers(user);
 
   const fetchCustomers = useCallback(async (): Promise<ResourceRow[]> => {
     const res = await managerApi.listCustomers({ pageSize: 100 });
@@ -41,9 +43,9 @@ export default function ManagerCustomersPage() {
       navigation={managerNavigation}
       eyebrow="Assigned customers"
       title="My customers"
-      description="Onboard customers and maintain full operational visibility over retail shop relationships within your assigned territory."
-      primaryAction="Add customer"
-      primaryHref="/manager/customers/new"
+      description="Maintain full operational visibility over retail shop relationships within your assigned territory."
+      primaryAction={canOnboard ? "Add customer" : undefined}
+      primaryHref={canOnboard ? "/manager/customers/new" : undefined}
       searchPlaceholder="Search assigned customers by shop name, officer, or village"
       columns={[
         { key: "name", label: "Customer / shop" },

@@ -24,7 +24,7 @@ type ResourceListScreenProps = {
   eyebrow: string;
   title: string;
   description: string;
-  primaryAction: string;
+  primaryAction?: string;
   primaryHref?: string;
   searchPlaceholder: string;
   columns: { key: string; label: string }[];
@@ -271,28 +271,30 @@ export function ResourceListScreen({
                 <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin text-[#E61C5D]" : ""}`} />
               </button>
             )}
-            {primaryHref ? (
-              <Link
-                href={primaryHref}
-                className="inline-flex h-10 sm:h-11 items-center gap-1.5 rounded-xl bg-[#E61C5D] px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#c91550] transition active:scale-95"
-              >
-                + {primaryAction}
-              </Link>
-            ) : primaryAction.toLowerCase().includes("export") ? (
-              <button
-                onClick={exportRows}
-                className="inline-flex h-10 sm:h-11 items-center gap-1.5 rounded-xl bg-[#E61C5D] px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#c91550] transition active:scale-95 cursor-pointer"
-              >
-                {primaryAction}
-              </button>
-            ) : (
-              <button
-                onClick={() => setFiltersOpen(true)}
-                className="inline-flex h-10 sm:h-11 items-center gap-1.5 rounded-xl bg-[#E61C5D] px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#c91550] transition active:scale-95 cursor-pointer"
-              >
-                {primaryAction}
-              </button>
-            )}
+            {primaryAction ? (
+              primaryHref ? (
+                <Link
+                  href={primaryHref}
+                  className="inline-flex h-10 sm:h-11 items-center gap-1.5 rounded-xl bg-[#E61C5D] px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#c91550] transition active:scale-95"
+                >
+                  + {primaryAction}
+                </Link>
+              ) : primaryAction.toLowerCase().includes("export") ? (
+                <button
+                  onClick={exportRows}
+                  className="inline-flex h-10 sm:h-11 items-center gap-1.5 rounded-xl bg-[#E61C5D] px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#c91550] transition active:scale-95 cursor-pointer"
+                >
+                  {primaryAction}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setFiltersOpen(true)}
+                  className="inline-flex h-10 sm:h-11 items-center gap-1.5 rounded-xl bg-[#E61C5D] px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#c91550] transition active:scale-95 cursor-pointer"
+                >
+                  {primaryAction}
+                </button>
+              )
+            ) : null}
           </div>
         }
       />

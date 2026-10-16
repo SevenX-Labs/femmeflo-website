@@ -5,11 +5,13 @@ import { ResourceListScreen, type ResourceRow } from "@/components/management/Re
 import { managerNavigation } from "@/components/management/navigation";
 import { managerApi } from "@/lib/api/manager";
 import { useAuth } from "@/context/AuthContext";
+import { canManageSellers } from "@/lib/permissions";
 
 export default function ManagerSellersPage() {
   const { user } = useAuth();
   const userName = user?.name ?? "Manager";
   const userDetail = [user?.district, user?.state].filter(Boolean).join(", ") || "Territory";
+  const canManage = canManageSellers(user);
 
   const fetchSellers = useCallback(async (): Promise<ResourceRow[]> => {
     const res = await managerApi.listSellers({ pageSize: 100 });
@@ -34,9 +36,9 @@ export default function ManagerSellersPage() {
       navigation={managerNavigation}
       eyebrow="Assigned team"
       title="Field Officers"
-      description="Onboard and supervise field officers assigned to your territory. Monitor customer coverage and packet balances."
-      primaryAction="Onboard Officer"
-      primaryHref="/manager/sellers/new"
+      description="Supervise field officers assigned to your territory. Monitor customer coverage and packet balances."
+      primaryAction={canManage ? "Onboard Officer" : undefined}
+      primaryHref={canManage ? "/manager/sellers/new" : undefined}
       searchPlaceholder="Search officers by name, village, or phone"
       columns={[
         { key: "name", label: "Field Officer" },
