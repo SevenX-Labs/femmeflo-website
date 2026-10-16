@@ -468,6 +468,13 @@ export interface BusinessSettings {
   id: number;
   minimumPricePaise: number;
   incentiveRatePaise: number | null;
+  companyName?: string | null;
+  companyGst?: string | null;
+  companyAddress?: string | null;
+  companyPhone?: string | null;
+  companyEmail?: string | null;
+  companyPan?: string | null;
+  invoiceTerms?: string | null;
   updatedAt: string;
 }
 

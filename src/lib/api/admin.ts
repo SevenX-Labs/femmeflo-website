@@ -499,6 +499,13 @@ export const adminApi = {
   async updateIncentiveSettings(payload: {
     minimumPricePaise?: number;
     incentiveRatePaise?: number;
+    companyName?: string;
+    companyGst?: string;
+    companyAddress?: string;
+    companyPhone?: string;
+    companyEmail?: string;
+    companyPan?: string;
+    invoiceTerms?: string;
   }): Promise<{ settings: BusinessSettings }> {
     return apiRequest<{ settings: BusinessSettings }>("admin/incentives/settings", {
       method: "PATCH",
