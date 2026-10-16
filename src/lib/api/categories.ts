@@ -76,4 +76,14 @@ export const categoryApi = {
       body: payload,
     });
   },
+
+  /**
+   * Delete category (Admin)
+   * DELETE /api/v1/admin/categories/:id
+   */
+  async deleteCategory(id: string): Promise<{ id: string; name: string }> {
+    return apiRequest<{ id: string; name: string }>(`admin/categories/${id}`, {
+      method: "DELETE",
+    });
+  },
 };

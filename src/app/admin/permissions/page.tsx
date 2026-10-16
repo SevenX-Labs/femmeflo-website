@@ -101,7 +101,7 @@ export default function AdminPermissionsPage() {
               onClick={loadData}
               disabled={loading}
               title="Refresh permissions"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 hover:border-rose-200 hover:text-[#E61C5D]"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 hover:border-rose-200 hover:text-[#E61C5D]"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
@@ -150,7 +150,7 @@ export default function AdminPermissionsPage() {
                   className="flex w-full items-center justify-between rounded-xl border border-zinc-100 p-3 text-left transition hover:bg-[#FFF8FA]"
                 >
                   <span className="flex items-center gap-3 text-sm font-semibold text-zinc-700">
-                    <LockKeyhole className="h-4 w-4 text-zinc-400" />
+                    <LockKeyhole className="h-4 w-4 text-zinc-700" />
                     {permission}
                   </span>
                   <span

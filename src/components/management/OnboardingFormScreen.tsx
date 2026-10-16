@@ -388,7 +388,7 @@ export function OnboardingFormScreen({
       userDetail={userDetail}
       navigation={navigation}
     >
-      <Link href={backHref} className="inline-flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-[#E61C5D]">
+      <Link href={backHref} className="inline-flex items-center gap-2 text-xs font-bold text-zinc-800 hover:text-[#E61C5D]">
         <ArrowLeft className="h-4 w-4" />Back to {seller ? "sellers" : "customers"}
       </Link>
 
@@ -445,7 +445,7 @@ export function OnboardingFormScreen({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                    placeholder="Ananya Deshmukh"
+                    placeholder="Enter full name"
                   />
                 </label>
                 <label className="block text-xs font-bold text-zinc-700">
@@ -455,7 +455,7 @@ export function OnboardingFormScreen({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                    placeholder="+919876542108"
+                    placeholder="Enter 10-digit mobile number"
                   />
                 </label>
               </div>
@@ -468,7 +468,7 @@ export function OnboardingFormScreen({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                    placeholder="seller@femmeflo.com"
+                    placeholder="Enter seller email address"
                   />
                 </label>
                 <label className="block text-xs font-bold text-zinc-700">
@@ -541,7 +541,7 @@ export function OnboardingFormScreen({
                   <h3 className="text-xs font-bold uppercase tracking-wider text-[#E61C5D]">
                     A. Shopkeeper &amp; Store Details
                   </h3>
-                  <p className="text-[11px] text-zinc-500">
+                  <p className="text-[11px] text-zinc-800">
                     Core retail shopkeeper credentials and category classification
                   </p>
                 </div>
@@ -662,7 +662,7 @@ export function OnboardingFormScreen({
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#E61C5D]">
                       B. Address &amp; Auto-Fetch by PIN Code
                     </h3>
-                    <p className="text-[11px] text-zinc-500">
+                    <p className="text-[11px] text-zinc-800">
                       Enter 6-digit Indian PIN code to automatically retrieve State, District &amp; Village
                     </p>
                   </div>
@@ -792,7 +792,7 @@ export function OnboardingFormScreen({
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[#E61C5D]">
                   C. Live Location &amp; Storefront Photo
                 </h3>
-                <p className="text-[11px] text-zinc-500">
+                <p className="text-[11px] text-zinc-800">
                   Record real-time device GPS coordinates and attach storefront photo
                 </p>
               </div>
@@ -816,7 +816,7 @@ export function OnboardingFormScreen({
                             {photoFile?.name}
                           </p>
                         </div>
-                        <p className="text-[11px] text-zinc-500">
+                        <p className="text-[11px] text-zinc-800">
                           {photoFile ? `${(photoFile.size / (1024 * 1024)).toFixed(2)} MB · Ready to upload` : ""}
                         </p>
                         <div className="mt-1 flex items-center gap-2">
@@ -834,7 +834,7 @@ export function OnboardingFormScreen({
                           <button
                             type="button"
                             onClick={handleRemovePhoto}
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-zinc-500 hover:text-rose-600"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-zinc-800 hover:text-rose-600"
                           >
                             <Trash2 className="h-3 w-3" /> Remove
                           </button>
@@ -847,7 +847,7 @@ export function OnboardingFormScreen({
                         <Camera className="h-4 w-4" />
                         <span className="text-xs font-bold">Upload / capture shop photo</span>
                       </div>
-                      <span className="text-[11px] text-zinc-400">
+                      <span className="text-[11px] text-zinc-700">
                         JPEG, PNG, WebP up to 5 MB
                       </span>
                       <input
@@ -867,7 +867,7 @@ export function OnboardingFormScreen({
                 {/* GPS Coordinates Card */}
                 <div className="flex flex-col justify-between rounded-xl border border-zinc-200 bg-[#FAF8F5] p-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-800">
                       Live GPS Location
                     </span>
                     {lat !== undefined && lng !== undefined && (
@@ -911,11 +911,11 @@ export function OnboardingFormScreen({
                             📍 View on Google Maps
                             <ExternalLink className="h-3 w-3" />
                           </a>
-                          <span className="text-[10px] text-zinc-400 font-mono">6-decimal GPS</span>
+                          <span className="text-[10px] text-zinc-700 font-mono">6-decimal GPS</span>
                         </div>
                       </div>
                     ) : (
-                      <span className="block text-[11px] text-zinc-400 text-center">
+                      <span className="block text-[11px] text-zinc-700 text-center">
                         Tap &apos;Get Current Location&apos; to capture device GPS
                       </span>
                     )}
@@ -951,7 +951,7 @@ export function OnboardingFormScreen({
                     <div className="min-w-0">
                       <p className="font-bold text-zinc-900 truncate">{name}</p>
                       <p className="text-xs text-emerald-700 font-semibold">✓ Storefront photo verified</p>
-                      <p className="text-[11px] text-zinc-600 truncate">
+                      <p className="text-[11px] text-zinc-900 truncate">
                         {[shopNumber, streetName, village, district, state, pincode].filter(Boolean).join(", ") || `${village}, ${district}`}
                       </p>
                       {lat !== undefined && lng !== undefined && (

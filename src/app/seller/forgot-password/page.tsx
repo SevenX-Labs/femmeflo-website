@@ -26,7 +26,7 @@ export default function SellerForgotPasswordPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] px-5 py-12 font-jakarta">
       <section className="w-full max-w-lg rounded-3xl border border-rose-100 bg-white p-7 shadow-xl sm:p-10">
-        <Link href="/seller/auth/login" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-[#E61C5D]">
+        <Link href="/seller/auth/login" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-800 hover:text-[#E61C5D]">
           <ArrowLeft className="h-4 w-4" />Back to login
         </Link>
         <div className="mt-10">
@@ -35,7 +35,7 @@ export default function SellerForgotPasswordPage() {
           </span>
           <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-[#E61C5D]">Account recovery</p>
           <h1 className="mt-2 font-playfair text-4xl font-bold text-[#156035]">Reset your password</h1>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-500">
+          <p className="mt-3 text-sm leading-relaxed text-zinc-800">
             Enter the email or phone number linked to your Seller account.
           </p>
         </div>
@@ -52,7 +52,7 @@ export default function SellerForgotPasswordPage() {
                 required
                 value={login}
                 onChange={(e) => setLogin(e.target.value)}
-                placeholder="seller@femmeflo.com or +91..."
+                placeholder="Enter your email or phone number"
                 className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300"
               />
             </label>
@@ -63,7 +63,7 @@ export default function SellerForgotPasswordPage() {
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send recovery instructions"}
             </button>
-            <p className="text-center text-[11px] text-zinc-400">
+            <p className="text-center text-[11px] text-zinc-700">
               
             </p>
           </form>

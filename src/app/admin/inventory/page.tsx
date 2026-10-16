@@ -127,7 +127,7 @@ export default function AdminInventoryPage() {
               onClick={fetchInventory}
               disabled={loading}
               title="Refresh live stock"
-              className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 shadow-xs transition hover:border-rose-200 hover:text-[#E61C5D] active:scale-95 disabled:opacity-50"
+              className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 shadow-xs transition hover:border-rose-200 hover:text-[#E61C5D] active:scale-95 disabled:opacity-50"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
@@ -199,7 +199,7 @@ export default function AdminInventoryPage() {
               <Package className="h-6 w-6" />
             </div>
             <h4 className="mt-3 text-sm font-bold text-zinc-800">No Inventory or Locations Found</h4>
-            <p className="mt-1 text-xs text-zinc-400 max-w-sm mx-auto">
+            <p className="mt-1 text-xs text-zinc-700 max-w-sm mx-auto">
               Your inventory database is completely empty. Start from scratch by inwarding your first stock batch above.
             </p>
             <div className="mt-5">
@@ -230,9 +230,9 @@ export default function AdminInventoryPage() {
                     {(data?.hqStock ?? 0).toLocaleString("en-IN")} pkts
                   </span>
                 </div>
-                <div className="mt-1 flex items-center justify-between text-xs text-zinc-500">
+                <div className="mt-1 flex items-center justify-between text-xs text-zinc-800">
                   <span>Central Office Warehouse</span>
-                  <span className="text-[11px] font-medium text-zinc-400">Central Reserve</span>
+                  <span className="text-[11px] font-medium text-zinc-700">Central Reserve</span>
                 </div>
               </div>
 
@@ -247,9 +247,9 @@ export default function AdminInventoryPage() {
                       {wh.balance.toLocaleString("en-IN")} pkts
                     </span>
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-xs text-zinc-500">
+                  <div className="mt-1 flex items-center justify-between text-xs text-zinc-800">
                     <span className="truncate pr-2 font-medium">{wh.name}</span>
-                    <span className="shrink-0 text-[11px] font-medium text-zinc-400">Buffer Stock</span>
+                    <span className="shrink-0 text-[11px] font-medium text-zinc-700">Buffer Stock</span>
                   </div>
                 </div>
               ))}
@@ -265,9 +265,9 @@ export default function AdminInventoryPage() {
                       {sl.balance.toLocaleString("en-IN")} pkts
                     </span>
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-xs text-zinc-500">
+                  <div className="mt-1 flex items-center justify-between text-xs text-zinc-800">
                     <span className="truncate pr-2 font-medium">{sl.name}</span>
-                    <span className="shrink-0 text-[11px] font-medium text-zinc-400">Field Custody</span>
+                    <span className="shrink-0 text-[11px] font-medium text-zinc-700">Field Custody</span>
                   </div>
                 </div>
               ))}
@@ -276,7 +276,7 @@ export default function AdminInventoryPage() {
             {/* Desktop Table (shown on sm and up) */}
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full min-w-180 text-left">
-                <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
+                <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-700">
                   <tr>
                     <th className="px-4 py-4">Level</th>
                     <th className="px-4 py-4">Location identifier</th>
@@ -293,7 +293,7 @@ export default function AdminInventoryPage() {
                       </span>
                     </td>
                     <td className="px-4 py-4 text-sm font-semibold text-zinc-700">Central Office Warehouse</td>
-                    <td className="px-4 py-4 text-xs font-semibold text-zinc-500">Central Reserve</td>
+                    <td className="px-4 py-4 text-xs font-semibold text-zinc-800">Central Reserve</td>
                     <td className="px-4 py-4 text-sm font-bold text-[#156035]">{(data?.hqStock ?? 0).toLocaleString("en-IN")} pkts</td>
                   </tr>
 
@@ -306,7 +306,7 @@ export default function AdminInventoryPage() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-sm font-semibold text-zinc-700">{wh.name}</td>
-                      <td className="px-4 py-4 text-xs font-semibold text-zinc-500">Buffer Stock</td>
+                      <td className="px-4 py-4 text-xs font-semibold text-zinc-800">Buffer Stock</td>
                       <td className="px-4 py-4 text-sm font-bold text-amber-700">{wh.balance.toLocaleString("en-IN")} pkts</td>
                     </tr>
                   ))}
@@ -320,7 +320,7 @@ export default function AdminInventoryPage() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-sm font-semibold text-zinc-700">{sl.name}</td>
-                      <td className="px-4 py-4 text-xs font-semibold text-zinc-500">Field Custody</td>
+                      <td className="px-4 py-4 text-xs font-semibold text-zinc-800">Field Custody</td>
                       <td className="px-4 py-4 text-sm font-bold text-rose-700">{sl.balance.toLocaleString("en-IN")} pkts</td>
                     </tr>
                   ))}
@@ -342,13 +342,13 @@ export default function AdminInventoryPage() {
                 </span>
                 <div>
                   <h3 className="font-playfair text-lg font-bold text-zinc-900">Stock Receipt / Inward</h3>
-                  <p className="text-xs text-zinc-500">Record newly manufactured packets received at HQ</p>
+                  <p className="text-xs text-zinc-800">Record newly manufactured packets received at HQ</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowInwardModal(false)}
-                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition"
+                className="rounded-lg p-1.5 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -379,7 +379,7 @@ export default function AdminInventoryPage() {
                   placeholder="e.g. 500"
                   className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
                 />
-                <p className="mt-1 text-[11px] text-zinc-400">
+                <p className="mt-1 text-[11px] text-zinc-700">
                   Packets are incremented into the central Headquarters (HQ) reserve.
                 </p>
               </div>
@@ -388,7 +388,7 @@ export default function AdminInventoryPage() {
                 <button
                   type="button"
                   onClick={() => setShowInwardModal(false)}
-                  className="h-10 rounded-xl px-4 text-xs font-bold text-zinc-500 hover:bg-zinc-100 transition"
+                  className="h-10 rounded-xl px-4 text-xs font-bold text-zinc-800 hover:bg-zinc-100 transition"
                 >
                   Cancel
                 </button>
@@ -421,13 +421,13 @@ export default function AdminInventoryPage() {
                 </span>
                 <div>
                   <h3 className="font-playfair text-lg font-bold text-zinc-900">Add Regional Warehouse</h3>
-                  <p className="text-xs text-zinc-500">Create a regional depot for buffer packet storage</p>
+                  <p className="text-xs text-zinc-800">Create a regional depot for buffer packet storage</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowWarehouseModal(false)}
-                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition"
+                className="rounded-lg p-1.5 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -463,7 +463,7 @@ export default function AdminInventoryPage() {
                 <button
                   type="button"
                   onClick={() => setShowWarehouseModal(false)}
-                  className="rounded-xl border border-zinc-200 px-4 py-2.5 text-xs font-bold text-zinc-600 hover:bg-zinc-50 transition"
+                  className="rounded-xl border border-zinc-200 px-4 py-2.5 text-xs font-bold text-zinc-900 hover:bg-zinc-50 transition"
                 >
                   Cancel
                 </button>

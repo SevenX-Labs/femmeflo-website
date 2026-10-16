@@ -30,7 +30,7 @@ export default function AdminForgotPasswordPage() {
     <main className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#FAF8F5] font-jakarta text-zinc-800">
       <div className="relative z-10 grid flex-1 place-items-center px-5 py-8">
         <section className="w-full max-w-lg rounded-3xl border border-rose-100 bg-white p-6 shadow-[0_24px_80px_rgba(104,48,66,0.12)] sm:p-10">
-          <Link href="/admin/auth/login" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-[#E61C5D]">
+          <Link href="/admin/auth/login" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-800 hover:text-[#E61C5D]">
             <ArrowLeft className="h-4 w-4" />Back to Admin login
           </Link>
           <div className="mt-8">
@@ -39,7 +39,7 @@ export default function AdminForgotPasswordPage() {
             </span>
             <p className="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-[#E61C5D]">Account recovery</p>
             <h1 className="mt-2 font-playfair text-4xl font-bold text-[#156035]">Reset your password</h1>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-500">
+            <p className="mt-3 text-sm leading-relaxed text-zinc-800">
               Enter your admin email address to generate secure recovery instructions.
             </p>
           </div>
@@ -62,7 +62,7 @@ export default function AdminForgotPasswordPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@femmeflo.com"
+                  placeholder="Enter your email address"
                   className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
                 />
               </label>

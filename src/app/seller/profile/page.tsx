@@ -82,12 +82,12 @@ export default function SellerProfilePage() {
             <p className="text-xs font-bold uppercase tracking-wide text-[#E61C5D]">Seller account ID</p>
             <p className="mt-1 font-mono text-sm font-bold text-zinc-800">{profile ? `${profile.id.slice(0, 8)}...` : "Loading..."}</p>
 
-            <p className="mt-4 text-xs text-zinc-500">Assigned territory</p>
+            <p className="mt-4 text-xs text-zinc-800">Assigned territory</p>
             <p className="mt-1 font-semibold text-zinc-800">
               {[profile?.village, profile?.district, profile?.state].filter(Boolean).join(", ") || "Not available"}
             </p>
 
-            <p className="mt-4 text-xs text-zinc-500">Reporting manager</p>
+            <p className="mt-4 text-xs text-zinc-800">Reporting manager</p>
             <p className="mt-1 font-semibold text-zinc-800">{profile?.manager?.name || "Not available"}</p>
 
             <p className="mt-4 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">

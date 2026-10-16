@@ -174,3 +174,39 @@ input:disabled,
 [aria-disabled="true"] {
   cursor: not-allowed;
 }
+
+/* Custom Clean Scrollbar for Modals and Small Scroll Boxes */
+[data-lenis-prevent],
+[role="dialog"],
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-auto {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+[data-lenis-prevent]::-webkit-scrollbar,
+[role="dialog"]::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+[data-lenis-prevent]::-webkit-scrollbar-track,
+[role="dialog"]::-webkit-scrollbar-track,
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-lenis-prevent]::-webkit-scrollbar-thumb,
+[role="dialog"]::-webkit-scrollbar-thumb,
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+
+[data-lenis-prevent]::-webkit-scrollbar-thumb:hover,
+[role="dialog"]::-webkit-scrollbar-thumb:hover,
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 114, 128, 0.7);
+}

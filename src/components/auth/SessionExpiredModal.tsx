@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Lock, Mail, KeyRound, Loader2, X, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { tokenStorage } from "@/lib/api/client";
 
 export function SessionExpiredModal() {
+  const pathname = usePathname();
   const { login, user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -15,6 +17,20 @@ export function SessionExpiredModal() {
 
   useEffect(() => {
     const handleUnauthorized = () => {
+      // Don't show session expired modal on public landing / auth pages
+      const isPublicPath =
+        !pathname ||
+        pathname === "/" ||
+        pathname === "/contact" ||
+        pathname.includes("/auth/") ||
+        pathname.includes("/login") ||
+        pathname.includes("/forgot-password") ||
+        pathname.includes("/reset-password");
+
+      if (isPublicPath) {
+        return;
+      }
+
       // Prefill cached user email if available
       const cached = (tokenStorage.getCachedUser() || user) as { email?: string } | null;
       if (cached?.email && !email) {
@@ -28,7 +44,7 @@ export function SessionExpiredModal() {
     return () => {
       window.removeEventListener("femmeflo:unauthorized", handleUnauthorized);
     };
-  }, [user, email]);
+  }, [user, email, pathname]);
 
   if (!isOpen) return null;
 
@@ -62,7 +78,7 @@ export function SessionExpiredModal() {
         <button
           type="button"
           onClick={() => setIsOpen(false)}
-          className="absolute right-5 top-5 rounded-xl p-1.5 text-zinc-400 hover:bg-rose-50 hover:text-zinc-700 transition"
+          className="absolute right-5 top-5 rounded-xl p-1.5 text-zinc-700 hover:bg-rose-50 hover:text-zinc-700 transition"
           aria-label="Close modal"
         >
           <X className="h-5 w-5" />
@@ -74,7 +90,7 @@ export function SessionExpiredModal() {
           </div>
           <div>
             <h3 className="font-playfair text-xl font-bold text-zinc-900">Session Expired</h3>
-            <p className="text-xs text-zinc-500">Sign in to continue without losing your place</p>
+            <p className="text-xs text-zinc-800">Sign in to continue without losing your place</p>
           </div>
         </div>
 
@@ -89,12 +105,12 @@ export function SessionExpiredModal() {
           <div>
             <label className="block text-xs font-bold text-zinc-700">Email Address</label>
             <div className="relative mt-1">
-              <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-700" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@femmeflo.in"
+                placeholder="Enter your email address"
                 required
                 className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 py-2.5 pl-10 pr-3.5 text-sm text-zinc-900 outline-none transition focus:border-[#E61C5D] focus:bg-white focus:ring-2 focus:ring-rose-100"
               />
@@ -104,12 +120,12 @@ export function SessionExpiredModal() {
           <div>
             <label className="block text-xs font-bold text-zinc-700">Password</label>
             <div className="relative mt-1">
-              <KeyRound className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <KeyRound className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-700" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 required
                 autoFocus
                 className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 py-2.5 pl-10 pr-3.5 text-sm text-zinc-900 outline-none transition focus:border-[#E61C5D] focus:bg-white focus:ring-2 focus:ring-rose-100"

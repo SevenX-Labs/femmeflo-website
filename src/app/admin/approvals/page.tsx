@@ -96,7 +96,7 @@ export default function AdminApprovalsPage() {
       navigation={adminNavigation}
     >
       <div>
-        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-[#E61C5D]">
+        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-800 hover:text-[#E61C5D]">
           <ArrowLeft className="h-4 w-4" />Back to admin
         </Link>
         <div className="mt-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
@@ -105,7 +105,7 @@ export default function AdminApprovalsPage() {
             <h1 className="mt-2 font-playfair text-4xl font-bold text-[#156035] sm:text-5xl">
               Review low-price sales
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500">
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-800">
               Approve or reject sales submitted below the threshold ₹25 per-packet price before inventory deductions and incentives are posted.
             </p>
           </div>
@@ -117,29 +117,29 @@ export default function AdminApprovalsPage() {
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-rose-100 bg-white p-5 shadow-[0_8px_30px_rgba(104,48,66,0.04)]">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-zinc-500">Awaiting Review</p>
+              <p className="text-xs font-semibold text-zinc-800">Awaiting Review</p>
               <Clock3 className="h-4 w-4 text-[#E61C5D]" />
             </div>
-            <p className="mt-3 font-playfair text-3xl font-bold text-zinc-900">{pendingSales.length}</p>
-            <p className="mt-1 text-xs text-zinc-400">Requests in queue</p>
+            <p className="mt-3 text-3xl font-bold font-sans tracking-tight text-zinc-900">{pendingSales.length}</p>
+            <p className="mt-1 text-xs text-zinc-700">Requests in queue</p>
           </div>
 
           <div className="rounded-2xl border border-rose-100 bg-white p-5 shadow-[0_8px_30px_rgba(104,48,66,0.04)]">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-zinc-500">Value Under Review</p>
+              <p className="text-xs font-semibold text-zinc-800">Value Under Review</p>
               <IndianRupee className="h-4 w-4 text-[#E61C5D]" />
             </div>
-            <p className="mt-3 font-playfair text-3xl font-bold text-zinc-900">₹{pendingValue.toLocaleString("en-IN")}</p>
-            <p className="mt-1 text-xs text-zinc-400">Pending transaction amount</p>
+            <p className="mt-3 text-3xl font-bold font-sans tracking-tight text-zinc-900">₹{pendingValue.toLocaleString("en-IN")}</p>
+            <p className="mt-1 text-xs text-zinc-700">Pending transaction amount</p>
           </div>
 
           <div className="rounded-2xl border border-rose-100 bg-white p-5 shadow-[0_8px_30px_rgba(104,48,66,0.04)]">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-zinc-500">Floor Price Rule</p>
+              <p className="text-xs font-semibold text-zinc-800">Floor Price Rule</p>
               <Check className="h-4 w-4 text-[#156035]" />
             </div>
-            <p className="mt-3 font-playfair text-3xl font-bold text-zinc-900">₹25</p>
-            <p className="mt-1 text-xs text-zinc-400">Minimum automatic price</p>
+            <p className="mt-3 text-3xl font-bold font-sans tracking-tight text-zinc-900">₹25</p>
+            <p className="mt-1 text-xs text-zinc-700">Minimum automatic price</p>
           </div>
         </div>
 
@@ -148,14 +148,14 @@ export default function AdminApprovalsPage() {
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
                 <h2 className="font-playfair text-2xl font-bold text-[#156035]">Approval queue</h2>
-                <p className="mt-1 text-xs text-zinc-400">{visibleSales.length} requests in view</p>
+                <p className="mt-1 text-xs text-zinc-700">{visibleSales.length} requests in view</p>
               </div>
               <div className="flex items-center gap-3">
                 <button
                   onClick={fetchApprovals}
                   disabled={loading}
                   title="Refresh queue"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 hover:border-rose-200 hover:text-[#E61C5D]"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 hover:border-rose-200 hover:text-[#E61C5D]"
                 >
                   <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
                 </button>
@@ -174,7 +174,7 @@ export default function AdminApprovalsPage() {
                   key={tab}
                   onClick={() => setFilter(tab)}
                   className={`rounded-lg px-3 py-2 text-xs font-bold whitespace-nowrap ${
-                    filter === tab ? "bg-white text-[#E61C5D] shadow-sm" : "text-zinc-500 hover:text-zinc-800"
+                    filter === tab ? "bg-white text-[#E61C5D] shadow-sm" : "text-zinc-800 hover:text-zinc-800"
                   }`}
                 >
                   {tab}
@@ -190,7 +190,7 @@ export default function AdminApprovalsPage() {
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-220 text-left">
-              <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
+              <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-700">
                 <tr>
                   <th className="px-5 py-4">Request</th>
                   <th className="px-5 py-4">Seller / territory</th>
@@ -215,12 +215,12 @@ export default function AdminApprovalsPage() {
                           <p className="text-sm font-bold text-zinc-800 hover:text-[#E61C5D]">
                             {s.customer?.shopName || "Retail Customer"}
                           </p>
-                          <p className="mt-1 text-[11px] text-zinc-400">{s.id}</p>
+                          <p className="mt-1 text-[11px] text-zinc-700">{s.id}</p>
                         </button>
                       </td>
                       <td className="px-5 py-4">
                         <p className="text-sm text-zinc-700">{s.seller?.name || "Seller"}</p>
-                        <p className="mt-1 text-xs text-zinc-400">
+                        <p className="mt-1 text-xs text-zinc-700">
                           {[s.seller?.village, s.seller?.district].filter(Boolean).join(", ") || "Territory"}
                         </p>
                       </td>
@@ -272,7 +272,7 @@ export default function AdminApprovalsPage() {
               </tbody>
             </table>
             {visibleSales.length === 0 && (
-              <p className="py-14 text-center text-sm text-zinc-500">No approval requests in this filter.</p>
+              <p className="py-14 text-center text-sm text-zinc-800">No approval requests in this filter.</p>
             )}
           </div>
         </section>
@@ -286,25 +286,25 @@ export default function AdminApprovalsPage() {
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#E61C5D]">{selected.id}</p>
                 <h2 className="mt-2 font-playfair text-3xl font-bold text-[#156035]">Sale review</h2>
               </div>
-              <button onClick={() => setSelected(null)} className="rounded-lg p-2 text-zinc-400 hover:bg-rose-50" aria-label="Close review">
+              <button onClick={() => setSelected(null)} className="rounded-lg p-2 text-zinc-700 hover:bg-rose-50" aria-label="Close review">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="mt-6 space-y-3 rounded-xl bg-[#FFF8FA] p-4 text-sm">
               <div className="flex justify-between">
-                <span className="text-zinc-500">Customer</span>
+                <span className="text-zinc-800">Customer</span>
                 <strong>{selected.customer?.shopName}</strong>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Seller</span>
+                <span className="text-zinc-800">Seller</span>
                 <strong>{selected.seller?.name}</strong>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Packets</span>
+                <span className="text-zinc-800">Packets</span>
                 <strong>{selected.quantity}</strong>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Per packet</span>
+                <span className="text-zinc-800">Per packet</span>
                 <strong className="text-amber-700">₹{selected.unitPricePaise / 100}</strong>
               </div>
               <div className="flex justify-between border-t border-rose-100 pt-3">
@@ -330,7 +330,7 @@ export default function AdminApprovalsPage() {
                 </button>
               </div>
             ) : (
-              <p className="mt-6 rounded-xl bg-zinc-50 p-3 text-center text-xs font-bold text-zinc-500">
+              <p className="mt-6 rounded-xl bg-zinc-50 p-3 text-center text-xs font-bold text-zinc-800">
                 This request is already resolved.
               </p>
             )}

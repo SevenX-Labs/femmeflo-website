@@ -74,7 +74,7 @@ export default function AdminAddManagerPage() {
       userDetail="Head Office"
       navigation={adminNavigation}
     >
-      <Link href="/admin/managers" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-[#E61C5D]">
+      <Link href="/admin/managers" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-800 hover:text-[#E61C5D]">
         <ArrowLeft className="h-4 w-4" />Back to managers
       </Link>
       <div className="mt-7">
@@ -101,7 +101,7 @@ export default function AdminAddManagerPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                placeholder="Kavita Sharma"
+                placeholder="Enter full name"
               />
             </label>
             <label className="block text-xs font-bold text-zinc-700">
@@ -111,7 +111,7 @@ export default function AdminAddManagerPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                placeholder="+919876542108"
+                placeholder="Enter 10-digit mobile number"
               />
             </label>
           </div>
@@ -124,7 +124,7 @@ export default function AdminAddManagerPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                placeholder="manager@femmeflo.com"
+                placeholder="Enter manager email address"
               />
             </label>
             <label className="block text-xs font-bold text-zinc-700">

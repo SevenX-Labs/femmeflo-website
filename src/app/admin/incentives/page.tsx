@@ -100,7 +100,7 @@ export default function AdminIncentivesPage() {
               onClick={loadData}
               disabled={loading}
               title="Refresh incentives"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 hover:border-rose-200 hover:text-[#E61C5D]"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 hover:border-rose-200 hover:text-[#E61C5D]"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
@@ -145,7 +145,7 @@ export default function AdminIncentivesPage() {
       >
         <div className="overflow-x-auto">
           <table className="w-full min-w-160 text-left">
-            <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
+            <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-700">
               <tr>
                 <th className="px-4 py-4">Seller</th>
                 <th className="px-4 py-4">Territory</th>
@@ -158,9 +158,9 @@ export default function AdminIncentivesPage() {
               {incentives.map((item) => (
                 <tr key={item.sellerId} className="hover:bg-[#FFFDFD]">
                   <td className="px-4 py-4 text-sm font-bold text-zinc-800">{item.sellerName}</td>
-                  <td className="px-4 py-4 text-sm text-zinc-500">{item.territory}</td>
+                  <td className="px-4 py-4 text-sm text-zinc-800">{item.territory}</td>
                   <td className="px-4 py-4 text-sm font-semibold">{item.confirmedPackets} pkts</td>
-                  <td className="px-4 py-4 text-sm text-zinc-500">₹{item.ratePerPacketRupees}</td>
+                  <td className="px-4 py-4 text-sm text-zinc-800">₹{item.ratePerPacketRupees}</td>
                   <td className="px-4 py-4 text-sm font-bold text-[#156035]">
                     ₹{item.totalIncentiveRupees.toLocaleString("en-IN")}
                   </td>
@@ -182,7 +182,7 @@ export default function AdminIncentivesPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="font-playfair text-2xl font-bold text-[#156035]">Incentive rule configuration</h3>
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-xs text-zinc-800">
               Set the per-packet incentive awarded to field Sellers upon confirmed customer delivery.
             </p>
 
@@ -204,7 +204,7 @@ export default function AdminIncentivesPage() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="w-1/2 rounded-xl border border-zinc-200 py-3 text-xs font-bold text-zinc-600 hover:bg-zinc-50"
+                  className="w-1/2 rounded-xl border border-zinc-200 py-3 text-xs font-bold text-zinc-900 hover:bg-zinc-50"
                 >
                   Cancel
                 </button>

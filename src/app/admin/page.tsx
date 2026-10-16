@@ -219,7 +219,7 @@ export default function AdminOverviewDashboard() {
               onClick={fetchDashboard}
               disabled={loading}
               title="Refresh dashboard metrics"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
@@ -257,12 +257,12 @@ export default function AdminOverviewDashboard() {
                     {activeFilterCount} active
                   </span>
                 ) : (
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-500">
+                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-800">
                     All India (National)
                   </span>
                 )}
               </div>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-700">
                 Hierarchical drilldown: State &rarr; District &rarr; Village &rarr; Manager &rarr; Seller &rarr; Category
               </p>
             </div>
@@ -273,7 +273,7 @@ export default function AdminOverviewDashboard() {
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-bold text-zinc-600 hover:border-rose-200 hover:bg-rose-50 hover:text-[#E61C5D] transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-bold text-zinc-900 hover:border-rose-200 hover:bg-rose-50 hover:text-[#E61C5D] transition cursor-pointer"
               >
                 <RotateCcw className="h-3 w-3" />
                 Reset filters
@@ -282,7 +282,7 @@ export default function AdminOverviewDashboard() {
             <button
               type="button"
               onClick={() => setFiltersExpanded(!filtersExpanded)}
-              className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-600 hover:bg-zinc-50 transition cursor-pointer"
+              className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-900 hover:bg-zinc-50 transition cursor-pointer"
             >
               {filtersExpanded ? "Collapse" : "Expand"}
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${filtersExpanded ? "rotate-180" : ""}`} />
@@ -294,7 +294,7 @@ export default function AdminOverviewDashboard() {
           <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {/* 1. State */}
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800">
                 State
               </label>
               <select
@@ -314,7 +314,7 @@ export default function AdminOverviewDashboard() {
 
             {/* 2. District */}
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800">
                 District
               </label>
               <select
@@ -334,7 +334,7 @@ export default function AdminOverviewDashboard() {
 
             {/* 3. Village */}
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800">
                 Village / Town
               </label>
               <select
@@ -354,7 +354,7 @@ export default function AdminOverviewDashboard() {
 
             {/* 4. Manager */}
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800">
                 Manager
               </label>
               <select
@@ -374,7 +374,7 @@ export default function AdminOverviewDashboard() {
 
             {/* 5. Seller */}
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800">
                 Field Seller
               </label>
               <select
@@ -394,7 +394,7 @@ export default function AdminOverviewDashboard() {
 
             {/* 6. Category */}
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800">
                 Category
               </label>
               <select
@@ -417,7 +417,7 @@ export default function AdminOverviewDashboard() {
         {/* Active Filter Badges */}
         {activeFilterCount > 0 && (
           <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-3">
-            <span className="text-[11px] font-bold text-zinc-400">Filtering by:</span>
+            <span className="text-[11px] font-bold text-zinc-700">Filtering by:</span>
             {selectedState && (
               <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D]">
                 State: {selectedState}
@@ -515,12 +515,12 @@ export default function AdminOverviewDashboard() {
                 <span className="rounded-xl bg-white p-2.5 text-[#E61C5D] shadow-sm">
                   <Layers className="h-5 w-5" />
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">HQ Central</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700">HQ Central</span>
               </div>
-              <p className="mt-4 font-playfair text-3xl font-bold text-zinc-900">
+              <p className="mt-4 text-3xl font-bold font-sans tracking-tight text-zinc-900">
                 {metrics.hqStock.toLocaleString("en-IN")}
               </p>
-              <p className="mt-1 text-xs text-zinc-500">Packets in central warehouse</p>
+              <p className="mt-1 text-xs text-zinc-800">Packets in central warehouse</p>
             </div>
 
             <div className="rounded-2xl border border-rose-100 bg-[#FFF8FA] p-5">
@@ -528,12 +528,12 @@ export default function AdminOverviewDashboard() {
                 <span className="rounded-xl bg-white p-2.5 text-amber-600 shadow-sm">
                   <Package className="h-5 w-5" />
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Regional Depots</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700">Regional Depots</span>
               </div>
-              <p className="mt-4 font-playfair text-3xl font-bold text-zinc-900">
+              <p className="mt-4 text-3xl font-bold font-sans tracking-tight text-zinc-900">
                 {metrics.warehouseStock.toLocaleString("en-IN")}
               </p>
-              <p className="mt-1 text-xs text-zinc-500">Packets in district storage</p>
+              <p className="mt-1 text-xs text-zinc-800">Packets in district storage</p>
             </div>
 
             <div className="rounded-2xl border border-rose-100 bg-[#FFF8FA] p-5">
@@ -541,12 +541,12 @@ export default function AdminOverviewDashboard() {
                 <span className="rounded-xl bg-white p-2.5 text-[#156035] shadow-sm">
                   <PackageCheck className="h-5 w-5" />
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Seller Handover</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700">Seller Handover</span>
               </div>
-              <p className="mt-4 font-playfair text-3xl font-bold text-zinc-900">
+              <p className="mt-4 text-3xl font-bold font-sans tracking-tight text-zinc-900">
                 {metrics.sellerStock.toLocaleString("en-IN")}
               </p>
-              <p className="mt-1 text-xs text-zinc-500">Packets ready for retail</p>
+              <p className="mt-1 text-xs text-zinc-800">Packets ready for retail</p>
             </div>
           </div>
 
@@ -579,10 +579,10 @@ export default function AdminOverviewDashboard() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Retailers / Shops</p>
-                  <p className="text-xs text-zinc-400">Onboarded customer accounts</p>
+                  <p className="text-xs text-zinc-700">Onboarded customer accounts</p>
                 </div>
               </div>
-              <span className="font-playfair text-xl font-bold text-[#156035]">
+              <span className="text-xl font-bold font-sans tracking-tight text-[#156035]">
                 {metrics.totalShops}
               </span>
             </div>
@@ -594,10 +594,10 @@ export default function AdminOverviewDashboard() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Field Sellers</p>
-                  <p className="text-xs text-zinc-400">Active distribution agents</p>
+                  <p className="text-xs text-zinc-700">Active distribution agents</p>
                 </div>
               </div>
-              <span className="font-playfair text-xl font-bold text-[#E61C5D]">
+              <span className="text-xl font-bold font-sans tracking-tight text-[#E61C5D]">
                 {metrics.totalSellers}
               </span>
             </div>
@@ -609,10 +609,10 @@ export default function AdminOverviewDashboard() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Incentives Earned</p>
-                  <p className="text-xs text-zinc-400">Calculated on confirmed sales</p>
+                  <p className="text-xs text-zinc-700">Calculated on confirmed sales</p>
                 </div>
               </div>
-              <span className="font-playfair text-xl font-bold text-amber-700">
+              <span className="text-xl font-bold font-sans tracking-tight text-amber-700">
                 ₹{metrics.totalIncentiveRupees.toLocaleString("en-IN")}
               </span>
             </div>
@@ -636,7 +636,7 @@ export default function AdminOverviewDashboard() {
                 <Clock3 className="h-5 w-5" />
               </span>
               <h3 className="mt-4 font-bold text-zinc-900">Approvals</h3>
-              <p className="mt-1 text-xs text-zinc-500">Review low-price packet sales</p>
+              <p className="mt-1 text-xs text-zinc-800">Review low-price packet sales</p>
             </div>
             <span className="mt-4 text-xs font-bold text-[#E61C5D]">Open queue &rarr;</span>
           </Link>
@@ -650,7 +650,7 @@ export default function AdminOverviewDashboard() {
                 <TrendingUp className="h-5 w-5" />
               </span>
               <h3 className="mt-4 font-bold text-zinc-900">Sales ledger</h3>
-              <p className="mt-1 text-xs text-zinc-500">Audit confirmed and pending transactions</p>
+              <p className="mt-1 text-xs text-zinc-800">Audit confirmed and pending transactions</p>
             </div>
             <span className="mt-4 text-xs font-bold text-[#156035]">View sales &rarr;</span>
           </Link>
@@ -664,7 +664,7 @@ export default function AdminOverviewDashboard() {
                 <CheckCircle2 className="h-5 w-5" />
               </span>
               <h3 className="mt-4 font-bold text-zinc-900">Invoices</h3>
-              <p className="mt-1 text-xs text-zinc-500">Track delivery by Email & WhatsApp</p>
+              <p className="mt-1 text-xs text-zinc-800">Track delivery by Email & WhatsApp</p>
             </div>
             <span className="mt-4 text-xs font-bold text-zinc-700">Check invoices &rarr;</span>
           </Link>
@@ -678,7 +678,7 @@ export default function AdminOverviewDashboard() {
                 <MapPin className="h-5 w-5" />
               </span>
               <h3 className="mt-4 font-bold text-zinc-900">Territory reports</h3>
-              <p className="mt-1 text-xs text-zinc-500">Export CSV / JSON performance logs</p>
+              <p className="mt-1 text-xs text-zinc-800">Export CSV / JSON performance logs</p>
             </div>
             <span className="mt-4 text-xs font-bold text-amber-700">Explore reports &rarr;</span>
           </Link>

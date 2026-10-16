@@ -96,8 +96,8 @@ export function RoleLoginScreen({ role, subtitle, dashboardHref }: RoleLoginScre
             </div>
           </section>
 
-          <section className="p-7 sm:p-12 lg:p-16">
-            <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-[#E61C5D]">
+          <section className="p-5 sm:p-10 lg:p-14">
+            <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-800 hover:text-[#E61C5D]">
               <ArrowLeft className="h-4 w-4" />Back to Femmeflo
             </Link>
             
@@ -108,8 +108,8 @@ export function RoleLoginScreen({ role, subtitle, dashboardHref }: RoleLoginScre
                   <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Live API</span>
                 )}
               </div>
-              <h1 className="mt-2 font-playfair text-4xl font-bold tracking-tight text-[#156035]">Welcome back</h1>
-              <p className="mt-3 text-sm leading-relaxed text-zinc-500">Sign in to continue to your {role.toLowerCase()} workspace.</p>
+              <h1 className="mt-2 font-playfair text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#156035]">Welcome back</h1>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-800">Sign in to continue to your {role.toLowerCase()} workspace.</p>
             </div>
 
             {user && (
@@ -132,7 +132,7 @@ export function RoleLoginScreen({ role, subtitle, dashboardHref }: RoleLoginScre
               <label className="block">
                 <span className="mb-2 block text-xs font-bold text-zinc-700">Email or phone</span>
                 <span className="relative block">
-                  <UserRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                  <UserRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-700" />
                   <input
                     type="text"
                     inputMode="email"
@@ -145,7 +145,7 @@ export function RoleLoginScreen({ role, subtitle, dashboardHref }: RoleLoginScre
                       setError("");
                       setErrorField(null);
                     }}
-                    placeholder={role === "Seller" ? "seller@femmeflo.com or +919876543211" : "manager@femmeflo.com"}
+                    placeholder={role === "Seller" ? "Enter your email or phone number" : "Enter your email address"}
                     aria-invalid={errorField === "identifier"}
                     className="h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] pl-10 pr-3 text-sm outline-none transition aria-[invalid=true]:border-rose-300 aria-[invalid=true]:bg-rose-50/40 focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
                   />
@@ -155,7 +155,7 @@ export function RoleLoginScreen({ role, subtitle, dashboardHref }: RoleLoginScre
               <label className="block">
                 <span className="mb-2 block text-xs font-bold text-zinc-700">Password</span>
                 <span className="relative block">
-                  <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                  <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-700" />
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
@@ -174,7 +174,7 @@ export function RoleLoginScreen({ role, subtitle, dashboardHref }: RoleLoginScre
                   <button
                     type="button"
                     onClick={() => setShowPassword((value) => !value)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-400 hover:text-[#E61C5D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-700 hover:text-[#E61C5D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     aria-pressed={showPassword}
                   >
@@ -184,7 +184,7 @@ export function RoleLoginScreen({ role, subtitle, dashboardHref }: RoleLoginScre
               </label>
 
               <div className="flex items-center justify-between">
-                <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-500">
+                <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-800">
                   <input
                     type="checkbox"
                     checked={rememberMe}

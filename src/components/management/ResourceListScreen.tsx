@@ -1,5 +1,7 @@
 "use client";
 
+import { CustomerDetailModal } from "./CustomerDetailModal";
+
 import { Camera, CheckCircle2, Download, Eye, ExternalLink, FileText, Image as ImageIcon, Loader2, MapPin, RefreshCw, Search, SlidersHorizontal, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -264,7 +266,7 @@ export function ResourceListScreen({
                 onClick={loadData}
                 disabled={isLoading}
                 title="Refresh live data"
-                className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin text-[#E61C5D]" : ""}`} />
               </button>
@@ -312,7 +314,7 @@ export function ResourceListScreen({
             className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold ${
               filtersOpen
                 ? "border-rose-200 bg-rose-50 text-[#E61C5D]"
-                : "border-zinc-200 text-zinc-600 hover:border-rose-200"
+                : "border-zinc-200 text-zinc-900 hover:border-rose-200"
             }`}
           >
             <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -320,9 +322,9 @@ export function ResourceListScreen({
           </button>
         }
       >
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row">
+        <div className="mb-5 flex flex-col gap-2.5 sm:flex-row sm:items-center">
           <label className="relative block flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-700" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -334,7 +336,7 @@ export function ResourceListScreen({
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="h-10 rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold text-zinc-600"
+              className="h-10 rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold text-zinc-900"
               aria-label="Filter sales by date"
             >
               <option>All time</option>
@@ -345,7 +347,7 @@ export function ResourceListScreen({
           <select
             value={status}
             onChange={(event) => setStatus(event.target.value)}
-            className="h-10 rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold text-zinc-600 outline-none focus:border-rose-300"
+            className="h-10 rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold text-zinc-900 outline-none focus:border-rose-300"
             aria-label="Filter by status"
           >
             <option>All status</option>
@@ -361,7 +363,7 @@ export function ResourceListScreen({
 
         {filtersOpen && (
           <div className="mb-5 grid gap-3 rounded-xl border border-rose-100 bg-[#FFF8FA] p-4 sm:grid-cols-3">
-            <label className="text-[11px] font-bold text-zinc-600">
+            <label className="text-[11px] font-bold text-zinc-900">
               State / district / village
               <input
                 value={locationQuery}
@@ -370,7 +372,7 @@ export function ResourceListScreen({
                 className="mt-1.5 h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-xs font-normal"
               />
             </label>
-            <label className="text-[11px] font-bold text-zinc-600">
+            <label className="text-[11px] font-bold text-zinc-900">
               Category
               <input
                 value={categoryQuery}
@@ -385,7 +387,7 @@ export function ResourceListScreen({
                 setCategoryQuery("");
                 setStatus("All status");
               }}
-              className="self-end rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-bold text-zinc-600"
+              className="self-end rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-bold text-zinc-900"
             >
               Clear filters
             </button>
@@ -393,14 +395,14 @@ export function ResourceListScreen({
         )}
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16 text-zinc-400">
+          <div className="flex flex-col items-center justify-center py-16 text-zinc-700">
             <Loader2 className="h-8 w-8 animate-spin text-[#E61C5D]" />
             <p className="mt-3 text-xs font-semibold">Loading data from backend...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-180 text-left">
-              <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
+            <table className="w-full min-w-full sm:min-w-160 text-left">
+              <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-700">
                 <tr>
                   {columns.map((column) => (
                     <th key={column.key} className="px-4 py-4">
@@ -421,7 +423,7 @@ export function ResourceListScreen({
                             ? ""
                             : column.key === columns[0].key
                             ? "font-bold text-zinc-800"
-                            : "text-zinc-500"
+                            : "text-zinc-800"
                         }`}
                       >
                         {column.key === "status" ? (
@@ -433,7 +435,7 @@ export function ResourceListScreen({
                                   row.status === "Pending payment" ||
                                   row.status === "Approval required"
                                 ? "bg-amber-50 text-amber-700"
-                                : "bg-zinc-100 text-zinc-500"
+                                : "bg-zinc-100 text-zinc-800"
                             }`}
                           >
                             {String(row[column.key])}
@@ -515,7 +517,7 @@ export function ResourceListScreen({
                                 }}
                                 disabled={Boolean(pdfLoadingId)}
                                 title="Download Tax Invoice PDF"
-                                className="inline-flex items-center rounded-md p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 transition disabled:opacity-50"
+                                className="inline-flex items-center rounded-md p-1 text-zinc-800 hover:bg-zinc-100 hover:text-zinc-800 transition disabled:opacity-50"
                               >
                                 {isDlLoading ? (
                                   <Loader2 className="h-3 w-3 animate-spin text-[#E61C5D]" />
@@ -533,13 +535,36 @@ export function ResourceListScreen({
               </tbody>
             </table>
             {filteredRows.length === 0 && (
-              <p className="py-12 text-center text-sm text-zinc-500">No records match your filters.</p>
+              <p className="py-12 text-center text-sm text-zinc-800">No records match your filters.</p>
             )}
           </div>
         )}
       </SectionCard>
 
       {selectedRow && (
+        (eyebrow.toLowerCase().includes("customer") || title.toLowerCase().includes("customer")) ? (
+          <CustomerDetailModal
+            role={role}
+            customerId={String(selectedRow.id)}
+            onClose={() => setSelectedRow(null)}
+            onCustomerUpdated={(updated) => {
+              setDataRows((prev) =>
+                prev.map((r) =>
+                  r.id === updated.id
+                    ? {
+                        ...r,
+                        name: updated.shopName,
+                        contact: updated.contactName,
+                        phone: updated.phone || "—",
+                        photoPath: updated.photoPath,
+                        status: updated.active ? "Active" : "Inactive",
+                      }
+                    : r
+                )
+              );
+            }}
+          />
+        ) : (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/35 px-4"
           onClick={() => setSelectedRow(null)}
@@ -547,7 +572,8 @@ export function ResourceListScreen({
           <section
             role="dialog"
             aria-modal="true"
-            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+            data-lenis-prevent
+            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto overscroll-contain"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">
@@ -557,7 +583,7 @@ export function ResourceListScreen({
                   {String(selectedRow[columns[0].key] ?? "Item")}
                 </h2>
                 {selectedRow.address ? (
-                  <p className="mt-1 text-xs text-zinc-600 leading-relaxed">
+                  <p className="mt-1 text-xs text-zinc-900 leading-relaxed">
                     {String(selectedRow.address)}
                   </p>
                 ) : null}
@@ -565,7 +591,7 @@ export function ResourceListScreen({
               <button
                 onClick={() => setSelectedRow(null)}
                 aria-label="Close details"
-                className="rounded-lg p-2 text-zinc-400 hover:bg-rose-50"
+                className="rounded-lg p-2 text-zinc-700 hover:bg-rose-50"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -599,7 +625,7 @@ export function ResourceListScreen({
                     </span>
                   </div>
 
-                  <p className="mt-2.5 text-xs text-zinc-600 leading-relaxed">
+                  <p className="mt-2.5 text-xs text-zinc-900 leading-relaxed">
                     View or download the official generated GST tax invoice complete with itemized packet details, GST breakdown, and digital verification seal.
                   </p>
 
@@ -658,13 +684,13 @@ export function ResourceListScreen({
               title.toLowerCase().includes("customer")) && (
               <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-[#FAF8F5] p-3">
                 <div className="mb-2 flex items-center justify-between text-xs">
-                  <span className="font-bold uppercase tracking-wider text-zinc-600">
+                  <span className="font-bold uppercase tracking-wider text-zinc-900">
                     Storefront Photo
                   </span>
                   {selectedRow.photoPath ? (
                     <span className="font-semibold text-emerald-700">✓ Verified</span>
                   ) : (
-                    <span className="text-zinc-400">Not uploaded</span>
+                    <span className="text-zinc-700">Not uploaded</span>
                   )}
                 </div>
 
@@ -695,7 +721,7 @@ export function ResourceListScreen({
                         href={String(selectedRow.photoPath)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium text-zinc-500 hover:text-zinc-800 hover:underline"
+                        className="font-medium text-zinc-800 hover:text-zinc-800 hover:underline"
                       >
                         View full size ↗
                       </a>
@@ -703,7 +729,7 @@ export function ResourceListScreen({
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-4 text-center">
-                    <p className="mb-2 text-xs text-zinc-500">
+                    <p className="mb-2 text-xs text-zinc-800">
                       No storefront photo attached yet
                     </p>
                     <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#E61C5D] px-3.5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-[#c91550]">
@@ -740,7 +766,7 @@ export function ResourceListScreen({
                     <p className="text-[11px] font-bold uppercase tracking-wider text-blue-900">
                       Storefront GPS Location
                     </p>
-                    <p className="font-mono text-xs text-zinc-600 truncate">
+                    <p className="font-mono text-xs text-zinc-900 truncate">
                       {String(selectedRow.latitude)}, {String(selectedRow.longitude)}
                     </p>
                   </div>
@@ -760,7 +786,7 @@ export function ResourceListScreen({
             <div className="mt-5 divide-y divide-zinc-100">
               {columns.map((col) => (
                 <div key={col.key} className="flex justify-between gap-4 py-3 text-sm">
-                  <span className="text-zinc-500">{col.label}</span>
+                  <span className="text-zinc-800">{col.label}</span>
                   <strong className="text-right text-zinc-800">
                     {String(selectedRow[col.key] ?? "—")}
                   </strong>
@@ -775,7 +801,7 @@ export function ResourceListScreen({
             </button>
           </section>
         </div>
-      )}
+      ))}
     </DashboardShell>
   );
 }

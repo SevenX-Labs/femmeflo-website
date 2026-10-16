@@ -46,7 +46,7 @@ export default function SellerIncentivePage() {
             onClick={loadIncentives}
             disabled={loading}
             title="Refresh incentive stats"
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 hover:border-rose-200 hover:text-[#E61C5D]"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 hover:border-rose-200 hover:text-[#E61C5D]"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
           </button>
@@ -79,7 +79,7 @@ export default function SellerIncentivePage() {
       <SectionCard title="Incentive history" description="Confirmed delivery periods contributing to payout" className="mt-8">
         <div className="overflow-x-auto">
           <table className="w-full min-w-120 text-left">
-            <thead className="border-b border-zinc-100 text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
+            <thead className="border-b border-zinc-100 text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-700">
               <tr>
                 <th className="pb-3">Period</th>
                 <th className="pb-3">Packets</th>
@@ -91,12 +91,12 @@ export default function SellerIncentivePage() {
               {items.map((row) => (
                 <tr key={row.saleId}>
                   <td className="py-4 text-sm font-bold text-zinc-700">{new Date(row.date).toLocaleDateString("en-IN")}</td>
-                  <td className="py-4 text-sm text-zinc-500">{row.quantity} pkts</td>
-                  <td className="py-4 text-sm text-zinc-500">{row.incentiveRatePaise === null ? "—" : `₹${row.incentiveRatePaise / 100}`}</td>
+                  <td className="py-4 text-sm text-zinc-800">{row.quantity} pkts</td>
+                  <td className="py-4 text-sm text-zinc-800">{row.incentiveRatePaise === null ? "—" : `₹${row.incentiveRatePaise / 100}`}</td>
                   <td className="py-4 text-sm font-bold text-[#156035]">₹{row.incentiveAmountPaise / 100}</td>
                 </tr>
               ))}
-              {items.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-sm text-zinc-400">No confirmed incentive records.</td></tr>}
+              {items.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-sm text-zinc-700">No confirmed incentive records.</td></tr>}
             </tbody>
           </table>
         </div>

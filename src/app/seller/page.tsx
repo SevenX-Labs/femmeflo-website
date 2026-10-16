@@ -111,7 +111,7 @@ export default function SellerOverviewDashboard() {
               onClick={fetchDashboard}
               disabled={loading}
               title="Refresh live metrics"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
@@ -178,7 +178,7 @@ export default function SellerOverviewDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#E61C5D]">Stock balance</p>
-              <h3 className="mt-1 font-playfair text-xl font-bold text-[#156035]">Inventory distribution</h3>
+              <h3 className="mt-1 text-xl font-bold font-sans tracking-tight text-[#156035]">Inventory distribution</h3>
             </div>
             <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-[#156035]">
               {soldPercent}% sold
@@ -196,20 +196,20 @@ export default function SellerOverviewDashboard() {
 
           <div className="mt-5 grid grid-cols-3 gap-4 border-t border-zinc-100 pt-4 text-center">
             <div>
-              <p className="text-xs text-zinc-400">Assigned</p>
-              <p className="mt-1 font-playfair text-xl font-bold text-zinc-900">
+              <p className="text-xs text-zinc-700">Assigned</p>
+              <p className="mt-1 text-xl font-bold font-sans tracking-tight text-zinc-900">
                 {metrics.assignedPackets}
               </p>
             </div>
             <div>
-              <p className="text-xs text-zinc-400">Sold</p>
-              <p className="mt-1 font-playfair text-xl font-bold text-[#156035]">
+              <p className="text-xs text-zinc-700">Sold</p>
+              <p className="mt-1 text-xl font-bold font-sans tracking-tight text-[#156035]">
                 {metrics.soldPackets}
               </p>
             </div>
             <div>
-              <p className="text-xs text-zinc-400">Remaining</p>
-              <p className="mt-1 font-playfair text-xl font-bold text-amber-600">
+              <p className="text-xs text-zinc-700">Remaining</p>
+              <p className="mt-1 text-xl font-bold font-sans tracking-tight text-amber-600">
                 {metrics.remainingPackets}
               </p>
             </div>
@@ -224,7 +224,7 @@ export default function SellerOverviewDashboard() {
               <p className="text-xs font-bold uppercase tracking-[0.16em]">Price Rule notice</p>
             </div>
             <h4 className="mt-2 text-sm font-bold text-zinc-900">Standard rate: ₹25 / packet</h4>
-            <p className="mt-1.5 text-xs leading-relaxed text-zinc-600">
+            <p className="mt-1.5 text-xs leading-relaxed text-zinc-900">
               Sales below ₹25 require Super Admin WhatsApp approval before packet deduction and incentive calculation.
             </p>
           </div>
@@ -263,9 +263,9 @@ export default function SellerOverviewDashboard() {
                       <p className="text-sm font-bold text-zinc-800">
                         {s.customer?.shopName || "Customer Store"}
                       </p>
-                      <p className="text-xs text-zinc-400">
+                      <p className="text-xs text-zinc-700">
                         {s.quantity} packets ·{" "}
-                        <span className="font-semibold text-zinc-600">
+                        <span className="font-semibold text-zinc-900">
                           {s.paymentMode === "CASH" ? "Cash" : s.paymentMode === "BANK" ? "Bank" : "Pending"}
                         </span>{" "}
                         · {new Date(s.createdAt).toLocaleDateString("en-IN")}
@@ -315,7 +315,7 @@ export default function SellerOverviewDashboard() {
                           onClick={() => handleInvoicePdf(s.invoice!.id, s.invoice?.number, "download")}
                           disabled={Boolean(pdfLoadingId)}
                           title="Download Invoice PDF"
-                          className="rounded-lg p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50"
+                          className="rounded-lg p-1 text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50"
                         >
                           {pdfLoadingId === `${s.invoice.id}-download` ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin text-[#E61C5D]" />
@@ -329,7 +329,7 @@ export default function SellerOverviewDashboard() {
                 </div>
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-zinc-200 py-10 text-center text-xs text-zinc-400">
+              <div className="rounded-xl border border-dashed border-zinc-200 py-10 text-center text-xs text-zinc-700">
                 No recorded sales yet. Click &quot;Record sale&quot; to log your first field transaction.
               </div>
             )}
@@ -346,7 +346,7 @@ export default function SellerOverviewDashboard() {
                 <ReceiptIndianRupee className="h-4 w-4 text-[#E61C5D]" />
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Record Field Sale</p>
-                  <p className="text-xs text-zinc-400">Calculate totals, packet cost &amp; invoice</p>
+                  <p className="text-xs text-zinc-700">Calculate totals, packet cost &amp; invoice</p>
                 </div>
               </div>
               <span className="text-xs font-bold text-[#E61C5D]">Record &rarr;</span>
@@ -360,7 +360,7 @@ export default function SellerOverviewDashboard() {
                 <Store className="h-4 w-4 text-[#156035]" />
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Onboard Retail Shop</p>
-                  <p className="text-xs text-zinc-400">Add shopkeeper, category &amp; GPS location</p>
+                  <p className="text-xs text-zinc-700">Add shopkeeper, category &amp; GPS location</p>
                 </div>
               </div>
               <span className="text-xs font-bold text-[#156035]">+ Add</span>
@@ -374,10 +374,10 @@ export default function SellerOverviewDashboard() {
                 <PackageCheck className="h-4 w-4 text-amber-600" />
                 <div>
                   <p className="text-sm font-bold text-zinc-800">My Packet Inventory</p>
-                  <p className="text-xs text-zinc-400">{metrics.remainingPackets} packets in hand</p>
+                  <p className="text-xs text-zinc-700">{metrics.remainingPackets} packets in hand</p>
                 </div>
               </div>
-              <span className="text-xs font-bold text-zinc-600">Audit &rarr;</span>
+              <span className="text-xs font-bold text-zinc-900">Audit &rarr;</span>
             </Link>
 
             <Link
@@ -388,10 +388,10 @@ export default function SellerOverviewDashboard() {
                 <DollarSign className="h-4 w-4 text-emerald-600" />
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Incentive Status</p>
-                  <p className="text-xs text-zinc-400">₹{metrics.totalIncentiveRupees} earned this month</p>
+                  <p className="text-xs text-zinc-700">₹{metrics.totalIncentiveRupees} earned this month</p>
                 </div>
               </div>
-              <span className="text-xs font-bold text-zinc-600">View &rarr;</span>
+              <span className="text-xs font-bold text-zinc-900">View &rarr;</span>
             </Link>
           </div>
         </SectionCard>

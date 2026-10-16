@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -10,7 +11,23 @@ interface SmoothScrollProps {
 }
 
 export default function SmoothScroll({ children }: SmoothScrollProps) {
+  const pathname = usePathname();
+
   useEffect(() => {
+    // Only initialize Lenis smooth scrolling on public marketing / landing pages.
+    // Dashboard, admin, manager, seller, and modal-heavy workspaces need standard native scrolling
+    // so nested scroll boxes, dialogs, and tables can scroll freely with mousewheel without Lenis intercepting.
+    const isDashboardOrAuthRoute =
+      pathname?.startsWith("/admin") ||
+      pathname?.startsWith("/manager") ||
+      pathname?.startsWith("/manger") ||
+      pathname?.startsWith("/seller") ||
+      pathname?.startsWith("/login");
+
+    if (isDashboardOrAuthRoute) {
+      return;
+    }
+
     // Register GSAP ScrollTrigger plugin for syncing
     gsap.registerPlugin(ScrollTrigger);
 
@@ -24,6 +41,20 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
       smoothWheel: !prefersReducedMotion,
       wheelMultiplier: 1.0,
       touchMultiplier: 1.2,
+      prevent: (node) => {
+        // Automatically allow any element with data-lenis-prevent, inside a dialog/modal,
+        // or any element that has scrollable overflow to scroll natively
+        if (!node || !(node instanceof HTMLElement)) return false;
+        if (
+          node.hasAttribute("data-lenis-prevent") ||
+          node.closest("[data-lenis-prevent]") ||
+          node.getAttribute("role") === "dialog" ||
+          node.closest('[role="dialog"]')
+        ) {
+          return true;
+        }
+        return false;
+      },
     });
 
     (window as unknown as { lenis: Lenis | null }).lenis = lenis;
@@ -86,7 +117,7 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
       lenis.destroy();
       (window as unknown as { lenis: Lenis | null }).lenis = null;
     };
-  }, []);
+  }, [pathname]);
 
   return <>{children}</>;
 }

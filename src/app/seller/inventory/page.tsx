@@ -63,7 +63,7 @@ export default function SellerInventoryPage() {
               onClick={loadInventory}
               disabled={loading}
               title="Refresh stock"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 hover:border-rose-200 hover:text-[#E61C5D]"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 hover:border-rose-200 hover:text-[#E61C5D]"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
@@ -89,7 +89,7 @@ export default function SellerInventoryPage() {
                   <p className="text-sm font-bold text-zinc-700">
                     {t.type === "TRANSFER" ? "Depot transfer received" : t.type === "SALE" ? "Customer sale deduction" : "Stock receipt"}
                   </p>
-                  <p className="mt-1 text-xs text-zinc-400">
+                  <p className="mt-1 text-xs text-zinc-700">
                     {new Date(t.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
@@ -104,7 +104,7 @@ export default function SellerInventoryPage() {
                 </span>
               </div>
             ))
-          ) : <p className="py-10 text-center text-sm text-zinc-400">No stock movements available.</p>}
+          ) : <p className="py-10 text-center text-sm text-zinc-700">No stock movements available.</p>}
         </div>
       </SectionCard>
     </DashboardShell>

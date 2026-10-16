@@ -10,7 +10,7 @@ export default function LegacyManagerLoginPage() {
   }, [router]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] text-sm text-zinc-500">
+    <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] text-sm text-zinc-800">
       Redirecting to /manager/auth/login...
     </main>
   );

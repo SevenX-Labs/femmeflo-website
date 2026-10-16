@@ -147,7 +147,7 @@ export default function AdminSettingsPage() {
                 <p className="truncate font-playfair text-lg font-bold text-zinc-900">
                   {user?.name || "Super Admin"}
                 </p>
-                <p className="truncate text-xs text-zinc-500">
+                <p className="truncate text-xs text-zinc-800">
                   {user?.email || "admin@femmeflo.in"}
                 </p>
               </div>
@@ -155,20 +155,20 @@ export default function AdminSettingsPage() {
 
             <div className="mt-4 space-y-3 text-xs">
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Role Authority</span>
+                <span className="text-zinc-800">Role Authority</span>
                 <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 font-bold text-[#156035]">
                   {user?.role || "SUPER_ADMIN"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Account Status</span>
+                <span className="text-zinc-800">Account Status</span>
                 <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                   Active & Verified
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Session Expiration</span>
+                <span className="text-zinc-800">Session Expiration</span>
                 <span className="font-semibold text-zinc-700">60 Minutes</span>
               </div>
             </div>
@@ -181,7 +181,7 @@ export default function AdminSettingsPage() {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-800">
                   Security Protocol
                 </h3>
-                <p className="mt-1.5 text-xs leading-relaxed text-zinc-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-zinc-900">
                   Changing your password immediately invalidates all active session tokens on the backend. You will be redirected to the sign-in screen to authenticate with your new credentials.
                 </p>
               </div>
@@ -224,7 +224,7 @@ export default function AdminSettingsPage() {
                   Current Password <span className="text-[#E61C5D]">*</span>
                 </label>
                 <div className="relative">
-                  <KeyRound className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                  <KeyRound className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-700" />
                   <input
                     type={showCurrent ? "text" : "password"}
                     name="currentPassword"
@@ -241,7 +241,7 @@ export default function AdminSettingsPage() {
                   <button
                     type="button"
                     onClick={() => setShowCurrent(!showCurrent)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-zinc-400 hover:text-zinc-600 focus:outline-none"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-zinc-700 hover:text-zinc-900 focus:outline-none"
                     aria-label={showCurrent ? "Hide current password" : "Show current password"}
                   >
                     {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -255,7 +255,7 @@ export default function AdminSettingsPage() {
                   New Password <span className="text-[#E61C5D]">*</span>
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                  <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-700" />
                   <input
                     type={showNew ? "text" : "password"}
                     name="newPassword"
@@ -276,7 +276,7 @@ export default function AdminSettingsPage() {
                   <button
                     type="button"
                     onClick={() => setShowNew(!showNew)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-zinc-400 hover:text-zinc-600 focus:outline-none"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-zinc-700 hover:text-zinc-900 focus:outline-none"
                     aria-label={showNew ? "Hide new password" : "Show new password"}
                   >
                     {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -290,12 +290,12 @@ export default function AdminSettingsPage() {
                       className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${
                         isLengthValid
                           ? "bg-emerald-100 text-[#156035]"
-                          : "bg-zinc-100 text-zinc-400"
+                          : "bg-zinc-100 text-zinc-700"
                       }`}
                     >
                       {isLengthValid ? <Check className="h-3 w-3 stroke-[3]" /> : "•"}
                     </span>
-                    <span className={isLengthValid ? "font-semibold text-emerald-800" : "text-zinc-500"}>
+                    <span className={isLengthValid ? "font-semibold text-emerald-800" : "text-zinc-800"}>
                       At least 12 characters ({newPassword.length}/12)
                     </span>
                   </div>
@@ -323,7 +323,7 @@ export default function AdminSettingsPage() {
                   Confirm New Password <span className="text-[#E61C5D]">*</span>
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                  <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-700" />
                   <input
                     type={showConfirm ? "text" : "password"}
                     name="confirmPassword"
@@ -344,7 +344,7 @@ export default function AdminSettingsPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-zinc-400 hover:text-zinc-600 focus:outline-none"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-zinc-700 hover:text-zinc-900 focus:outline-none"
                     aria-label={showConfirm ? "Hide password confirmation" : "Show password confirmation"}
                   >
                     {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

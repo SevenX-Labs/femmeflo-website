@@ -95,8 +95,8 @@ function AdminLoginForm() {
             </div>
           </section>
 
-          <section className="flex flex-col justify-center p-6 sm:p-10 lg:p-12">
-            <Link href="/" className="inline-flex w-fit items-center gap-2 rounded-lg text-xs font-bold text-zinc-500 transition hover:text-[#E61C5D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300">
+          <section className="flex flex-col justify-center p-4.5 sm:p-8 lg:p-12">
+            <Link href="/" className="inline-flex w-fit items-center gap-2 rounded-lg text-xs font-bold text-zinc-800 transition hover:text-[#E61C5D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300">
               <ArrowLeft className="h-4 w-4" />Back to Femmeflo
             </Link>
             <div className="mt-7">
@@ -106,8 +106,8 @@ function AdminLoginForm() {
                   <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Live API</span>
                 )}
               </div>
-              <h2 className="mt-2 font-playfair text-4xl font-bold tracking-tight text-[#156035]">Sign in to admin</h2>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-500">Enter your credentials to access your operations workspace.</p>
+              <h2 className="mt-2 font-playfair text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#156035]">Sign in to admin</h2>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-800">Enter your credentials to access your operations workspace.</p>
             </div>
 
             <div className="mt-6 max-w-md rounded-2xl border border-rose-100 bg-[#FFFEFD] p-4 shadow-[0_8px_24px_rgba(104,48,66,0.04)] sm:p-5">
@@ -143,7 +143,7 @@ function AdminLoginForm() {
                 <label className="block">
                   <span className="mb-2 block text-xs font-bold text-zinc-700">Email address</span>
                   <span className="relative block">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-700" />
                     <input
                       type="email"
                       name="email"
@@ -152,7 +152,7 @@ function AdminLoginForm() {
                       suppressHydrationWarning
                       value={email}
                       onChange={event => { setEmail(event.target.value); setError(""); setErrorField(null); }}
-                      placeholder="admin@femmeflo.in"
+                      placeholder="Enter your email address"
                       aria-invalid={errorField === "email"}
                       className="h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] pl-10 pr-3 text-sm outline-none transition aria-[invalid=true]:border-rose-300 aria-[invalid=true]:bg-rose-50/40 focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
                     />
@@ -161,7 +161,7 @@ function AdminLoginForm() {
                 <label className="block">
                   <span className="mb-2 block text-xs font-bold text-zinc-700">Password</span>
                   <span className="relative block">
-                    <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                    <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-700" />
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
@@ -177,7 +177,7 @@ function AdminLoginForm() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(value => !value)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-zinc-400 transition hover:bg-rose-50 hover:text-[#E61C5D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-zinc-700 transition hover:bg-rose-50 hover:text-[#E61C5D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                       aria-pressed={showPassword}
                     >
@@ -186,7 +186,7 @@ function AdminLoginForm() {
                   </span>
                 </label>
                 <div className="flex items-center justify-between gap-3">
-                  <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-500">
+                  <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-800">
                     <input
                       type="checkbox"
                       checked={rememberMe}

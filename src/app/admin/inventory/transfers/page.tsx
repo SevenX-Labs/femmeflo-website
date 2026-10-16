@@ -106,7 +106,7 @@ export default function TransfersPage() {
       userDetail="Head Office"
       navigation={adminNavigation}
     >
-      <Link href="/admin/inventory" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-[#E61C5D]">
+      <Link href="/admin/inventory" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-800 hover:text-[#E61C5D]">
         <ArrowLeft className="h-4 w-4" />Back to inventory
       </Link>
       <div className="mt-7">
@@ -248,7 +248,7 @@ export default function TransfersPage() {
                   Packets to transfer *
                 </label>
                 {selectedSource && (
-                  <span className="text-xs font-medium text-zinc-500">
+                  <span className="text-xs font-medium text-zinc-800">
                     Available: <strong className="text-[#156035]">{selectedSource.balance.toLocaleString("en-IN")}</strong> pkts
                   </span>
                 )}
@@ -280,7 +280,7 @@ export default function TransfersPage() {
             </button>
 
             {notice && <p className="text-xs font-semibold text-emerald-700">{notice}</p>}
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-[11px] text-zinc-700">
               
             </p>
           </form>
@@ -296,7 +296,7 @@ export default function TransfersPage() {
                     <ArrowRightLeft className="h-4 w-4 shrink-0 text-[#E61C5D]" />
                     <span>{t.destination?.name || "Destination"}</span>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500">
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-800">
                     <span>{t.quantity.toLocaleString("en-IN")} packets · {new Date(t.createdAt).toLocaleDateString("en-IN")}</span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 font-bold text-emerald-700">
                       <CheckCircle2 className="h-3.5 w-3.5" /> Confirmed
@@ -305,7 +305,7 @@ export default function TransfersPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-zinc-200 p-8 text-center text-xs text-zinc-400">
+              <div className="rounded-xl border border-dashed border-zinc-200 p-8 text-center text-xs text-zinc-700">
                 No transfer history recorded yet. Executed transfers will appear here.
               </div>
             )}

@@ -49,7 +49,7 @@ export function RoleGuard({ role, loginPath, children }: RoleGuardProps) {
 
   if (isPublicRoute) return <>{children}</>;
   if (isLoading || !user || user.role !== role) {
-    return <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] text-sm text-zinc-500">Checking account access...</main>;
+    return <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] text-sm text-zinc-800">Checking account access...</main>;
   }
   return <>{children}</>;
 }

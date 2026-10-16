@@ -60,7 +60,7 @@ export default function ManagerInventoryPage() {
               onClick={loadInventory}
               disabled={loading}
               title="Refresh stock data"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
@@ -110,7 +110,7 @@ export default function ManagerInventoryPage() {
       >
         <div className="overflow-x-auto">
           <table className="w-full min-w-180 text-left">
-            <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
+            <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-700">
               <tr>
                 <th className="px-4 py-4">Seller</th>
                 <th className="px-4 py-4">Village</th>
@@ -135,7 +135,7 @@ export default function ManagerInventoryPage() {
                         <span className="text-sm font-bold text-zinc-800">{seller.seller.name}</span>
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-sm text-zinc-500">
+                    <td className="px-4 py-4 text-sm text-zinc-800">
                       {seller.seller.village || "—"}
                     </td>
                     <td className="px-4 py-4 text-sm font-semibold text-zinc-700">
@@ -163,7 +163,7 @@ export default function ManagerInventoryPage() {
                             style={{ width: `${Math.min(100, utilization)}%` }}
                           />
                         </div>
-                        <span className="text-xs font-semibold text-zinc-500">{utilization}%</span>
+                        <span className="text-xs font-semibold text-zinc-800">{utilization}%</span>
                       </div>
                     </td>
                   </tr>
@@ -173,7 +173,7 @@ export default function ManagerInventoryPage() {
           </table>
 
           {sellers.length === 0 && (
-            <p className="py-12 text-center text-sm text-zinc-400">
+            <p className="py-12 text-center text-sm text-zinc-700">
               No seller stock data available in your territory.
             </p>
           )}
@@ -210,7 +210,7 @@ export default function ManagerInventoryPage() {
             <div key={item.title} className="rounded-2xl border border-zinc-100 p-5">
               <span className={`inline-flex rounded-xl p-2.5 ${item.color}`}>{item.icon}</span>
               <h3 className="mt-4 text-sm font-bold text-zinc-800">{item.title}</h3>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-500">{item.desc}</p>
+              <p className="mt-1 text-xs leading-relaxed text-zinc-800">{item.desc}</p>
             </div>
           ))}
         </div>

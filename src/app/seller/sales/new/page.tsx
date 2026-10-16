@@ -95,7 +95,7 @@ export default function NewSellerSalePage() {
       userDetail={userDetail}
       navigation={sellerNavigation}
     >
-      <Link href="/seller/sales" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-[#E61C5D]">
+      <Link href="/seller/sales" className="inline-flex items-center gap-2 text-xs font-bold text-zinc-800 hover:text-[#E61C5D]">
         <ArrowLeft className="h-4 w-4" />Back to sales
       </Link>
       <div className="mt-7">
@@ -164,12 +164,12 @@ export default function NewSellerSalePage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-xl bg-[#FFF8FA] p-4">
               <PackageCheck className="h-4 w-4 text-[#E61C5D]" />
-              <p className="mt-3 text-xs text-zinc-500">Available stock</p>
+              <p className="mt-3 text-xs text-zinc-800">Available stock</p>
               <p className="mt-1 text-xl font-bold text-[#156035]">{availableStock}</p>
             </div>
             <div className="rounded-xl bg-[#FFF8FA] p-4">
               <IndianRupee className="h-4 w-4 text-[#E61C5D]" />
-              <p className="mt-3 text-xs text-zinc-500">Total amount</p>
+              <p className="mt-3 text-xs text-zinc-800">Total amount</p>
               <p className="mt-1 text-xl font-bold text-[#156035]">₹{total.toLocaleString("en-IN")}</p>
             </div>
             <label className="block rounded-xl bg-[#FFF8FA] p-4 text-xs font-bold text-zinc-700">

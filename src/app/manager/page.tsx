@@ -84,7 +84,7 @@ export default function ManagerOverviewDashboard() {
               onClick={fetchDashboard}
               disabled={loading}
               title="Refresh territory metrics"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
@@ -172,9 +172,9 @@ export default function ManagerOverviewDashboard() {
                       <p className="text-sm font-bold text-zinc-800">
                         {s.customer?.shopName || "Customer Store"}
                       </p>
-                      <p className="text-xs text-zinc-400">
+                      <p className="text-xs text-zinc-700">
                         by {s.seller?.name || "Seller"} · {s.quantity} pkts ·{" "}
-                        <span className="font-semibold text-zinc-600">
+                        <span className="font-semibold text-zinc-900">
                           {s.paymentMode === "CASH" ? "Cash" : s.paymentMode === "BANK" ? "Bank" : "Pending"}
                         </span>{" "}
                         · {new Date(s.createdAt).toLocaleDateString("en-IN")}
@@ -204,7 +204,7 @@ export default function ManagerOverviewDashboard() {
                 </div>
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-zinc-200 py-8 text-center text-xs text-zinc-400">
+              <div className="rounded-xl border border-dashed border-zinc-200 py-8 text-center text-xs text-zinc-700">
                 No territory sales recorded yet. Sellers will log sales from the field.
               </div>
             )}
@@ -234,7 +234,7 @@ export default function ManagerOverviewDashboard() {
                     </span>
                     <div>
                       <p className="text-sm font-bold text-zinc-800">{s.name}</p>
-                      <p className="text-xs text-zinc-400">
+                      <p className="text-xs text-zinc-700">
                         {[s.village, s.district].filter(Boolean).join(", ") || "Territory"} ·{" "}
                         {s._count?.customers ?? 0} customers onboarded
                       </p>
@@ -246,7 +246,7 @@ export default function ManagerOverviewDashboard() {
                     </p>
                     <span
                       className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                        s.active ? "bg-emerald-50 text-[#156035]" : "bg-zinc-100 text-zinc-500"
+                        s.active ? "bg-emerald-50 text-[#156035]" : "bg-zinc-100 text-zinc-800"
                       }`}
                     >
                       {s.active ? "Active" : "Inactive"}
@@ -255,7 +255,7 @@ export default function ManagerOverviewDashboard() {
                 </div>
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-zinc-200 py-8 text-center text-xs text-zinc-400">
+              <div className="rounded-xl border border-dashed border-zinc-200 py-8 text-center text-xs text-zinc-700">
                 No sellers assigned yet. Click &quot;Add seller&quot; to onboard field agents.
               </div>
             )}
@@ -277,10 +277,10 @@ export default function ManagerOverviewDashboard() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Total Customer Stores</p>
-                  <p className="text-xs text-zinc-400">Pharmacies, medicals &amp; general stores</p>
+                  <p className="text-xs text-zinc-700">Pharmacies, medicals &amp; general stores</p>
                 </div>
               </div>
-              <span className="font-playfair text-2xl font-bold text-[#156035]">
+              <span className="text-2xl font-bold font-sans tracking-tight text-[#156035]">
                 {metrics.totalCustomers}
               </span>
             </div>
@@ -292,10 +292,10 @@ export default function ManagerOverviewDashboard() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Assigned Sellers</p>
-                  <p className="text-xs text-zinc-400">Field sales agents reporting to you</p>
+                  <p className="text-xs text-zinc-700">Field sales agents reporting to you</p>
                 </div>
               </div>
-              <span className="font-playfair text-2xl font-bold text-[#E61C5D]">
+              <span className="text-2xl font-bold font-sans tracking-tight text-[#E61C5D]">
                 {metrics.totalSellers}
               </span>
             </div>
@@ -307,10 +307,10 @@ export default function ManagerOverviewDashboard() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Stock in Field</p>
-                  <p className="text-xs text-zinc-400">Ready for instant sale in territory</p>
+                  <p className="text-xs text-zinc-700">Ready for instant sale in territory</p>
                 </div>
               </div>
-              <span className="font-playfair text-2xl font-bold text-amber-700">
+              <span className="text-2xl font-bold font-sans tracking-tight text-amber-700">
                 {metrics.totalRemainingStock} pkts
               </span>
             </div>
@@ -327,7 +327,7 @@ export default function ManagerOverviewDashboard() {
                 <Users className="h-4 w-4 text-[#E61C5D]" />
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Manage Sellers</p>
-                  <p className="text-xs text-zinc-400">Onboard sellers &amp; review activity</p>
+                  <p className="text-xs text-zinc-700">Onboard sellers &amp; review activity</p>
                 </div>
               </div>
               <span className="text-xs font-bold text-[#E61C5D]">View team &rarr;</span>
@@ -341,10 +341,10 @@ export default function ManagerOverviewDashboard() {
                 <Store className="h-4 w-4 text-[#156035]" />
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Territory Customers</p>
-                  <p className="text-xs text-zinc-400">Review retail store accounts &amp; categories</p>
+                  <p className="text-xs text-zinc-700">Review retail store accounts &amp; categories</p>
                 </div>
               </div>
-              <span className="text-xs font-bold text-zinc-600">Explore &rarr;</span>
+              <span className="text-xs font-bold text-zinc-900">Explore &rarr;</span>
             </Link>
 
             <Link
@@ -355,10 +355,10 @@ export default function ManagerOverviewDashboard() {
                 <PackageCheck className="h-4 w-4 text-amber-600" />
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Reconcile Stock</p>
-                  <p className="text-xs text-zinc-400">Audit seller allocations and sold packets</p>
+                  <p className="text-xs text-zinc-700">Audit seller allocations and sold packets</p>
                 </div>
               </div>
-              <span className="text-xs font-bold text-zinc-600">Audit &rarr;</span>
+              <span className="text-xs font-bold text-zinc-900">Audit &rarr;</span>
             </Link>
 
             <Link
@@ -369,10 +369,10 @@ export default function ManagerOverviewDashboard() {
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Territory Sales Ledger</p>
-                  <p className="text-xs text-zinc-400">Review all confirmed &amp; pending transactions</p>
+                  <p className="text-xs text-zinc-700">Review all confirmed &amp; pending transactions</p>
                 </div>
               </div>
-              <span className="text-xs font-bold text-zinc-600">Ledger &rarr;</span>
+              <span className="text-xs font-bold text-zinc-900">Ledger &rarr;</span>
             </Link>
           </div>
         </SectionCard>
