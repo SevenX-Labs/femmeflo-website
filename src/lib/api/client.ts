@@ -60,11 +60,24 @@ export const tokenStorage = {
     }
   },
 
-  getLastUser<T>(): T | null {
+  getLastUser<T>(role?: string): T | null {
     if (typeof window === "undefined") return null;
     try {
+      if (role) {
+        const roleKey = role.toLowerCase().replace("super_", "");
+        const roleData = localStorage.getItem(`femmeflo_last_user_${roleKey}`);
+        if (roleData) return JSON.parse(roleData);
+      }
       const data = localStorage.getItem(LAST_USER_KEY) || localStorage.getItem(USER_KEY);
-      return data ? JSON.parse(data) : null;
+      const parsed = data ? JSON.parse(data) : null;
+      if (role && parsed && (parsed as any).role) {
+        const uRole = String((parsed as any).role).toLowerCase().replace("super_", "");
+        const targetRole = role.toLowerCase().replace("super_", "");
+        if (uRole !== targetRole) {
+          return null;
+        }
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -75,6 +88,16 @@ export const tokenStorage = {
     try {
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       localStorage.setItem(LAST_USER_KEY, JSON.stringify(user));
+      if (user && typeof user === "object" && "role" in user && (user as any).role) {
+        const roleStr = String((user as any).role).toLowerCase();
+        if (roleStr.includes("admin")) {
+          localStorage.setItem("femmeflo_last_user_admin", JSON.stringify(user));
+        } else if (roleStr.includes("manager")) {
+          localStorage.setItem("femmeflo_last_user_manager", JSON.stringify(user));
+        } else if (roleStr.includes("seller")) {
+          localStorage.setItem("femmeflo_last_user_seller", JSON.stringify(user));
+        }
+      }
     } catch {
       // Ignored
     }

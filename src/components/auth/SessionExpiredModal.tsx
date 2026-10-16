@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Lock,
@@ -16,11 +16,10 @@ import {
   Briefcase,
   UserCheck,
   User,
-  RotateCcw,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { tokenStorage } from "@/lib/api/client";
-import type { PublicUser, Role } from "@/lib/api/types";
+import type { PublicUser } from "@/lib/api/types";
 
 type AuthRole = "manager" | "admin" | "seller";
 
@@ -50,7 +49,7 @@ const ROLE_CONFIG: Record<AuthRole, RoleMeta> = {
     title: "Super Admin",
     badge: "Admin Session",
     eyebrow: "Super Admin Access",
-    placeholder: "admin@femmeflo.in or phone number",
+    placeholder: "admin@femmeflo.in or mobile number",
     loginHref: "/admin/auth/login",
     dashboardHref: "/admin",
     brandColor: "#E61C5D",
@@ -68,6 +67,18 @@ const ROLE_CONFIG: Record<AuthRole, RoleMeta> = {
   },
 };
 
+const isAuthPath = (path: string | null): boolean => {
+  if (!path) return false;
+  return (
+    path === "/" ||
+    path === "/contact" ||
+    path.includes("/auth/") ||
+    path.includes("/login") ||
+    path.includes("/forgot-password") ||
+    path.includes("/reset-password")
+  );
+};
+
 export function SessionExpiredModal() {
   const router = useRouter();
   const pathname = usePathname();
@@ -80,60 +91,74 @@ export function SessionExpiredModal() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastUser, setLastUser] = useState<PublicUser | null>(null);
+  const [lastUserForRole, setLastUserForRole] = useState<PublicUser | null>(null);
 
   // Helper to detect initial role from URL pathname
-  const detectRoleFromPath = (path: string | null): AuthRole => {
-    if (!path) return "manager";
-    if (path.startsWith("/admin")) return "admin";
-    if (path.startsWith("/seller")) return "seller";
-    if (path.startsWith("/manager")) return "manager";
-    return "manager";
-  };
+  const detectRoleFromPath = useCallback((path: string | null): AuthRole => {
+    const currentPath =
+      (typeof window !== "undefined" ? window.location.pathname : path) || "";
+    if (currentPath.includes("/admin")) return "admin";
+    if (currentPath.includes("/seller")) return "seller";
+    if (currentPath.includes("/manager")) return "manager";
+
+    // If path has no role prefix, check cached user role
+    const cached = tokenStorage.getLastUser<PublicUser>();
+    if (cached?.role === "SUPER_ADMIN") return "admin";
+    if (cached?.role === "MANAGER") return "manager";
+    if (cached?.role === "SELLER") return "seller";
+    return "admin";
+  }, []);
+
+  // Helper to sync email field with the matching cached user for THAT role
+  const syncEmailForRole = useCallback((role: AuthRole) => {
+    const roleUser = tokenStorage.getLastUser<PublicUser>(role);
+    if (roleUser) {
+      setEmail(roleUser.email || roleUser.phone || "");
+      setLastUserForRole(roleUser);
+    } else {
+      // Check if general cached user matches this specific role
+      const cached = tokenStorage.getLastUser<PublicUser>();
+      const roleMatches =
+        (role === "admin" && cached?.role === "SUPER_ADMIN") ||
+        (role === "manager" && cached?.role === "MANAGER") ||
+        (role === "seller" && cached?.role === "SELLER");
+
+      if (roleMatches && cached) {
+        setEmail(cached.email || cached.phone || "");
+        setLastUserForRole(cached);
+      } else {
+        // Do NOT prefill an email from another role! Clear it so user can type freely.
+        setEmail("");
+        setLastUserForRole(null);
+      }
+    }
+  }, []);
+
+  // Immediately close if navigating to any login or public auth page
+  useEffect(() => {
+    const currentPath =
+      (typeof window !== "undefined" ? window.location.pathname : pathname) || "";
+    if (isAuthPath(currentPath)) {
+      setIsOpen(false);
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
-      // Don't show session expired modal on public landing / auth pages
-      const isPublicPath =
-        !pathname ||
-        pathname === "/" ||
-        pathname === "/contact" ||
-        pathname.includes("/auth/") ||
-        pathname.includes("/login") ||
-        pathname.includes("/forgot-password") ||
-        pathname.includes("/reset-password");
+      const currentPath =
+        (typeof window !== "undefined" ? window.location.pathname : pathname) || "";
 
-      if (isPublicPath) {
+      // Never display session expired modal on public landing / auth / login pages
+      if (isAuthPath(currentPath)) {
         return;
       }
 
-      // 1. Detect role from path or previous user
-      const initialRole = detectRoleFromPath(pathname);
-      const cached = (tokenStorage.getLastUser<PublicUser>() ||
-        tokenStorage.getCachedUser<PublicUser>() ||
-        user) as PublicUser | null;
+      // 1. Detect role from current workspace
+      const initialRole = detectRoleFromPath(currentPath);
+      setSelectedRole(initialRole);
 
-      if (cached) {
-        setLastUser(cached);
-        if (cached.role === "SUPER_ADMIN" && pathname.startsWith("/admin")) {
-          setSelectedRole("admin");
-        } else if (cached.role === "MANAGER" || pathname.startsWith("/manager")) {
-          setSelectedRole("manager");
-        } else if (cached.role === "SELLER" || pathname.startsWith("/seller")) {
-          setSelectedRole("seller");
-        } else {
-          setSelectedRole(initialRole);
-        }
-
-        // Prefill email or phone
-        if (cached.email) {
-          setEmail(cached.email);
-        } else if (cached.phone) {
-          setEmail(cached.phone);
-        }
-      } else {
-        setSelectedRole(initialRole);
-      }
+      // 2. Prefill email ONLY if a cached user exists for this specific role
+      syncEmailForRole(initialRole);
 
       setError(null);
       setShowPassword(false);
@@ -145,7 +170,7 @@ export function SessionExpiredModal() {
     return () => {
       window.removeEventListener("femmeflo:unauthorized", handleUnauthorized);
     };
-  }, [user, pathname]);
+  }, [user, pathname, detectRoleFromPath, syncEmailForRole]);
 
   // Handle escape key to close
   useEffect(() => {
@@ -161,6 +186,12 @@ export function SessionExpiredModal() {
 
   const currentRoleMeta = useMemo(() => ROLE_CONFIG[selectedRole], [selectedRole]);
   const RoleIcon = currentRoleMeta.icon;
+
+  const handleRoleChange = (newRole: AuthRole) => {
+    setSelectedRole(newRole);
+    setError(null);
+    syncEmailForRole(newRole);
+  };
 
   if (!isOpen) return null;
 
@@ -183,9 +214,11 @@ export function SessionExpiredModal() {
       setShowPassword(false);
 
       // Verify if the authenticated role has access to current path
-      const isManagerPath = pathname.startsWith("/manager");
-      const isAdminPath = pathname.startsWith("/admin");
-      const isSellerPath = pathname.startsWith("/seller");
+      const currentPath =
+        (typeof window !== "undefined" ? window.location.pathname : pathname) || "";
+      const isManagerPath = currentPath.startsWith("/manager");
+      const isAdminPath = currentPath.startsWith("/admin");
+      const isSellerPath = currentPath.startsWith("/seller");
 
       if (isManagerPath && loggedInUser.role === "SELLER") {
         router.push("/seller");
@@ -283,10 +316,7 @@ export function SessionExpiredModal() {
                 <button
                   key={r}
                   type="button"
-                  onClick={() => {
-                    setSelectedRole(r);
-                    setError(null);
-                  }}
+                  onClick={() => handleRoleChange(r)}
                   className={`flex items-center justify-center gap-1.5 rounded-xl py-2 px-1 text-xs font-bold transition cursor-pointer select-none ${
                     isSelected
                       ? "bg-white text-zinc-900 shadow-xs ring-1 ring-black/5"
@@ -301,18 +331,17 @@ export function SessionExpiredModal() {
           </div>
         </div>
 
-        {/* Previous session notice */}
-        {lastUser && (
+        {/* Previous session notice — ONLY shown when matching the selected role */}
+        {lastUserForRole && (
           <div className="mt-3 flex items-center justify-between rounded-xl border border-zinc-200/80 bg-[#FCFAF6] px-3 py-2 text-xs">
             <div className="flex items-center gap-2 min-w-0">
               <User className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
               <span className="text-zinc-600 truncate">
-                Last user: <strong className="text-zinc-900">{lastUser.name}</strong>{" "}
-                <span className="text-[10px] text-zinc-400">({lastUser.role})</span>
+                Saved {currentRoleMeta.title}: <strong className="text-zinc-900">{lastUserForRole.name}</strong>
               </span>
             </div>
             <span className="rounded-full bg-emerald-50 px-2 py-0.2 text-[10px] font-bold text-emerald-800 border border-emerald-200 shrink-0">
-              Cached
+              Auto-filled
             </span>
           </div>
         )}
