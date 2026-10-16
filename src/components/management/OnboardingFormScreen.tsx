@@ -12,6 +12,7 @@ import { sellerApi } from "@/lib/api/seller";
 import { categoryApi } from "@/lib/api/categories";
 import type { Category, ManagerItem, PincodeLookupResponse, SellerItem } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
+import { validateMobileNumber, validateEmail } from "@/lib/validation";
 
 type Props = {
   role: "Super Admin" | "Manager" | "Seller";
@@ -278,6 +279,23 @@ export function OnboardingFormScreen({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
+
+    // Validate 10-digit mobile phone
+    const phoneVal = validateMobileNumber(phone);
+    if (!phoneVal.isValid) {
+      setErrorMessage(phoneVal.error || "Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    // Validate email if entered
+    if (email) {
+      const emailVal = validateEmail(email);
+      if (!emailVal.isValid) {
+        setErrorMessage(emailVal.error || "Please enter a valid email address.");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     setSubmissionStep("Saving record…");
 
@@ -287,7 +305,7 @@ export function OnboardingFormScreen({
         if (role === "Super Admin") {
           await adminApi.createSeller({
             name,
-            phone: phone.startsWith("+") ? phone : `+91${phone.replace(/\D/g, "")}`,
+            phone: phoneVal.normalized,
             email: email || undefined,
             password,
             managerId: selectedManagerId || undefined,
@@ -298,7 +316,7 @@ export function OnboardingFormScreen({
         } else {
           await managerApi.createSeller({
             name,
-            phone: phone.startsWith("+") ? phone : `+91${phone.replace(/\D/g, "")}`,
+            phone: phoneVal.normalized,
             email: email || undefined,
             password,
             state,
@@ -321,13 +339,12 @@ export function OnboardingFormScreen({
         }
 
         // Submitting Customer with Photo & Location (Single Request multipart/form-data)
-        const formattedPhone = phone.startsWith("+") ? phone : `+91${phone.replace(/\D/g, "")}`;
         const formData = new FormData();
 
         // Text fields
         formData.append("shopName", name);
         formData.append("contactName", contactName || name);
-        formData.append("phone", formattedPhone);
+        formData.append("phone", phoneVal.normalized);
         if (email) formData.append("email", email);
         formData.append("categoryId", selectedCategoryId);
 
@@ -584,7 +601,7 @@ export function OnboardingFormScreen({
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                      placeholder="+919876549911"
+                      placeholder="10-digit mobile number, e.g. 9876543210"
                     />
                   </label>
 

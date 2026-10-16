@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock3,
   DollarSign,
+  LockKeyhole,
   PackageCheck,
   Plus,
   ReceiptIndianRupee,
@@ -17,10 +18,17 @@ import {
   Users,
 } from "lucide-react";
 import { DashboardShell, MetricCard, PageHeading, SectionCard } from "@/components/management/DashboardShell";
-import { managerNavigation } from "@/components/management/navigation";
+import { getManagerNavigation } from "@/components/management/navigation";
 import { managerApi } from "@/lib/api/manager";
 import type { ManagerDashboardData, SaleItem, SellerItem } from "@/lib/api/types";
 import { useAuth } from "@/context/AuthContext";
+import {
+  canApproveSales,
+  canManageSellers,
+  canOnboardCustomers,
+  canViewCustomers,
+  canViewInventory,
+} from "@/lib/permissions";
 
 export default function ManagerOverviewDashboard() {
   const [data, setData] = useState<ManagerDashboardData | null>(null);
@@ -28,18 +36,39 @@ export default function ManagerOverviewDashboard() {
   const [sellersList, setSellersList] = useState<SellerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
+
+  const canSales = canApproveSales(user);
+  const canManage = canManageSellers(user);
+  const canCustomers = canViewCustomers(user) || canOnboardCustomers(user);
+  const canInventory = canViewInventory(user);
+  const canOnboard = canOnboardCustomers(user);
 
   const fetchDashboard = async () => {
     setLoading(true);
     setError(null);
     try {
+      // Refresh current user session permissions from backend
+      const refreshed = await refreshUser().catch(() => user);
+      const activeUser = refreshed || user;
+
+      const salesPromise = canApproveSales(activeUser)
+        ? managerApi.listSales({ pageSize: 5 }).catch(() => ({ sales: [] as SaleItem[] }))
+        : Promise.resolve({ sales: [] as SaleItem[] });
+
+      const sellersPromise = canManageSellers(activeUser)
+        ? managerApi.listSellers({ pageSize: 5 }).catch(() => ({ sellers: [] as SellerItem[] }))
+        : Promise.resolve({ sellers: [] as SellerItem[] });
+
       const [dashRes, salesRes, sellersRes] = await Promise.all([
-        managerApi.getDashboard(),
-        managerApi.listSales({ pageSize: 5 }).catch(() => ({ sales: [] as SaleItem[] })),
-        managerApi.listSellers({ pageSize: 5 }).catch(() => ({ sellers: [] as SellerItem[] })),
+        managerApi.getDashboard().catch(() => null),
+        salesPromise,
+        sellersPromise,
       ]);
-      setData(dashRes);
+
+      if (dashRes) {
+        setData(dashRes);
+      }
       setRecentSales(salesRes?.sales ?? []);
       setSellersList(sellersRes?.sellers ?? []);
     } catch (err: unknown) {
@@ -72,7 +101,7 @@ export default function ManagerOverviewDashboard() {
       workspace="Manager workspace"
       userName={user?.name ?? "Manager"}
       userDetail={territoryLabel}
-      navigation={managerNavigation}
+      navigation={getManagerNavigation(user)}
     >
       <PageHeading
         eyebrow="Territory management"
@@ -84,22 +113,26 @@ export default function ManagerOverviewDashboard() {
               onClick={fetchDashboard}
               disabled={loading}
               title="Refresh territory metrics"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50 cursor-pointer"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
-            <Link
-              href="/manager/customers/new"
-              className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-bold text-[#E61C5D] shadow-sm transition hover:bg-rose-50"
-            >
-              <Store className="h-4 w-4" /> Add customer
-            </Link>
-            <Link
-              href="/manager/sellers/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#E61C5D] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(230,28,93,0.18)] transition hover:bg-[#c91550]"
-            >
-              <Plus className="h-4 w-4" /> Add seller
-            </Link>
+            {canOnboard && (
+              <Link
+                href="/manager/customers/new"
+                className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-bold text-[#E61C5D] shadow-sm transition hover:bg-rose-50"
+              >
+                <Store className="h-4 w-4" /> Add customer
+              </Link>
+            )}
+            {canManage && (
+              <Link
+                href="/manager/sellers/new"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#E61C5D] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(230,28,93,0.18)] transition hover:bg-[#c91550]"
+              >
+                <Plus className="h-4 w-4" /> Add officer
+              </Link>
+            )}
           </div>
         }
       />
@@ -107,7 +140,7 @@ export default function ManagerOverviewDashboard() {
       {error && (
         <div className="mt-6 flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800">
           <span>Unable to load live territory data. ({error})</span>
-          <button onClick={fetchDashboard} className="underline hover:text-amber-950 font-bold">
+          <button onClick={fetchDashboard} className="underline hover:text-amber-950 font-bold cursor-pointer">
             Retry
           </button>
         </div>
@@ -152,13 +185,23 @@ export default function ManagerOverviewDashboard() {
           title="Recent territory sales"
           description="Latest packet transactions recorded in your jurisdiction"
           action={
-            <Link href="/manager/sales" className="text-xs font-bold text-[#E61C5D] hover:underline">
-              View all sales &rarr;
-            </Link>
+            canSales ? (
+              <Link href="/manager/sales" className="text-xs font-bold text-[#E61C5D] hover:underline">
+                View all sales &rarr;
+              </Link>
+            ) : undefined
           }
         >
           <div className="space-y-3">
-            {recentSales && recentSales.length > 0 ? (
+            {!canSales ? (
+              <div className="rounded-xl border border-dashed border-zinc-200 py-8 px-4 text-center">
+                <LockKeyhole className="h-5 w-5 mx-auto mb-2 text-zinc-400" />
+                <p className="text-xs font-bold text-zinc-700">Sales Ledger Access Not Granted</p>
+                <p className="text-[11px] text-zinc-500 mt-1">
+                  Super Admin has not assigned sales verification permissions to your account.
+                </p>
+              </div>
+            ) : recentSales && recentSales.length > 0 ? (
               recentSales.map((s) => (
                 <div
                   key={s.id}
@@ -216,13 +259,23 @@ export default function ManagerOverviewDashboard() {
           title="Assigned Field Officers"
           description="Field officers onboarding retail stores and distributing stock"
           action={
-            <Link href="/manager/sellers" className="text-xs font-bold text-[#E61C5D] hover:underline">
-              View all officers &rarr;
-            </Link>
+            canManage ? (
+              <Link href="/manager/sellers" className="text-xs font-bold text-[#E61C5D] hover:underline">
+                View all officers &rarr;
+              </Link>
+            ) : undefined
           }
         >
           <div className="space-y-3">
-            {sellersList && sellersList.length > 0 ? (
+            {!canManage ? (
+              <div className="rounded-xl border border-dashed border-zinc-200 py-8 px-4 text-center">
+                <LockKeyhole className="h-5 w-5 mx-auto mb-2 text-zinc-400" />
+                <p className="text-xs font-bold text-zinc-700">Field Officer Supervision Not Granted</p>
+                <p className="text-[11px] text-zinc-500 mt-1">
+                  Super Admin has not assigned officer onboarding and management permissions to your account.
+                </p>
+              </div>
+            ) : sellersList && sellersList.length > 0 ? (
               sellersList.map((s) => (
                 <div
                   key={s.id}
@@ -319,61 +372,113 @@ export default function ManagerOverviewDashboard() {
 
         <SectionCard title="Territory management links" description="Direct operations shortcuts">
           <div className="space-y-3">
-            <Link
-              href="/manager/sellers"
-              className="flex items-center justify-between rounded-xl border border-rose-100 bg-[#FFF8FA] p-4 transition hover:bg-rose-50"
-            >
-              <div className="flex items-center gap-3">
-                <Users className="h-4 w-4 text-[#E61C5D]" />
-                <div>
-                  <p className="text-sm font-bold text-zinc-800">Manage Field Officers</p>
-                  <p className="text-xs text-zinc-700">Onboard officers &amp; review activity</p>
+            {canManage ? (
+              <Link
+                href="/manager/sellers"
+                className="flex items-center justify-between rounded-xl border border-rose-100 bg-[#FFF8FA] p-4 transition hover:bg-rose-50"
+              >
+                <div className="flex items-center gap-3">
+                  <Users className="h-4 w-4 text-[#E61C5D]" />
+                  <div>
+                    <p className="text-sm font-bold text-zinc-800">Manage Field Officers</p>
+                    <p className="text-xs text-zinc-700">Onboard officers &amp; review activity</p>
+                  </div>
                 </div>
+                <span className="text-xs font-bold text-[#E61C5D]">View team &rarr;</span>
+              </Link>
+            ) : (
+              <div className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50/60 p-4 opacity-75">
+                <div className="flex items-center gap-3">
+                  <LockKeyhole className="h-4 w-4 text-zinc-400" />
+                  <div>
+                    <p className="text-sm font-bold text-zinc-600">Field Officers</p>
+                    <p className="text-xs text-zinc-400">Permission not granted by Admin</p>
+                  </div>
+                </div>
+                <span className="rounded bg-zinc-200 px-2 py-0.5 text-[10px] font-bold text-zinc-600">Locked</span>
               </div>
-              <span className="text-xs font-bold text-[#E61C5D]">View team &rarr;</span>
-            </Link>
+            )}
 
-            <Link
-              href="/manager/customers"
-              className="flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition hover:bg-zinc-50"
-            >
-              <div className="flex items-center gap-3">
-                <Store className="h-4 w-4 text-[#156035]" />
-                <div>
-                  <p className="text-sm font-bold text-zinc-800">Territory Customers</p>
-                  <p className="text-xs text-zinc-700">Review retail store accounts &amp; categories</p>
+            {canCustomers ? (
+              <Link
+                href="/manager/customers"
+                className="flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition hover:bg-zinc-50"
+              >
+                <div className="flex items-center gap-3">
+                  <Store className="h-4 w-4 text-[#156035]" />
+                  <div>
+                    <p className="text-sm font-bold text-zinc-800">Territory Customers</p>
+                    <p className="text-xs text-zinc-700">Review retail store accounts &amp; categories</p>
+                  </div>
                 </div>
+                <span className="text-xs font-bold text-zinc-900">Explore &rarr;</span>
+              </Link>
+            ) : (
+              <div className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50/60 p-4 opacity-75">
+                <div className="flex items-center gap-3">
+                  <LockKeyhole className="h-4 w-4 text-zinc-400" />
+                  <div>
+                    <p className="text-sm font-bold text-zinc-600">Territory Customers</p>
+                    <p className="text-xs text-zinc-400">Permission not granted by Admin</p>
+                  </div>
+                </div>
+                <span className="rounded bg-zinc-200 px-2 py-0.5 text-[10px] font-bold text-zinc-600">Locked</span>
               </div>
-              <span className="text-xs font-bold text-zinc-900">Explore &rarr;</span>
-            </Link>
+            )}
 
-            <Link
-              href="/manager/inventory"
-              className="flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition hover:bg-zinc-50"
-            >
-              <div className="flex items-center gap-3">
-                <PackageCheck className="h-4 w-4 text-amber-600" />
-                <div>
-                  <p className="text-sm font-bold text-zinc-800">Reconcile Stock</p>
-                  <p className="text-xs text-zinc-700">Audit seller allocations and sold packets</p>
+            {canInventory ? (
+              <Link
+                href="/manager/inventory"
+                className="flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition hover:bg-zinc-50"
+              >
+                <div className="flex items-center gap-3">
+                  <PackageCheck className="h-4 w-4 text-amber-600" />
+                  <div>
+                    <p className="text-sm font-bold text-zinc-800">Reconcile Stock</p>
+                    <p className="text-xs text-zinc-700">Audit seller allocations and sold packets</p>
+                  </div>
                 </div>
+                <span className="text-xs font-bold text-zinc-900">Audit &rarr;</span>
+              </Link>
+            ) : (
+              <div className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50/60 p-4 opacity-75">
+                <div className="flex items-center gap-3">
+                  <LockKeyhole className="h-4 w-4 text-zinc-400" />
+                  <div>
+                    <p className="text-sm font-bold text-zinc-600">Stock Reconciliation</p>
+                    <p className="text-xs text-zinc-400">Permission not granted by Admin</p>
+                  </div>
+                </div>
+                <span className="rounded bg-zinc-200 px-2 py-0.5 text-[10px] font-bold text-zinc-600">Locked</span>
               </div>
-              <span className="text-xs font-bold text-zinc-900">Audit &rarr;</span>
-            </Link>
+            )}
 
-            <Link
-              href="/manager/sales"
-              className="flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition hover:bg-zinc-50"
-            >
-              <div className="flex items-center gap-3">
-                <TrendingUp className="h-4 w-4 text-emerald-600" />
-                <div>
-                  <p className="text-sm font-bold text-zinc-800">Territory Sales Ledger</p>
-                  <p className="text-xs text-zinc-700">Review all confirmed &amp; pending transactions</p>
+            {canSales ? (
+              <Link
+                href="/manager/sales"
+                className="flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition hover:bg-zinc-50"
+              >
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="h-4 w-4 text-emerald-600" />
+                  <div>
+                    <p className="text-sm font-bold text-zinc-800">Territory Sales Ledger</p>
+                    <p className="text-xs text-zinc-700">Review all confirmed &amp; pending transactions</p>
+                  </div>
                 </div>
+                <span className="text-xs font-bold text-zinc-900">Ledger &rarr;</span>
+              </Link>
+            ) : (
+              <div className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50/60 p-4 opacity-75">
+                <div className="flex items-center gap-3">
+                  <LockKeyhole className="h-4 w-4 text-zinc-400" />
+                  <div>
+                    <p className="text-sm font-bold text-zinc-600">Sales Ledger</p>
+                    <p className="text-xs text-zinc-400">Permission not granted by Admin</p>
+                  </div>
+                </div>
+                <span className="rounded bg-zinc-200 px-2 py-0.5 text-[10px] font-bold text-zinc-600">Locked</span>
               </div>
-              <span className="text-xs font-bold text-zinc-900">Ledger &rarr;</span>
-            </Link>
+            )}
           </div>
         </SectionCard>
       </div>

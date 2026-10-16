@@ -7,6 +7,7 @@ import { sellerNavigation } from "@/components/management/navigation";
 import { sellerApi } from "@/lib/api/seller";
 import type { PublicUser } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
+import { validateMobileNumber, validateEmail } from "@/lib/validation";
 
 export default function SellerProfilePage() {
   const [profile, setProfile] = useState<(PublicUser & { manager?: { name: string; phone?: string } | null }) | null>(null);
@@ -37,14 +38,29 @@ export default function SellerProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
     setError("");
     setSaved(false);
+
+    const phoneVal = validateMobileNumber(phone);
+    if (!phoneVal.isValid) {
+      setError(phoneVal.error || "Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    if (email) {
+      const emailVal = validateEmail(email);
+      if (!emailVal.isValid) {
+        setError(emailVal.error || "Please enter a valid email address.");
+        return;
+      }
+    }
+
+    setIsSaving(true);
 
     try {
       const res = await sellerApi.updateProfile({
         name,
-        phone: phone.startsWith("+") ? phone : `+91${phone.replace(/\D/g, "")}`,
+        phone: phoneVal.normalized,
         email: email || undefined,
       });
 

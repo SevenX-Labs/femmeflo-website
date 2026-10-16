@@ -92,36 +92,47 @@ export const adminApi = {
   },
 
   async getManager(id: string): Promise<{ manager: ManagerItem }> {
-    return apiRequest<{ manager: ManagerItem }>(`admin/managers/${id}`, {
+    const raw = await apiRequest<{ manager?: ManagerItem; user?: ManagerItem }>(`admin/managers/${id}`, {
       method: "GET",
     });
+    const manager = (raw?.manager ?? raw?.user)!;
+    return { manager };
   },
 
   async createManager(payload: CreateManagerPayload): Promise<{ manager: ManagerItem }> {
-    return apiRequest<{ manager: ManagerItem }>("admin/managers", {
+    const raw = await apiRequest<{ manager?: ManagerItem; user?: ManagerItem }>("admin/managers", {
       method: "POST",
       body: payload,
     });
+    const manager = (raw?.manager ?? raw?.user)!;
+    return { manager };
   },
 
   async updateManager(
     id: string,
     payload: UpdateUserPayload
   ): Promise<{ manager: ManagerItem }> {
-    return apiRequest<{ manager: ManagerItem }>(`admin/managers/${id}`, {
+    const raw = await apiRequest<{ manager?: ManagerItem; user?: ManagerItem }>(`admin/managers/${id}`, {
       method: "PATCH",
       body: payload,
     });
+    const manager = (raw?.manager ?? raw?.user)!;
+    return { manager };
   },
 
   async updateManagerPermissions(
     id: string,
     permissions: string[]
   ): Promise<{ manager: ManagerItem }> {
-    return apiRequest<{ manager: ManagerItem }>(`admin/permissions/managers/${id}/permissions`, {
-      method: "PATCH",
-      body: { permissions },
-    });
+    const raw = await apiRequest<{ manager?: ManagerItem; user?: ManagerItem }>(
+      `admin/permissions/managers/${id}/permissions`,
+      {
+        method: "PATCH",
+        body: { permissions },
+      }
+    );
+    const manager = (raw?.manager ?? raw?.user)!;
+    return { manager };
   },
 
   async updateOverallPermissions(

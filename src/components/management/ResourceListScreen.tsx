@@ -1,6 +1,7 @@
 "use client";
 
 import { CustomerDetailModal } from "./CustomerDetailModal";
+import { ManagerDetailModal } from "./ManagerDetailModal";
 
 import { Camera, CheckCircle2, Download, Eye, ExternalLink, FileText, Image as ImageIcon, Loader2, Mail, MapPin, Package, Phone, RefreshCw, Search, SlidersHorizontal, Upload, User, Users, X } from "lucide-react";
 import Link from "next/link";
@@ -804,6 +805,30 @@ export function ResourceListScreen({
                         contact: updated.contactName,
                         phone: updated.phone || "—",
                         photoPath: updated.photoPath,
+                        status: updated.active ? "Active" : "Inactive",
+                      }
+                    : r
+                )
+              );
+            }}
+          />
+        ) : (eyebrow.toLowerCase().includes("manager") || title.toLowerCase().includes("manager")) ? (
+          <ManagerDetailModal
+            managerId={String(selectedRow.id)}
+            onClose={() => setSelectedRow(null)}
+            onManagerUpdated={(updated) => {
+              setDataRows((prev) =>
+                prev.map((r) =>
+                  r.id === updated.id
+                    ? {
+                        ...r,
+                        name: updated.name,
+                        phone: updated.phone || "—",
+                        email: updated.email || "—",
+                        territory:
+                          [updated.village, updated.district, updated.state]
+                            .filter(Boolean)
+                            .join(", ") || "General Scope",
                         status: updated.active ? "Active" : "Inactive",
                       }
                     : r

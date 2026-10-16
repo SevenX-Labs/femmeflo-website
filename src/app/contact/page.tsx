@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { validateMobileNumber, validateEmail } from "@/lib/validation";
 import Link from "next/link";
 import { Footer } from "@/components/footer";
 import { BackgroundParticles } from "@/components/BackgroundParticles";
@@ -88,6 +89,20 @@ export default function ContactPage() {
     if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
       setErrorMsg("Please fill in all required fields (Name, Email, Message).");
       return;
+    }
+
+    const emailVal = validateEmail(formData.email);
+    if (!emailVal.isValid) {
+      setErrorMsg(emailVal.error || "Please enter a valid email address.");
+      return;
+    }
+
+    if (formData.phone && formData.phone.trim()) {
+      const phoneVal = validateMobileNumber(formData.phone);
+      if (!phoneVal.isValid) {
+        setErrorMsg(phoneVal.error || "Please enter a valid 10-digit mobile number.");
+        return;
+      }
     }
 
     setLoading(true);

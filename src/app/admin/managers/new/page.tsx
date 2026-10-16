@@ -9,6 +9,7 @@ import { adminNavigation } from "@/components/management/navigation";
 import { adminApi } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
 import { syncPermissionAliases } from "@/lib/permissions";
+import { validateMobileNumber, validateEmail } from "@/lib/validation";
 
 export default function AdminAddManagerPage() {
   const router = useRouter();
@@ -34,12 +35,27 @@ export default function AdminAddManagerPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    const phoneVal = validateMobileNumber(phone);
+    if (!phoneVal.isValid) {
+      setError(phoneVal.error || "Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    if (email) {
+      const emailVal = validateEmail(email);
+      if (!emailVal.isValid) {
+        setError(emailVal.error || "Please enter a valid email address.");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
       await adminApi.createManager({
         name,
-        phone: phone.startsWith("+") ? phone : `+91${phone.replace(/\D/g, "")}`,
+        phone: phoneVal.normalized,
         email: email || undefined,
         password,
         state,

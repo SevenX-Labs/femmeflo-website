@@ -49,8 +49,8 @@ export const PERMISSION_METADATA: Record<string, { label: string; description: s
 const PERMISSION_ALIASES: Record<string, string[]> = {
   onboard_customers: ["onboard_customers", "CUSTOMER_CREATE"],
   CUSTOMER_CREATE: ["onboard_customers", "CUSTOMER_CREATE"],
-  view_customers: ["view_customers", "CUSTOMER_READ"],
-  CUSTOMER_READ: ["view_customers", "CUSTOMER_READ"],
+  view_customers: ["view_customers", "CUSTOMER_READ", "onboard_customers", "CUSTOMER_CREATE"],
+  CUSTOMER_READ: ["view_customers", "CUSTOMER_READ", "onboard_customers", "CUSTOMER_CREATE"],
   manage_sellers: ["manage_sellers", "SELLER_CREATE", "SELLER_READ"],
   SELLER_CREATE: ["manage_sellers", "SELLER_CREATE", "SELLER_READ"],
   SELLER_READ: ["manage_sellers", "SELLER_READ", "SELLER_CREATE"],
@@ -85,7 +85,7 @@ export function canOnboardCustomers(user: PublicUser | null | undefined): boolea
 }
 
 export function canViewCustomers(user: PublicUser | null | undefined): boolean {
-  return hasPermission(user, "view_customers");
+  return hasPermission(user, "view_customers") || hasPermission(user, "onboard_customers");
 }
 
 export function canManageSellers(user: PublicUser | null | undefined): boolean {
@@ -108,6 +108,10 @@ export function syncPermissionAliases(permissions: string[]): string[] {
     const aliases = PERMISSION_ALIASES[perm];
     if (aliases) {
       aliases.forEach((a) => result.add(a));
+    }
+    if (perm === "onboard_customers" || perm === "CUSTOMER_CREATE") {
+      result.add("view_customers");
+      result.add("CUSTOMER_READ");
     }
   }
   return Array.from(result);

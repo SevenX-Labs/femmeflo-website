@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PackageCheck, RefreshCw, Truck, Users } from "lucide-react";
+import Link from "next/link";
+import { LockKeyhole, PackageCheck, RefreshCw, Truck, Users } from "lucide-react";
 import { DashboardShell, MetricCard, PageHeading, SectionCard } from "@/components/management/DashboardShell";
-import { managerNavigation } from "@/components/management/navigation";
+import { getManagerNavigation } from "@/components/management/navigation";
 import { managerApi } from "@/lib/api/manager";
+import { useAuth } from "@/context/AuthContext";
+import { canViewInventory } from "@/lib/permissions";
 
 interface SellerStockRow {
   seller: {
@@ -18,12 +21,21 @@ interface SellerStockRow {
 }
 
 export default function ManagerInventoryPage() {
+  const { user } = useAuth();
+  const userName = user?.name ?? "Manager";
+  const userDetail = [user?.district, user?.state].filter(Boolean).join(", ") || "Territory";
+  const canInventory = canViewInventory(user);
+
   const [summary, setSummary] = useState({ totalAssigned: 0, totalSold: 0, totalRemaining: 0 });
   const [sellers, setSellers] = useState<SellerStockRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadInventory = async () => {
+    if (!canInventory) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -39,16 +51,56 @@ export default function ManagerInventoryPage() {
   };
 
   useEffect(() => {
-    loadInventory();
-  }, []);
+    if (canInventory) {
+      loadInventory();
+    } else {
+      setLoading(false);
+    }
+  }, [canInventory]);
+
+  if (!canInventory) {
+    return (
+      <DashboardShell
+        role="Manager"
+        workspace="Manager workspace"
+        userName={userName}
+        userDetail={userDetail}
+        navigation={getManagerNavigation(user)}
+      >
+        <PageHeading
+          eyebrow="Access control"
+          title="Territory stock"
+          description="Monitor seller allocations and remaining packets in your jurisdiction."
+        />
+        <div className="mt-8 max-w-xl mx-auto rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-xs">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 mb-4">
+            <LockKeyhole className="h-7 w-7" />
+          </div>
+          <h2 className="text-lg font-bold text-zinc-900">Access Restricted</h2>
+          <p className="mt-2 text-xs sm:text-sm text-zinc-600 leading-relaxed">
+            Your Super Admin has not assigned inventory viewing permissions to your account.
+            If your role requires monitoring field stock balances, contact your head office administrator.
+          </p>
+          <div className="mt-6">
+            <Link
+              href="/manager"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#E61C5D] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#c91550] transition cursor-pointer"
+            >
+              Back to Overview
+            </Link>
+          </div>
+        </div>
+      </DashboardShell>
+    );
+  }
 
   return (
     <DashboardShell
       role="Manager"
       workspace="Manager workspace"
-      userName="Manager"
-      userDetail="Assigned territory"
-      navigation={managerNavigation}
+      userName={userName}
+      userDetail={userDetail}
+      navigation={getManagerNavigation(user)}
     >
       <PageHeading
         eyebrow="Assigned inventory"

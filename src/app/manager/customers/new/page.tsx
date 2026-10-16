@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ShieldAlert, ArrowLeft } from "lucide-react";
 import { OnboardingFormScreen } from "@/components/management/OnboardingFormScreen";
 import { DashboardShell } from "@/components/management/DashboardShell";
-import { managerNavigation } from "@/components/management/navigation";
+import { getManagerNavigation } from "@/components/management/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { canOnboardCustomers } from "@/lib/permissions";
 
@@ -20,7 +20,7 @@ export default function ManagerAddCustomerPage() {
         workspace="Manager workspace"
         userName={userName}
         userDetail={userDetail}
-        navigation={managerNavigation}
+        navigation={getManagerNavigation(user)}
       >
         <div className="mx-auto max-w-xl py-12 px-4 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-[#E61C5D]">
@@ -51,7 +51,7 @@ export default function ManagerAddCustomerPage() {
       workspace="Manager workspace"
       userName={userName}
       userDetail={userDetail}
-      navigation={managerNavigation}
+      navigation={getManagerNavigation(user)}
       entity="customer"
       backHref="/manager/customers"
     />

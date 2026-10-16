@@ -120,9 +120,19 @@ export default function AdminPermissionsPage() {
   };
 
   const togglePermission = (perm: string) => {
-    setActivePermissions((prev) =>
-      prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]
-    );
+    setActivePermissions((prev) => {
+      if (prev.includes(perm)) {
+        if (perm === "view_customers") {
+          return prev.filter((p) => p !== perm && p !== "onboard_customers");
+        }
+        return prev.filter((p) => p !== perm);
+      } else {
+        if (perm === "onboard_customers") {
+          return Array.from(new Set([...prev, perm, "view_customers"]));
+        }
+        return [...prev, perm];
+      }
+    });
   };
 
   const handleEnableAll = () => {
