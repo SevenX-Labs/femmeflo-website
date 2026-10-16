@@ -2,7 +2,7 @@
 
 import { CustomerDetailModal } from "./CustomerDetailModal";
 
-import { Camera, CheckCircle2, Download, Eye, ExternalLink, FileText, Image as ImageIcon, Loader2, MapPin, RefreshCw, Search, SlidersHorizontal, Upload, X } from "lucide-react";
+import { Camera, CheckCircle2, Download, Eye, ExternalLink, FileText, Image as ImageIcon, Loader2, Mail, MapPin, Package, Phone, RefreshCw, Search, SlidersHorizontal, Upload, User, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DashboardShell, NavigationItem, PageHeading, SectionCard } from "./DashboardShell";
@@ -260,13 +260,13 @@ export function ResourceListScreen({
         title={title}
         description={description}
         action={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {fetchData && (
               <button
                 onClick={loadData}
                 disabled={isLoading}
                 title="Refresh live data"
-                className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
+                className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50 shadow-xs active:scale-95 shrink-0"
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin text-[#E61C5D]" : ""}`} />
               </button>
@@ -274,21 +274,21 @@ export function ResourceListScreen({
             {primaryHref ? (
               <Link
                 href={primaryHref}
-                className="rounded-xl bg-[#E61C5D] px-4 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(230,28,93,0.18)] hover:bg-[#c91550]"
+                className="inline-flex h-10 sm:h-11 items-center gap-1.5 rounded-xl bg-[#E61C5D] px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#c91550] transition active:scale-95"
               >
                 + {primaryAction}
               </Link>
             ) : primaryAction.toLowerCase().includes("export") ? (
               <button
                 onClick={exportRows}
-                className="rounded-xl bg-[#E61C5D] px-4 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(230,28,93,0.18)] hover:bg-[#c91550]"
+                className="inline-flex h-10 sm:h-11 items-center gap-1.5 rounded-xl bg-[#E61C5D] px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#c91550] transition active:scale-95 cursor-pointer"
               >
                 {primaryAction}
               </button>
             ) : (
               <button
                 onClick={() => setFiltersOpen(true)}
-                className="rounded-xl bg-[#E61C5D] px-4 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(230,28,93,0.18)] hover:bg-[#c91550]"
+                className="inline-flex h-10 sm:h-11 items-center gap-1.5 rounded-xl bg-[#E61C5D] px-3.5 sm:px-4 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#c91550] transition active:scale-95 cursor-pointer"
               >
                 {primaryAction}
               </button>
@@ -305,16 +305,16 @@ export function ResourceListScreen({
       )}
 
       <SectionCard
-        title={`${title} directory`}
-        description={`${filteredRows.length} records in your current scope`}
+        title={title}
+        description={`${filteredRows.length} ${filteredRows.length === 1 ? "record" : "records"} in your current scope`}
         className="mt-8"
         action={
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
-            className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold ${
+            className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition shadow-xs cursor-pointer ${
               filtersOpen
                 ? "border-rose-200 bg-rose-50 text-[#E61C5D]"
-                : "border-zinc-200 text-zinc-900 hover:border-rose-200"
+                : "border-zinc-200 bg-white text-zinc-800 hover:border-rose-200"
             }`}
           >
             <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -329,7 +329,7 @@ export function ResourceListScreen({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={searchPlaceholder}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] pl-9 pr-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+              className="h-10 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] pl-9 pr-3 text-xs sm:text-sm outline-none transition focus:border-rose-300 focus:bg-white"
             />
           </label>
           {title === "My sales" && (
@@ -413,13 +413,13 @@ export function ResourceListScreen({
                 return (
                   <div
                     key={`m-${String(row[primaryCol.key])}-${index}`}
-                    className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-xs transition hover:border-rose-200"
+                    className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-xs transition hover:border-rose-200"
                   >
-                    {/* Header: Photo (if available) + Name + Status */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
+                    {/* Header: Photo / Avatar + Name + Status */}
+                    <div className="flex items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-3 min-w-0">
                         {row.photoPath ? (
-                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-rose-100 bg-[#FAF8F5] shadow-xs">
+                          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-rose-100 bg-[#FAF8F5] shadow-xs">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={String(row.photoPath)}
@@ -427,13 +427,17 @@ export function ResourceListScreen({
                               className="h-full w-full object-cover"
                             />
                           </div>
-                        ) : null}
+                        ) : (
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 text-[#156035] font-bold border border-emerald-100 text-sm shadow-2xs">
+                            {String(row[primaryCol.key] || "O").charAt(0).toUpperCase()}
+                          </div>
+                        )}
                         <div className="min-w-0">
                           <h4 className="text-sm font-bold text-zinc-950 truncate">
                             {String(row[primaryCol.key] ?? "—")}
                           </h4>
                           {row.code ? (
-                            <span className="text-[11px] font-mono font-medium text-zinc-600 block">
+                            <span className="inline-block rounded-md bg-zinc-100 px-1.5 py-0.2 text-[10px] font-mono font-bold text-zinc-600 mt-0.5">
                               {String(row.code)}
                             </span>
                           ) : null}
@@ -443,34 +447,123 @@ export function ResourceListScreen({
                       {/* Status badge */}
                       {row.status ? (
                         <span
-                          className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                          className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                             row.status === "Active" || row.status === "Confirmed" || row.status === "Paid"
-                              ? "bg-emerald-50 text-[#157347]"
+                              ? "bg-emerald-50 text-[#157347] border border-emerald-200/60"
                               : row.status === "Pending" ||
                                 row.status === "Pending payment" ||
                                 row.status === "Approval required"
-                              ? "bg-amber-50 text-amber-700"
-                              : "bg-zinc-100 text-zinc-800"
+                              ? "bg-amber-50 text-amber-700 border border-amber-200/60"
+                              : "bg-zinc-100 text-zinc-700 border border-zinc-200/60"
                           }`}
                         >
+                          <span className={`h-1.5 w-1.5 rounded-full ${
+                            row.status === "Active" || row.status === "Confirmed" || row.status === "Paid"
+                              ? "bg-emerald-500"
+                              : row.status === "Pending" ||
+                                row.status === "Pending payment" ||
+                                row.status === "Approval required"
+                              ? "bg-amber-500"
+                              : "bg-zinc-400"
+                          }`} />
                           {String(row.status)}
                         </span>
                       ) : null}
                     </div>
 
-                    {/* Key Details 2-Column Grid */}
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs border-t border-zinc-100 pt-3">
-                      {otherCols.slice(0, 4).map((col) => (
-                        <div key={col.key} className="min-w-0">
-                          <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-600 block">
-                            {col.label}
+                    {/* Territory / Location Line */}
+                    {(row.territory || row.location) && String(row.territory || row.location) !== "—" && (
+                      <div className="mt-3 pt-2.5 border-t border-zinc-100 flex items-center gap-1.5 text-xs text-zinc-700">
+                        <MapPin className="h-3.5 w-3.5 text-[#E61C5D] shrink-0" />
+                        <span className="font-semibold text-zinc-800 truncate">
+                          {String(row.territory || row.location)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Reporting Manager Row */}
+                    {row.manager && row.manager !== "—" && (
+                      <div className="mt-2.5 flex items-center justify-between rounded-xl bg-zinc-50 border border-zinc-150 px-3 py-2 text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-white border border-zinc-200 text-zinc-600 text-[10px]">
+                            👤
                           </span>
-                          <span className="font-semibold text-zinc-900 truncate block mt-0.5">
-                            {String(row[col.key] ?? "—")}
-                          </span>
+                          <span className="text-zinc-500 text-[11px] font-medium shrink-0">Supervisor:</span>
+                          <span className="font-bold text-zinc-900 truncate">{String(row.manager)}</span>
                         </div>
-                      ))}
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200/50 shrink-0">
+                          Assigned
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Compact Stats Row for Phone and Stock Balance / Team Size */}
+                    <div className="mt-2.5 grid grid-cols-2 gap-2 text-xs">
+                      {row.phone && row.phone !== "—" && (
+                        <div className="rounded-xl bg-[#FAF8F5] p-2.5 border border-zinc-150 min-w-0">
+                          <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-1">
+                            <Phone className="h-3 w-3 text-zinc-400" /> Phone
+                          </span>
+                          <a
+                            href={`tel:${row.phone}`}
+                            className="text-xs font-bold text-zinc-900 mt-0.5 block hover:text-[#E61C5D] truncate"
+                          >
+                            {String(row.phone)}
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Packets Balance for Field Officers */}
+                      {row.packets !== undefined && (
+                        <div className="rounded-xl bg-emerald-50/70 p-2.5 border border-emerald-200/60 min-w-0">
+                          <span className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider flex items-center gap-1">
+                            <Package className="h-3 w-3 text-emerald-600" /> Stock
+                          </span>
+                          <p className="text-xs font-bold text-[#156035] mt-0.5 truncate">
+                            {Number(row.packets) > 0 ? `${Number(row.packets).toLocaleString("en-IN")} pkts` : "0 pkts"}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Field Officers count for Managers */}
+                      {row.sellers !== undefined && (
+                        <div className="rounded-xl bg-emerald-50/70 p-2.5 border border-emerald-200/60 min-w-0">
+                          <span className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider flex items-center gap-1">
+                            <Users className="h-3 w-3 text-emerald-600" /> Team Size
+                          </span>
+                          <p className="text-xs font-bold text-[#156035] mt-0.5 truncate">
+                            {Number(row.sellers) > 0 ? `${row.sellers} officers` : "0 officers"}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Render other remaining columns if present (e.g. customers, category) */}
+                      {otherCols
+                        .filter((col) => !["territory", "location", "phone", "sellers", "packets", "manager", "email", "latitude", "longitude", "photoPath", "code"].includes(col.key))
+                        .map((col) => (
+                          <div key={col.key} className="rounded-xl bg-[#FAF8F5] p-2.5 border border-zinc-150 min-w-0">
+                            <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block truncate">
+                              {col.label}
+                            </span>
+                            <span className="text-xs font-bold text-zinc-900 mt-0.5 block truncate">
+                              {String(row[col.key] ?? "—")}
+                            </span>
+                          </div>
+                        ))}
                     </div>
+
+                    {/* Email Row (Full width) */}
+                    {row.email && row.email !== "—" && (
+                      <div className="mt-2.5 flex items-center gap-1.5 text-xs text-zinc-600 min-w-0">
+                        <Mail className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                        <a
+                          href={`mailto:${row.email}`}
+                          className="font-medium text-zinc-700 hover:text-[#E61C5D] truncate hover:underline"
+                        >
+                          {String(row.email)}
+                        </a>
+                      </div>
+                    )}
 
                     {/* GPS Location Pin if coordinates exist */}
                     {row.latitude && row.longitude ? (
@@ -490,17 +583,18 @@ export function ResourceListScreen({
                       </div>
                     ) : null}
 
-                    {/* Action Bar */}
-                    <div className="mt-3 pt-3 border-t border-zinc-100 flex items-center justify-between gap-2">
+                    {/* Action Bar: Full-width clean secondary button */}
+                    <div className="mt-3.5 pt-3 border-t border-zinc-100 flex items-center gap-2">
                       <button
                         onClick={() => {
                           setPhotoUploadMessage(null);
                           setPdfError(null);
                           setSelectedRow(row);
                         }}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-[#E61C5D] hover:bg-rose-100 transition"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 bg-[#FAF8F5] py-2 px-3 text-xs font-bold text-zinc-800 hover:border-rose-200 hover:bg-rose-50 hover:text-[#E61C5D] transition active:scale-[0.98] shadow-xs cursor-pointer"
                       >
-                        View Details →
+                        <span>View Profile &amp; Records</span>
+                        <span className="text-zinc-400">→</span>
                       </button>
 
                       {inv ? (
@@ -513,7 +607,7 @@ export function ResourceListScreen({
                             }}
                             disabled={Boolean(pdfLoadingId)}
                             title="View Tax Invoice PDF"
-                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition disabled:opacity-50"
+                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition disabled:opacity-50"
                           >
                             {isViewLoading ? (
                               <Loader2 className="h-3 w-3 animate-spin text-emerald-700" />

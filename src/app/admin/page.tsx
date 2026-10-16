@@ -214,14 +214,49 @@ export default function AdminOverviewDashboard() {
         title="Admin overview"
         description="Live operational metrics across HQ inventory, regional warehouses, assigned managers, active sellers, and field retail coverage."
         action={
-          <button
-            onClick={fetchDashboard}
-            disabled={loading}
-            title="Refresh dashboard metrics"
-            className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50 shadow-xs active:scale-95"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchDashboard}
+              disabled={loading}
+              title="Refresh dashboard metrics"
+              className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50 shadow-xs active:scale-95 shrink-0"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltersExpanded(!filtersExpanded)}
+              className={`inline-flex h-10 sm:h-11 items-center gap-2 rounded-xl border px-3 text-xs font-bold transition active:scale-95 shadow-xs cursor-pointer ${
+                filtersExpanded || activeFilterCount > 0
+                  ? "border-[#E61C5D] bg-rose-50 text-[#E61C5D]"
+                  : "border-zinc-200 bg-white text-zinc-800 hover:border-rose-200 hover:text-[#E61C5D]"
+              }`}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5 text-[#E61C5D]" />
+              <span>{filtersExpanded ? "Hide filters" : "Filter"}</span>
+              {activeFilterCount > 0 ? (
+                <span className="rounded-full bg-[#E61C5D] px-1.5 py-0.2 text-[10px] font-bold text-white">
+                  {activeFilterCount}
+                </span>
+              ) : (
+                <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-600">
+                  All India
+                </span>
+              )}
+              <ChevronDown className={`h-3.5 w-3.5 text-zinc-500 transition-transform duration-200 ${filtersExpanded ? "rotate-180" : ""}`} />
+            </button>
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="inline-flex h-10 sm:h-11 items-center gap-1 rounded-xl border border-zinc-200 bg-white px-2.5 text-xs font-bold text-zinc-700 hover:border-rose-200 hover:text-[#E61C5D] hover:bg-rose-50 transition active:scale-95 shadow-xs cursor-pointer"
+                title="Reset all filters"
+              >
+                <RotateCcw className="h-3 w-3 text-zinc-500" />
+                <span className="hidden sm:inline">Reset</span>
+              </button>
+            )}
+          </div>
         }
       />
 
@@ -234,60 +269,32 @@ export default function AdminOverviewDashboard() {
         </div>
       )}
 
-      {/* Geographic & Hierarchy Filters Bar */}
-      <div className="mt-8 rounded-2xl border border-zinc-200/80 bg-white p-4 sm:p-5 shadow-xs transition-all">
-        <div className="flex items-center justify-between gap-3">
-          <div
-            onClick={() => setFiltersExpanded(!filtersExpanded)}
-            className="flex items-center gap-2.5 min-w-0 cursor-pointer select-none"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-[#E61C5D] shadow-xs">
-              <SlidersHorizontal className="h-4 w-4" />
-            </span>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm font-bold text-zinc-950 truncate">Filters & Scope</h3>
-                {activeFilterCount > 0 ? (
-                  <span className="rounded-full bg-[#E61C5D] px-2 py-0.5 text-[10px] font-bold text-white shadow-xs">
-                    {activeFilterCount} active
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-600">
-                    All India
-                  </span>
-                )}
+      {/* Geographic & Hierarchy Filters Drawer */}
+      {filtersExpanded && (
+        <div className="mt-6 rounded-2xl border border-zinc-200/80 bg-white p-4 sm:p-5 shadow-xs transition-all animate-in fade-in duration-150">
+          <div className="flex items-center justify-between gap-3 border-b border-zinc-100 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-[#E61C5D]">
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+              </span>
+              <div>
+                <h3 className="text-xs font-bold text-zinc-900">Territory &amp; Scope Filters</h3>
+                <p className="text-[11px] text-zinc-500">Filter live operational metrics by geographic hierarchy and category</p>
               </div>
-              <p className="text-[11px] text-zinc-500 truncate hidden sm:block">
-                State, district, area, manager, officer &amp; category
-              </p>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
             {activeFilterCount > 0 && (
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-bold text-zinc-700 hover:border-rose-200 hover:text-[#E61C5D] hover:bg-rose-50 transition active:scale-95 shadow-xs cursor-pointer"
-                title="Reset all filters"
+                className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] font-bold text-zinc-700 hover:text-[#E61C5D] hover:border-rose-200 transition"
               >
                 <RotateCcw className="h-3 w-3 text-zinc-500" />
-                <span className="hidden sm:inline">Reset</span>
+                Reset all
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => setFiltersExpanded(!filtersExpanded)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 py-1.5 text-xs font-bold text-zinc-800 hover:border-rose-200 hover:text-[#E61C5D] hover:bg-rose-50 transition active:scale-95 shadow-xs cursor-pointer"
-            >
-              <span>{filtersExpanded ? "Hide" : "Filter"}</span>
-              <ChevronDown className={`h-3.5 w-3.5 text-zinc-600 transition-transform duration-200 ${filtersExpanded ? "rotate-180" : ""}`} />
-            </button>
           </div>
-        </div>
 
-        {filtersExpanded && (
-          <div className="mt-4 pt-4 border-t border-zinc-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 animate-in fade-in duration-150">
+          <div className="mt-3.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
             {/* 1. State */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800">
@@ -328,18 +335,18 @@ export default function AdminOverviewDashboard() {
                 aria-label="Filter by district"
               >
                 <option value="">All districts</option>
-                {availableDistricts.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
+                {availableDistricts.map((dst) => (
+                  <option key={dst} value={dst}>
+                    {dst}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* 3. Village */}
+            {/* 3. Village / Area */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800">
-                Village / Town
+                Village / Area
               </label>
               <select
                 value={selectedVillage}
@@ -378,13 +385,13 @@ export default function AdminOverviewDashboard() {
                 <option value="">All managers</option>
                 {availableManagers.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.name} {m.district ? `(${m.district})` : ""}
+                    {m.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* 5. Seller */}
+            {/* 5. Field Officer */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800">
                 Field Officer
@@ -402,13 +409,13 @@ export default function AdminOverviewDashboard() {
                 <option value="">All field officers</option>
                 {availableSellers.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} {s.district ? `(${s.district})` : ""}
+                    {s.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* 6. Category */}
+            {/* 6. Product Category */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800">
                 Category
@@ -432,64 +439,70 @@ export default function AdminOverviewDashboard() {
               </select>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Active Filter Badges */}
-        {activeFilterCount > 0 && (
-          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-3">
-            <span className="text-[11px] font-bold text-zinc-700">Filtering by:</span>
-            {selectedState && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D]">
-                State: {selectedState}
-                <button type="button" onClick={() => handleStateChange("")} aria-label="Remove state filter" className="cursor-pointer">
-                  <X className="h-3 w-3 hover:text-black" />
-                </button>
-              </span>
-            )}
-            {selectedDistrict && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D]">
-                District: {selectedDistrict}
-                <button type="button" onClick={() => handleDistrictChange("")} aria-label="Remove district filter" className="cursor-pointer">
-                  <X className="h-3 w-3 hover:text-black" />
-                </button>
-              </span>
-            )}
-            {selectedVillage && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D]">
-                Village: {selectedVillage}
-                <button type="button" onClick={() => setSelectedVillage("")} aria-label="Remove village filter" className="cursor-pointer">
-                  <X className="h-3 w-3 hover:text-black" />
-                </button>
-              </span>
-            )}
-            {selectedManagerId && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D]">
-                Manager: {availableManagers.find((m) => m.id === selectedManagerId)?.name || "Selected"}
-                <button type="button" onClick={() => setSelectedManagerId("")} aria-label="Remove manager filter" className="cursor-pointer">
-                  <X className="h-3 w-3 hover:text-black" />
-                </button>
-              </span>
-            )}
-            {selectedSellerId && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D]">
-                Officer: {availableSellers.find((s) => s.id === selectedSellerId)?.name || "Selected"}
-                <button type="button" onClick={() => setSelectedSellerId("")} aria-label="Remove seller filter" className="cursor-pointer">
-                  <X className="h-3 w-3 hover:text-black" />
-                </button>
-              </span>
-            )}
-            {selectedCategoryId && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D]">
-                Category: {availableCategories.find((c) => c.id === selectedCategoryId)?.name || "Selected"}
-                <button type="button" onClick={() => setSelectedCategoryId("")} aria-label="Remove category filter" className="cursor-pointer">
-                  <X className="h-3 w-3 hover:text-black" />
-                </button>
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-
+      {/* Active Filter Badges */}
+      {activeFilterCount > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-rose-100 bg-rose-50/30 p-2.5 px-3.5">
+          <span className="text-[11px] font-bold text-zinc-700">Filtering by:</span>
+          {selectedState && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-white border border-rose-200 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D] shadow-xs">
+              State: {selectedState}
+              <button type="button" onClick={() => handleStateChange("")} aria-label="Remove state filter" className="cursor-pointer">
+                <X className="h-3 w-3 hover:text-black" />
+              </button>
+            </span>
+          )}
+          {selectedDistrict && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-white border border-rose-200 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D] shadow-xs">
+              District: {selectedDistrict}
+              <button type="button" onClick={() => handleDistrictChange("")} aria-label="Remove district filter" className="cursor-pointer">
+                <X className="h-3 w-3 hover:text-black" />
+              </button>
+            </span>
+          )}
+          {selectedVillage && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-white border border-rose-200 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D] shadow-xs">
+              Village: {selectedVillage}
+              <button type="button" onClick={() => setSelectedVillage("")} aria-label="Remove village filter" className="cursor-pointer">
+                <X className="h-3 w-3 hover:text-black" />
+              </button>
+            </span>
+          )}
+          {selectedManagerId && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-white border border-rose-200 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D] shadow-xs">
+              Manager: {availableManagers.find((m) => m.id === selectedManagerId)?.name || "Selected"}
+              <button type="button" onClick={() => setSelectedManagerId("")} aria-label="Remove manager filter" className="cursor-pointer">
+                <X className="h-3 w-3 hover:text-black" />
+              </button>
+            </span>
+          )}
+          {selectedSellerId && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-white border border-rose-200 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D] shadow-xs">
+              Officer: {availableSellers.find((s) => s.id === selectedSellerId)?.name || "Selected"}
+              <button type="button" onClick={() => setSelectedSellerId("")} aria-label="Remove seller filter" className="cursor-pointer">
+                <X className="h-3 w-3 hover:text-black" />
+              </button>
+            </span>
+          )}
+          {selectedCategoryId && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-white border border-rose-200 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D] shadow-xs">
+              Category: {availableCategories.find((c) => c.id === selectedCategoryId)?.name || "Selected"}
+              <button type="button" onClick={() => setSelectedCategoryId("")} aria-label="Remove category filter" className="cursor-pointer">
+                <X className="h-3 w-3 hover:text-black" />
+              </button>
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            className="text-[11px] font-bold text-zinc-600 hover:text-[#E61C5D] underline ml-auto cursor-pointer"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
       {/* Primary KPI Grid */}
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard

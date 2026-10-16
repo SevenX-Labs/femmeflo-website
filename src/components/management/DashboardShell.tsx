@@ -153,5 +153,16 @@ export function PageHeading({ eyebrow, title, description, action }: { eyebrow: 
 }
 
 export function SectionCard({ title, description, action, children, className = "" }: { title: string; description?: string; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
-  return <section className={`rounded-2xl border border-rose-100 bg-white p-4 shadow-[0_8px_30px_rgba(104,48,66,0.04)] sm:p-6 ${className}`}><div className="flex items-start justify-between gap-4"><div><h2 className="font-playfair text-2xl font-bold text-[#156035]">{title}</h2>{description && <p className="mt-1 text-xs text-zinc-700">{description}</p>}</div>{action}</div><div className="mt-5">{children}</div></section>;
+  return (
+    <section className={`rounded-2xl border border-rose-100 bg-white p-4 shadow-[0_8px_30px_rgba(104,48,66,0.04)] sm:p-6 ${className}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h2 className="font-playfair text-xl sm:text-2xl font-bold text-[#156035] leading-snug break-words">{title}</h2>
+          {description && <p className="mt-1 text-xs text-zinc-600 font-medium leading-normal">{description}</p>}
+        </div>
+        {action && <div className="shrink-0">{action}</div>}
+      </div>
+      <div className="mt-4 sm:mt-5">{children}</div>
+    </section>
+  );
 }
