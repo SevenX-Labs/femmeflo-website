@@ -217,7 +217,7 @@ export default function NewSellerSalePage() {
             <button
               type="submit"
               disabled={overStock || isSubmitting}
-              className="flex h-12 items-center justify-center gap-2 rounded-xl bg-[#E61C5D] px-6 text-sm font-bold text-white shadow-[0_8px_20px_rgba(230,28,93,0.18)] hover:bg-[#c91550] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#E61C5D] px-6 text-sm font-bold text-white shadow-[0_8px_20px_rgba(230,28,93,0.18)] hover:bg-[#c91550] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

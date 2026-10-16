@@ -130,7 +130,7 @@ export default function ManagerOverviewDashboard() {
           tone="rose"
         />
         <MetricCard
-          label="Assigned Sellers"
+          label="Assigned Field Officers"
           value={metrics.totalSellers.toString()}
           note="Active in your jurisdiction"
           icon="chart"
@@ -139,7 +139,7 @@ export default function ManagerOverviewDashboard() {
         <MetricCard
           label="Remaining Stock"
           value={`${metrics.totalRemainingStock.toLocaleString("en-IN")} pkts`}
-          note="Packets in seller hands"
+          note="Packets with field officers"
           icon="package"
           tone="amber"
         />
@@ -162,7 +162,7 @@ export default function ManagerOverviewDashboard() {
               recentSales.map((s) => (
                 <div
                   key={s.id}
-                  className="flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition hover:bg-[#FFFDFD]"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-zinc-100 p-4 transition hover:bg-[#FFFDFD]"
                 >
                   <div className="flex items-center gap-3">
                     <span className="rounded-xl bg-rose-50 p-2 text-[#E61C5D]">
@@ -211,13 +211,13 @@ export default function ManagerOverviewDashboard() {
           </div>
         </SectionCard>
 
-        {/* Assigned Sellers Team */}
+        {/* Assigned Field Officers Team */}
         <SectionCard
-          title="Assigned sellers team"
-          description="Field agents onboarding customers and distributing stock"
+          title="Assigned Field Officers"
+          description="Field officers onboarding retail stores and distributing stock"
           action={
             <Link href="/manager/sellers" className="text-xs font-bold text-[#E61C5D] hover:underline">
-              View all sellers &rarr;
+              View all officers &rarr;
             </Link>
           }
         >
@@ -226,7 +226,7 @@ export default function ManagerOverviewDashboard() {
               sellersList.map((s) => (
                 <div
                   key={s.id}
-                  className="flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition hover:bg-zinc-50"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-zinc-100 p-4 transition hover:bg-zinc-50"
                 >
                   <div className="flex items-center gap-3">
                     <span className="rounded-xl bg-emerald-50 p-2 text-[#156035]">
@@ -256,7 +256,7 @@ export default function ManagerOverviewDashboard() {
               ))
             ) : (
               <div className="rounded-xl border border-dashed border-zinc-200 py-8 text-center text-xs text-zinc-700">
-                No sellers assigned yet. Click &quot;Add seller&quot; to onboard field agents.
+                No officers assigned yet. Click &quot;Add officer&quot; to onboard field personnel.
               </div>
             )}
           </div>
@@ -292,7 +292,7 @@ export default function ManagerOverviewDashboard() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Assigned Sellers</p>
-                  <p className="text-xs text-zinc-700">Field sales agents reporting to you</p>
+                  <p className="text-xs text-zinc-700">Field officers reporting to you</p>
                 </div>
               </div>
               <span className="text-2xl font-bold font-sans tracking-tight text-[#E61C5D]">
@@ -326,8 +326,8 @@ export default function ManagerOverviewDashboard() {
               <div className="flex items-center gap-3">
                 <Users className="h-4 w-4 text-[#E61C5D]" />
                 <div>
-                  <p className="text-sm font-bold text-zinc-800">Manage Sellers</p>
-                  <p className="text-xs text-zinc-700">Onboard sellers &amp; review activity</p>
+                  <p className="text-sm font-bold text-zinc-800">Manage Field Officers</p>
+                  <p className="text-xs text-zinc-700">Onboard officers &amp; review activity</p>
                 </div>
               </div>
               <span className="text-xs font-bold text-[#E61C5D]">View team &rarr;</span>

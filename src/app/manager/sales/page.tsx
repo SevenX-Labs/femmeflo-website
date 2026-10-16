@@ -17,7 +17,7 @@ export default function ManagerSalesPage() {
     return sales.map((s) => ({
       id: s.id,
       customer: s.customer?.shopName || "Retail Shop",
-      seller: s.seller?.name || "Assigned Seller",
+      seller: s.seller?.name || "Field Officer",
       packets: s.quantity.toString(),
       amount: `₹${(s.totalPaise / 100).toLocaleString("en-IN")}`,
       payment: s.paymentMode === "CASH" ? "Cash" : s.paymentMode === "BANK" ? "Bank" : "Pending",
@@ -42,12 +42,12 @@ export default function ManagerSalesPage() {
       navigation={managerNavigation}
       eyebrow="Territory sales"
       title="Sales ledger"
-      description="Review all packet transactions from sellers and customers in your assigned territory. Track confirmed deliveries, pending approvals, and payment status."
+      description="Review all packet transactions from field officers and customers in your assigned territory. Track confirmed deliveries, pending approvals, and payment status."
       primaryAction="Export sales"
-      searchPlaceholder="Search by customer, seller, or status"
+      searchPlaceholder="Search by customer, officer, or status"
       columns={[
         { key: "customer", label: "Customer" },
-        { key: "seller", label: "Seller" },
+        { key: "seller", label: "Field Officer" },
         { key: "packets", label: "Packets" },
         { key: "amount", label: "Amount" },
         { key: "payment", label: "Payment mode" },

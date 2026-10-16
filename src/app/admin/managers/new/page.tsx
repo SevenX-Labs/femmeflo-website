@@ -176,8 +176,8 @@ export default function AdminAddManagerPage() {
             <span className="block text-xs font-bold text-zinc-700 mb-2">Initial operational permissions</span>
             <div className="grid gap-2 sm:grid-cols-2 rounded-xl border border-rose-100 bg-[#FFF8FA] p-3">
               {[
-                ["SELLER_READ", "View assigned sellers"],
-                ["SELLER_CREATE", "Onboard new sellers"],
+                ["SELLER_READ", "View assigned field officers"],
+                ["SELLER_CREATE", "Onboard new field officers"],
                 ["CUSTOMER_READ", "View customer directory"],
                 ["CUSTOMER_CREATE", "Onboard new customers"],
                 ["view_inventory", "Monitor territory stock"],

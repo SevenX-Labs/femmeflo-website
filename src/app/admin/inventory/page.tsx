@@ -502,8 +502,98 @@ export default function AdminInventoryPage() {
             </p>
           </div>
         ) : (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-160 text-left border-collapse">
+          <>
+            {/* MOBILE LOCATION CARDS (under 640px) */}
+            <div className="sm:hidden mt-4 space-y-3">
+              {displayedLocations.map((loc) => {
+                const share =
+                  totalStock > 0 ? ((loc.balance / totalStock) * 100).toFixed(1) : "0.0";
+                const isHQ = loc.type === "HQ";
+                const isWarehouse = loc.type === "WAREHOUSE";
+
+                return (
+                  <div
+                    key={`m-${loc.id}`}
+                    className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-xs"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                            isHQ
+                              ? "bg-emerald-50 text-[#156035]"
+                              : isWarehouse
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-rose-50 text-[#E61C5D]"
+                          }`}
+                        >
+                          {isHQ ? (
+                            <WarehouseIcon className="h-4.5 w-4.5" />
+                          ) : isWarehouse ? (
+                            <Building2 className="h-4.5 w-4.5" />
+                          ) : (
+                            <Store className="h-4.5 w-4.5" />
+                          )}
+                        </span>
+                        <div>
+                          <h4 className="text-sm font-bold text-zinc-950">{loc.name}</h4>
+                          <span
+                            className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 ${
+                              isHQ
+                                ? "bg-emerald-50 text-[#156035]"
+                                : isWarehouse
+                                ? "bg-amber-50 text-amber-800"
+                                : "bg-rose-50 text-rose-800"
+                            }`}
+                          >
+                            {isHQ
+                              ? "HQ Reserve"
+                              : isWarehouse
+                              ? "Regional Depot"
+                              : "Field Officer"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <span
+                          className={`text-base font-extrabold block ${
+                            isHQ
+                              ? "text-[#156035]"
+                              : isWarehouse
+                              ? "text-amber-800"
+                              : "text-rose-700"
+                          }`}
+                        >
+                          {loc.balance.toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-medium">pkts ({share}%)</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 pt-2.5 border-t border-zinc-100 flex items-center justify-between text-xs">
+                      <span className="text-[11px] text-zinc-600 font-medium">
+                        {isHQ
+                          ? "Primary Central Reserve"
+                          : isWarehouse
+                          ? "Regional Buffer Distribution"
+                          : "Direct Field Retail / Sales"}
+                      </span>
+                      <Link
+                        href={`/admin/inventory/transfers?source=${loc.id}`}
+                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1 text-[11px] font-bold text-zinc-800 hover:text-[#E61C5D] hover:border-rose-200"
+                      >
+                        Transfer <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* DESKTOP TABLE VIEW (640px and up) */}
+            <div className="hidden sm:block mt-4 overflow-x-auto">
+              <table className="w-full min-w-160 text-left border-collapse">
               <thead>
                 <tr className="border-b border-zinc-100 text-[11px] font-bold uppercase tracking-wider text-zinc-600">
                   <th className="py-3 px-3">Location & Tier</th>
@@ -634,6 +724,7 @@ export default function AdminInventoryPage() {
               </tbody>
             </table>
           </div>
+        </>
         )}
       </div>
 
@@ -706,8 +797,90 @@ export default function AdminInventoryPage() {
             </p>
           </div>
         ) : (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-180 text-left border-collapse">
+          <>
+            {/* MOBILE HISTORY CARDS (under 640px) */}
+            <div className="sm:hidden mt-4 space-y-3">
+              {filteredTransactions.map((tx) => {
+                const dateObj = new Date(tx.createdAt);
+                const formattedDate = dateObj.toLocaleDateString("en-IN", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                });
+                const formattedTime = dateObj.toLocaleTimeString("en-IN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+
+                const isInward = tx.type === "RECEIPT";
+                const isTransfer = tx.type === "TRANSFER";
+                const isSale = tx.type === "SALE";
+
+                return (
+                  <div
+                    key={`m-tx-${tx.id}`}
+                    className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-xs"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                          isInward
+                            ? "bg-emerald-50 text-[#156035]"
+                            : isTransfer
+                            ? "bg-sky-50 text-sky-800"
+                            : isSale
+                            ? "bg-purple-50 text-purple-800"
+                            : "bg-rose-50 text-rose-800"
+                        }`}
+                      >
+                        {isInward ? (
+                          <PackagePlus className="h-3 w-3" />
+                        ) : isTransfer ? (
+                          <ArrowRightLeft className="h-3 w-3" />
+                        ) : (
+                          <PackageCheck className="h-3 w-3" />
+                        )}
+                        {tx.type}
+                      </span>
+
+                      <span className="text-sm font-extrabold text-zinc-950">
+                        +{tx.quantity.toLocaleString("en-IN")} pkts
+                      </span>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs border-t border-zinc-100 pt-2.5">
+                      <div>
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-500 block">
+                          From (Origin)
+                        </span>
+                        <span className="font-semibold text-zinc-900 block truncate mt-0.5">
+                          {tx.source?.name || (isInward ? "Manufacturing" : "Central HQ")}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-500 block">
+                          To (Destination)
+                        </span>
+                        <span className="font-semibold text-zinc-900 block truncate mt-0.5">
+                          {tx.destination?.name || (isSale ? "Customer Store" : "HQ Reserve")}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-2.5 pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-600">
+                      <span>{formattedDate} · {formattedTime}</span>
+                      <span className="inline-flex items-center gap-1 font-bold text-[#156035]">
+                        <CheckCircle2 className="h-3 w-3" /> Verified
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* DESKTOP TABLE VIEW (640px and up) */}
+            <div className="hidden sm:block mt-4 overflow-x-auto">
+              <table className="w-full min-w-180 text-left border-collapse">
               <thead>
                 <tr className="border-b border-zinc-100 text-[11px] font-bold uppercase tracking-wider text-zinc-600">
                   <th className="py-3 px-3">Date & Timestamp</th>
@@ -827,6 +1000,7 @@ export default function AdminInventoryPage() {
               </tbody>
             </table>
           </div>
+        </>
         )}
       </div>
 

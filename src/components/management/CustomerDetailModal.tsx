@@ -433,7 +433,7 @@ export function CustomerDetailModal({
                       ) : null}
 
                       <div className="space-y-1">
-                        <span className="text-zinc-700 block font-medium">Assigned Seller</span>
+                        <span className="text-zinc-700 block font-medium">Assigned Field Officer</span>
                         <strong className="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
                           <ShoppingBag className="h-3.5 w-3.5 text-[#E61C5D] shrink-0" />
                           {customer.seller?.name || "Assigned Seller"}

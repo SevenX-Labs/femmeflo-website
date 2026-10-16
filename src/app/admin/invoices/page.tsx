@@ -13,7 +13,7 @@ export default function AdminInvoicesPage() {
       id: inv.id,
       invoice: inv.number,
       customer: inv.sale?.customer?.shopName || "Customer",
-      seller: inv.sale?.seller?.name || "Seller",
+      seller: inv.sale?.seller?.name || "Officer",
       amount: inv.sale ? `₹${(inv.sale.totalPaise / 100).toLocaleString("en-IN")}` : "₹250",
       delivery: inv.deliveries?.map((d) => d.channel).join(" · ") || "Email · WhatsApp",
       status: inv.sale?.paymentMode === "PENDING" ? "Pending payment" : "Paid",
@@ -35,11 +35,11 @@ export default function AdminInvoicesPage() {
       title="Invoices"
       description="Track invoices generated automatically upon confirmed packet sales and audit multi-channel dispatch via Email and WhatsApp."
       primaryAction="Export invoices"
-      searchPlaceholder="Search by invoice number, customer, or seller"
+      searchPlaceholder="Search by invoice number, customer, or officer"
       columns={[
         { key: "invoice", label: "Invoice number" },
         { key: "customer", label: "Customer" },
-        { key: "seller", label: "Seller" },
+        { key: "seller", label: "Field Officer" },
         { key: "amount", label: "Amount" },
         { key: "delivery", label: "Delivery channels" },
         { key: "date", label: "Date" },

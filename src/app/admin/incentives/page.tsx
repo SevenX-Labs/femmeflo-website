@@ -92,7 +92,7 @@ export default function AdminIncentivesPage() {
     >
       <PageHeading
         eyebrow="Incentive management"
-        title="Seller incentives"
+        title="Field Officer Incentives"
         description="Review confirmed packet sales and calculated performance incentives across the seller network. Rates remain configurable by business policy."
         action={
           <div className="flex items-center gap-3">
@@ -139,15 +139,57 @@ export default function AdminIncentivesPage() {
       </div>
 
       <SectionCard
-        title="Seller incentive breakdown"
+        title="Field Officer Incentive Breakdown"
         description="Confirmed packets contributing to monthly payout"
         className="mt-8"
       >
-        <div className="overflow-x-auto">
+        {/* Mobile Cards View (under 640px) */}
+        <div className="sm:hidden space-y-3">
+          {incentives.map((item) => (
+            <div
+              key={`m-${item.sellerId}`}
+              className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-xs"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-bold text-zinc-950">{item.sellerName}</h4>
+                  <span className="text-xs text-zinc-600 block mt-0.5">{item.territory}</span>
+                </div>
+                <span className="text-sm font-extrabold text-[#156035] bg-emerald-50 px-2.5 py-1 rounded-xl">
+                  ₹{item.totalIncentiveRupees.toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs border-t border-zinc-100 pt-2.5">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-500 block">
+                    Confirmed Packets
+                  </span>
+                  <span className="font-bold text-zinc-800 text-xs block mt-0.5">
+                    {item.confirmedPackets.toLocaleString("en-IN")} pkts
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-500 block">
+                    Rate per Packet
+                  </span>
+                  <span className="font-semibold text-zinc-800 text-xs block mt-0.5">
+                    ₹{item.ratePerPacketRupees}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+          {incentives.length === 0 && (
+            <p className="py-8 text-center text-xs text-zinc-500">No incentive records found.</p>
+          )}
+        </div>
+
+        {/* Desktop Table View (640px and up) */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full min-w-160 text-left">
             <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-700">
               <tr>
-                <th className="px-4 py-4">Seller</th>
+                <th className="px-4 py-4">Field Officer</th>
                 <th className="px-4 py-4">Territory</th>
                 <th className="px-4 py-4">Confirmed Packets</th>
                 <th className="px-4 py-4">Rate</th>

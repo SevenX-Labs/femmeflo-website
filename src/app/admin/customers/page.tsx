@@ -13,7 +13,7 @@ export default function AdminCustomersPage() {
       id: c.id,
       name: c.shopName,
       contact: c.contactName,
-      seller: c.seller?.name || "Assigned Seller",
+      seller: c.seller?.name || "Field Officer",
       location: [c.village, c.district, c.state].filter(Boolean).join(", ") || "Field",
       address:
         c.address ||
@@ -37,14 +37,14 @@ export default function AdminCustomersPage() {
       navigation={adminNavigation}
       eyebrow="Customer management"
       title="Customers & shops"
-      description="Review every customer relationship across state, district, village, business category, manager, and seller."
+      description="Review every customer relationship across state, district, village, business category, manager, and field officer."
       primaryAction="Add customer"
       primaryHref="/admin/customers/new"
-      searchPlaceholder="Search customer by shop name, contact, village, or seller"
+      searchPlaceholder="Search customer by shop name, contact, village, or officer"
       columns={[
         { key: "name", label: "Customer / shop" },
         { key: "contact", label: "Contact person" },
-        { key: "seller", label: "Seller" },
+        { key: "seller", label: "Field Officer" },
         { key: "location", label: "Location" },
         { key: "phone", label: "Phone" },
         { key: "category", label: "Category" },

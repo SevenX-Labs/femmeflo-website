@@ -214,22 +214,14 @@ export default function AdminOverviewDashboard() {
         title="Admin overview"
         description="Live operational metrics across HQ inventory, regional warehouses, assigned managers, active sellers, and field retail coverage."
         action={
-          <div className="flex items-center gap-3">
-            <button
-              onClick={fetchDashboard}
-              disabled={loading}
-              title="Refresh dashboard metrics"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
-            </button>
-            <Link
-              href="/admin/inventory/transfers"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#E61C5D] px-4 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(230,28,93,0.18)] hover:bg-[#c91550]"
-            >
-              <Truck className="h-4 w-4" /> Allocate stock
-            </Link>
-          </div>
+          <button
+            onClick={fetchDashboard}
+            disabled={loading}
+            title="Refresh dashboard metrics"
+            className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50 shadow-xs active:scale-95"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
+          </button>
         }
       />
 
@@ -243,55 +235,59 @@ export default function AdminOverviewDashboard() {
       )}
 
       {/* Geographic & Hierarchy Filters Bar */}
-      <div className="mt-8 rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-[#E61C5D]">
+      <div className="mt-8 rounded-2xl border border-zinc-200/80 bg-white p-4 sm:p-5 shadow-xs transition-all">
+        <div className="flex items-center justify-between gap-3">
+          <div
+            onClick={() => setFiltersExpanded(!filtersExpanded)}
+            className="flex items-center gap-2.5 min-w-0 cursor-pointer select-none"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-[#E61C5D] shadow-xs">
               <SlidersHorizontal className="h-4 w-4" />
             </span>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-zinc-900">Territory & Scope Filters</h3>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-bold text-zinc-950 truncate">Filters & Scope</h3>
                 {activeFilterCount > 0 ? (
-                  <span className="rounded-full bg-[#E61C5D] px-2 py-0.5 text-[10px] font-bold text-white">
+                  <span className="rounded-full bg-[#E61C5D] px-2 py-0.5 text-[10px] font-bold text-white shadow-xs">
                     {activeFilterCount} active
                   </span>
                 ) : (
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-800">
-                    All India (National)
+                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-600">
+                    All India
                   </span>
                 )}
               </div>
-              <p className="text-xs text-zinc-700">
-                Filter by: State &rarr; District &rarr; Area &rarr; Manager &rarr; Officer &rarr; Category
+              <p className="text-[11px] text-zinc-500 truncate hidden sm:block">
+                State, district, area, manager, officer &amp; category
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {activeFilterCount > 0 && (
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-bold text-zinc-900 hover:border-rose-200 hover:bg-rose-50 hover:text-[#E61C5D] transition cursor-pointer"
+                className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-bold text-zinc-700 hover:border-rose-200 hover:text-[#E61C5D] hover:bg-rose-50 transition active:scale-95 shadow-xs cursor-pointer"
+                title="Reset all filters"
               >
-                <RotateCcw className="h-3 w-3" />
-                Reset filters
+                <RotateCcw className="h-3 w-3 text-zinc-500" />
+                <span className="hidden sm:inline">Reset</span>
               </button>
             )}
             <button
               type="button"
               onClick={() => setFiltersExpanded(!filtersExpanded)}
-              className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-900 hover:bg-zinc-50 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 py-1.5 text-xs font-bold text-zinc-800 hover:border-rose-200 hover:text-[#E61C5D] hover:bg-rose-50 transition active:scale-95 shadow-xs cursor-pointer"
             >
-              {filtersExpanded ? "Collapse" : "Expand"}
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${filtersExpanded ? "rotate-180" : ""}`} />
+              <span>{filtersExpanded ? "Hide" : "Filter"}</span>
+              <ChevronDown className={`h-3.5 w-3.5 text-zinc-600 transition-transform duration-200 ${filtersExpanded ? "rotate-180" : ""}`} />
             </button>
           </div>
         </div>
 
         {filtersExpanded && (
-          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <div className="mt-4 pt-4 border-t border-zinc-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 animate-in fade-in duration-150">
             {/* 1. State */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800">
@@ -300,7 +296,11 @@ export default function AdminOverviewDashboard() {
               <select
                 value={selectedState}
                 onChange={(e) => handleStateChange(e.target.value)}
-                className="mt-1.5 h-10 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-xs font-semibold text-zinc-700 outline-none focus:border-rose-300 focus:bg-white"
+                className={`mt-1.5 h-10 w-full rounded-xl border px-3 text-xs font-semibold outline-none transition focus:border-rose-300 focus:bg-white ${
+                  selectedState
+                    ? "border-[#E61C5D] bg-rose-50/40 text-[#E61C5D] font-bold shadow-xs"
+                    : "border-zinc-200 bg-[#FAF8F5] text-zinc-800"
+                }`}
                 aria-label="Filter by state"
               >
                 <option value="">All states</option>
@@ -320,7 +320,11 @@ export default function AdminOverviewDashboard() {
               <select
                 value={selectedDistrict}
                 onChange={(e) => handleDistrictChange(e.target.value)}
-                className="mt-1.5 h-10 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-xs font-semibold text-zinc-700 outline-none focus:border-rose-300 focus:bg-white"
+                className={`mt-1.5 h-10 w-full rounded-xl border px-3 text-xs font-semibold outline-none transition focus:border-rose-300 focus:bg-white ${
+                  selectedDistrict
+                    ? "border-[#E61C5D] bg-rose-50/40 text-[#E61C5D] font-bold shadow-xs"
+                    : "border-zinc-200 bg-[#FAF8F5] text-zinc-800"
+                }`}
                 aria-label="Filter by district"
               >
                 <option value="">All districts</option>
@@ -340,7 +344,11 @@ export default function AdminOverviewDashboard() {
               <select
                 value={selectedVillage}
                 onChange={(e) => setSelectedVillage(e.target.value)}
-                className="mt-1.5 h-10 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-xs font-semibold text-zinc-700 outline-none focus:border-rose-300 focus:bg-white"
+                className={`mt-1.5 h-10 w-full rounded-xl border px-3 text-xs font-semibold outline-none transition focus:border-rose-300 focus:bg-white ${
+                  selectedVillage
+                    ? "border-[#E61C5D] bg-rose-50/40 text-[#E61C5D] font-bold shadow-xs"
+                    : "border-zinc-200 bg-[#FAF8F5] text-zinc-800"
+                }`}
                 aria-label="Filter by village"
               >
                 <option value="">All villages</option>
@@ -360,7 +368,11 @@ export default function AdminOverviewDashboard() {
               <select
                 value={selectedManagerId}
                 onChange={(e) => setSelectedManagerId(e.target.value)}
-                className="mt-1.5 h-10 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-xs font-semibold text-zinc-700 outline-none focus:border-rose-300 focus:bg-white"
+                className={`mt-1.5 h-10 w-full rounded-xl border px-3 text-xs font-semibold outline-none transition focus:border-rose-300 focus:bg-white ${
+                  selectedManagerId
+                    ? "border-[#E61C5D] bg-rose-50/40 text-[#E61C5D] font-bold shadow-xs"
+                    : "border-zinc-200 bg-[#FAF8F5] text-zinc-800"
+                }`}
                 aria-label="Filter by manager"
               >
                 <option value="">All managers</option>
@@ -380,10 +392,14 @@ export default function AdminOverviewDashboard() {
               <select
                 value={selectedSellerId}
                 onChange={(e) => setSelectedSellerId(e.target.value)}
-                className="mt-1.5 h-10 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-xs font-semibold text-zinc-700 outline-none focus:border-rose-300 focus:bg-white"
+                className={`mt-1.5 h-10 w-full rounded-xl border px-3 text-xs font-semibold outline-none transition focus:border-rose-300 focus:bg-white ${
+                  selectedSellerId
+                    ? "border-[#E61C5D] bg-rose-50/40 text-[#E61C5D] font-bold shadow-xs"
+                    : "border-zinc-200 bg-[#FAF8F5] text-zinc-800"
+                }`}
                 aria-label="Filter by seller"
               >
-                <option value="">All sellers</option>
+                <option value="">All field officers</option>
                 {availableSellers.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name} {s.district ? `(${s.district})` : ""}
@@ -400,7 +416,11 @@ export default function AdminOverviewDashboard() {
               <select
                 value={selectedCategoryId}
                 onChange={(e) => setSelectedCategoryId(e.target.value)}
-                className="mt-1.5 h-10 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-xs font-semibold text-zinc-700 outline-none focus:border-rose-300 focus:bg-white"
+                className={`mt-1.5 h-10 w-full rounded-xl border px-3 text-xs font-semibold outline-none transition focus:border-rose-300 focus:bg-white ${
+                  selectedCategoryId
+                    ? "border-[#E61C5D] bg-rose-50/40 text-[#E61C5D] font-bold shadow-xs"
+                    : "border-zinc-200 bg-[#FAF8F5] text-zinc-800"
+                }`}
                 aria-label="Filter by category"
               >
                 <option value="">All categories</option>

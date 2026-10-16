@@ -400,7 +400,157 @@ export function ResourceListScreen({
             <p className="mt-3 text-xs font-semibold">Loading data from backend...</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            {/* MOBILE RECORD CARDS VIEW (Under 640px) */}
+            <div className="sm:hidden space-y-3">
+              {filteredRows.map((row, index) => {
+                const primaryCol = columns[0];
+                const otherCols = columns.slice(1).filter((col) => col.key !== "status");
+                const inv = getRowInvoice(row);
+                const isViewLoading = inv ? pdfLoadingId === `${inv.invoiceId}-view` : false;
+                const isDlLoading = inv ? pdfLoadingId === `${inv.invoiceId}-download` : false;
+
+                return (
+                  <div
+                    key={`m-${String(row[primaryCol.key])}-${index}`}
+                    className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-xs transition hover:border-rose-200"
+                  >
+                    {/* Header: Photo (if available) + Name + Status */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {row.photoPath ? (
+                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-rose-100 bg-[#FAF8F5] shadow-xs">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={String(row.photoPath)}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ) : null}
+                        <div className="min-w-0">
+                          <h4 className="text-sm font-bold text-zinc-950 truncate">
+                            {String(row[primaryCol.key] ?? "—")}
+                          </h4>
+                          {row.code ? (
+                            <span className="text-[11px] font-mono font-medium text-zinc-600 block">
+                              {String(row.code)}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {/* Status badge */}
+                      {row.status ? (
+                        <span
+                          className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                            row.status === "Active" || row.status === "Confirmed" || row.status === "Paid"
+                              ? "bg-emerald-50 text-[#157347]"
+                              : row.status === "Pending" ||
+                                row.status === "Pending payment" ||
+                                row.status === "Approval required"
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-zinc-100 text-zinc-800"
+                          }`}
+                        >
+                          {String(row.status)}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    {/* Key Details 2-Column Grid */}
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs border-t border-zinc-100 pt-3">
+                      {otherCols.slice(0, 4).map((col) => (
+                        <div key={col.key} className="min-w-0">
+                          <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-600 block">
+                            {col.label}
+                          </span>
+                          <span className="font-semibold text-zinc-900 truncate block mt-0.5">
+                            {String(row[col.key] ?? "—")}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* GPS Location Pin if coordinates exist */}
+                    {row.latitude && row.longitude ? (
+                      <div className="mt-2.5 pt-2 border-t border-zinc-100 flex items-center justify-between text-xs">
+                        <span className="text-[11px] text-zinc-600 flex items-center gap-1 font-medium">
+                          <MapPin className="h-3 w-3 text-blue-600" /> GPS Tagged
+                        </span>
+                        <a
+                          href={`https://www.google.com/maps?q=${row.latitude},${row.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-bold text-blue-600 hover:underline inline-flex items-center gap-0.5"
+                        >
+                          <span>View Map</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    ) : null}
+
+                    {/* Action Bar */}
+                    <div className="mt-3 pt-3 border-t border-zinc-100 flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => {
+                          setPhotoUploadMessage(null);
+                          setPdfError(null);
+                          setSelectedRow(row);
+                        }}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-[#E61C5D] hover:bg-rose-100 transition"
+                      >
+                        View Details →
+                      </button>
+
+                      {inv ? (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInvoicePdf(inv.invoiceId, inv.invoiceNumber, "view");
+                            }}
+                            disabled={Boolean(pdfLoadingId)}
+                            title="View Tax Invoice PDF"
+                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition disabled:opacity-50"
+                          >
+                            {isViewLoading ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-emerald-700" />
+                            ) : (
+                              <Eye className="h-3 w-3 text-emerald-700" />
+                            )}
+                            PDF
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInvoicePdf(inv.invoiceId, inv.invoiceNumber, "download");
+                            }}
+                            disabled={Boolean(pdfLoadingId)}
+                            title="Download Invoice PDF"
+                            className="inline-flex items-center rounded-lg p-1.5 text-zinc-700 hover:bg-zinc-100 transition disabled:opacity-50"
+                          >
+                            {isDlLoading ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#E61C5D]" />
+                            ) : (
+                              <Download className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+              {filteredRows.length === 0 && (
+                <p className="py-12 text-center text-sm text-zinc-800">No records match your filters.</p>
+              )}
+            </div>
+
+            {/* DESKTOP TABLE VIEW (640px and up) */}
+            <div className="hidden sm:block overflow-x-auto">
             <table className="w-full min-w-full sm:min-w-160 text-left">
               <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-700">
                 <tr>
@@ -538,7 +688,8 @@ export function ResourceListScreen({
               <p className="py-12 text-center text-sm text-zinc-800">No records match your filters.</p>
             )}
           </div>
-        )}
+        </>
+      )}
       </SectionCard>
 
       {selectedRow && (

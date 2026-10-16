@@ -12,7 +12,7 @@ export default function AdminSalesPage() {
     return sales.map((s) => ({
       id: s.id,
       customer: s.customer?.shopName || "Retail Shop",
-      seller: s.seller?.name || "Assigned Seller",
+      seller: s.seller?.name || "Field Officer",
       packets: s.quantity.toString(),
       amount: `₹${(s.totalPaise / 100).toLocaleString("en-IN")}`,
       payment: s.paymentMode === "CASH" ? "Cash" : s.paymentMode === "BANK" ? "Bank" : "Pending",
@@ -39,10 +39,10 @@ export default function AdminSalesPage() {
       title="All sales"
       description="Monitor confirmed, pending, and approval-required sales across the full regional distribution network."
       primaryAction="Export sales"
-      searchPlaceholder="Search by customer shop, seller, or sale status"
+      searchPlaceholder="Search by customer shop, officer, or sale status"
       columns={[
         { key: "customer", label: "Customer" },
-        { key: "seller", label: "Seller" },
+        { key: "seller", label: "Field Officer" },
         { key: "packets", label: "Packets" },
         { key: "amount", label: "Total amount" },
         { key: "payment", label: "Payment mode" },

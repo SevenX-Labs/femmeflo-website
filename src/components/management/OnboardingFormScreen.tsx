@@ -394,18 +394,18 @@ export function OnboardingFormScreen({
 
       <div className="mt-7">
         <PageHeading
-          eyebrow={seller ? "Seller onboarding" : "Customer onboarding"}
-          title={seller ? "Add seller" : "Add customer"}
+          eyebrow={seller ? "Field Team Onboarding" : "Customer onboarding"}
+          title={seller ? "Add Field Officer" : "Add customer"}
           description={
             seller
-              ? "Create credentials for a Seller, assign their territory, and link them to their reporting Manager."
+              ? "Create credentials for a Field Officer, assign their territory, and link them to their reporting Manager."
               : "Create a verified customer / shop record with category, contact, photo, and geolocation coordinates."
           }
         />
       </div>
 
       <SectionCard
-        title={seller ? "Seller information" : "Customer information"}
+        title={seller ? "Officer information" : "Customer information"}
         description="Complete the required fields to save this record to the database"
         className="mt-8"
       >
@@ -420,7 +420,7 @@ export function OnboardingFormScreen({
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-medium text-amber-900">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="font-bold text-sm text-amber-950">Prerequisite Step Required: Onboard a Field Seller First</p>
+                  <p className="font-bold text-sm text-amber-950">Prerequisite Step Required: Onboard a Field Officer First</p>
                   <p className="mt-0.5 text-xs text-amber-850">
                     Every customer shop must be linked to an active field seller for delivery and commission. Currently, zero sellers exist in your system.
                   </p>
@@ -429,7 +429,7 @@ export function OnboardingFormScreen({
                   href={role === "Super Admin" ? "/admin/sellers/new" : "/manager/sellers/new"}
                   className="inline-flex items-center gap-1 rounded-lg bg-[#E61C5D] px-3.5 py-2 font-bold text-white shadow-sm hover:bg-[#c91550] shrink-0"
                 >
-                  + Add Seller First
+                  + Add Field Officer First
                 </Link>
               </div>
             </div>
@@ -439,7 +439,7 @@ export function OnboardingFormScreen({
             <>
               <div className="grid gap-5 sm:grid-cols-2">
                 <label className="block text-xs font-bold text-zinc-700">
-                  Seller name *
+                  Officer name *
                   <input
                     required
                     value={name}
@@ -620,7 +620,7 @@ export function OnboardingFormScreen({
                 {(role === "Super Admin" || role === "Manager") && (
                   <div className="space-y-1.5">
                     <label className="block text-xs font-bold text-zinc-700">
-                      Assigned Field Seller *
+                      Assigned Field Officer *
                     </label>
                     {sellers.length > 0 ? (
                       <select
@@ -646,7 +646,7 @@ export function OnboardingFormScreen({
                             href={role === "Super Admin" ? "/admin/sellers/new" : "/manager/sellers/new"}
                             className="inline-flex items-center gap-1 rounded-lg bg-[#E61C5D] px-2.5 py-1 text-xs font-bold text-white hover:bg-[#c91550] shrink-0"
                           >
-                            + Onboard Seller First
+                            + Onboard Officer First
                           </Link>
                         </div>
                       </div>
@@ -936,7 +936,7 @@ export function OnboardingFormScreen({
                   <CheckCircle2 className="h-5 w-5 text-[#157347]" />
                   <span>
                     {seller
-                      ? "Seller successfully created!"
+                      ? "Field Officer successfully onboarded!"
                       : "Customer record and storefront photo successfully saved!"}
                   </span>
                 </div>
@@ -973,7 +973,7 @@ export function OnboardingFormScreen({
                 href={backHref}
                 className="inline-block rounded-xl bg-[#156035] px-5 py-3 text-xs font-bold text-white hover:bg-[#0f4e2b]"
               >
-                Return to {seller ? "Sellers" : "Customers"} Directory
+                Return to {seller ? "Officers" : "Customers"} Directory
               </Link>
             </div>
           ) : (

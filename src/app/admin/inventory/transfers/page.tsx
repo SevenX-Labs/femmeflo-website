@@ -113,7 +113,7 @@ export default function TransfersPage() {
         <PageHeading
           eyebrow="Inventory movement"
           title="Stock transfers"
-          description="Record verified packet movement from HQ to regional warehouses and from warehouses to field Sellers."
+          description="Record verified packet movement from HQ to regional warehouses and from warehouses to field officers."
         />
       </div>
 
@@ -137,7 +137,7 @@ export default function TransfersPage() {
                 href="/admin/sellers/new"
                 className="inline-flex items-center gap-1 rounded-lg bg-[#E61C5D] px-3 py-1.5 font-bold text-white hover:bg-[#c91550]"
               >
-                <Plus className="h-3.5 w-3.5" /> Add Seller
+                <Plus className="h-3.5 w-3.5" /> Add Field Officer
               </Link>
             </div>
           </div>
@@ -187,7 +187,7 @@ export default function TransfersPage() {
                   </optgroup>
                 )}
                 {sellerLocations.length > 0 && (
-                  <optgroup label="Field Sellers">
+                  <optgroup label="Field Officers">
                     {sellerLocations.map((loc) => (
                       <option key={loc.id} value={loc.id}>
                         {loc.name} ({loc.balance.toLocaleString("en-IN")} pkts available)
@@ -229,7 +229,7 @@ export default function TransfersPage() {
                   </optgroup>
                 )}
                 {sellerLocations.filter((l) => l.id !== sourceId).length > 0 && (
-                  <optgroup label="Field Sellers">
+                  <optgroup label="Field Officers">
                     {sellerLocations
                       .filter((l) => l.id !== sourceId)
                       .map((loc) => (

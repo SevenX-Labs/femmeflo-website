@@ -253,7 +253,7 @@ export default function SellerOverviewDashboard() {
               recentSales.map((s) => (
                 <div
                   key={s.id}
-                  className="flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition hover:bg-[#FFFDFD]"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-zinc-100 p-4 transition hover:bg-[#FFFDFD]"
                 >
                   <div className="flex items-center gap-3">
                     <span className="rounded-xl bg-rose-50 p-2 text-[#E61C5D]">
@@ -272,8 +272,8 @@ export default function SellerOverviewDashboard() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t sm:border-t-0 pt-2.5 sm:pt-0 border-zinc-100">
+                    <div className="text-left sm:text-right">
                       <p className="text-sm font-bold text-[#156035]">
                         ₹{(s.totalPaise / 100).toLocaleString("en-IN")}
                       </p>

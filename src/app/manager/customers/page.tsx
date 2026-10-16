@@ -18,7 +18,7 @@ export default function ManagerCustomersPage() {
       id: c.id,
       name: c.shopName,
       contact: c.contactName || c.phone || "—",
-      seller: c.seller?.name || "Assigned Seller",
+      seller: c.seller?.name || "Field Officer",
       village: c.village || "Territory",
       address:
         c.address ||
@@ -44,11 +44,11 @@ export default function ManagerCustomersPage() {
       description="Onboard customers and maintain full operational visibility over retail shop relationships within your assigned territory."
       primaryAction="Add customer"
       primaryHref="/manager/customers/new"
-      searchPlaceholder="Search assigned customers by shop name, seller, or village"
+      searchPlaceholder="Search assigned customers by shop name, officer, or village"
       columns={[
         { key: "name", label: "Customer / shop" },
         { key: "contact", label: "Contact person" },
-        { key: "seller", label: "Seller" },
+        { key: "seller", label: "Field Officer" },
         { key: "village", label: "Village" },
         { key: "category", label: "Category" },
         { key: "status", label: "Status" },

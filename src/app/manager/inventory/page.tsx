@@ -83,7 +83,7 @@ export default function ManagerInventoryPage() {
         <MetricCard
           label="Total Allocated"
           value={(summary?.totalAssigned ?? 0).toLocaleString("en-IN")}
-          note="Packets assigned to your sellers"
+          note="Packets assigned to your officers"
           icon="packages"
         />
         <MetricCard
@@ -104,11 +104,88 @@ export default function ManagerInventoryPage() {
 
       {/* Seller-wise Stock Table */}
       <SectionCard
-        title="Seller stock position"
-        description="Reconciliation across your assigned seller network"
+        title="Field Officer Stock Position"
+        description="Stock balance and sales progress across your assigned officers"
         className="mt-8"
       >
-        <div className="overflow-x-auto">
+        {/* MOBILE OFFICER CARDS (under 640px) */}
+        <div className="sm:hidden space-y-3">
+          {sellers.map((seller) => {
+            const utilization = seller.assigned > 0
+              ? Math.round((seller.sold / seller.assigned) * 100)
+              : 0;
+
+            return (
+              <div
+                key={`m-${seller.seller.id}`}
+                className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-xs"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="rounded-xl bg-rose-50 p-2 text-[#E61C5D]">
+                      <Users className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-bold text-zinc-950">{seller.seller.name}</h4>
+                      <span className="text-xs text-zinc-600 block mt-0.5">
+                        {seller.seller.village || "Territory"}
+                      </span>
+                    </div>
+                  </div>
+                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                    seller.remaining > 50
+                      ? "bg-amber-50 text-amber-700"
+                      : seller.remaining > 10
+                      ? "bg-emerald-50 text-[#157347]"
+                      : "bg-rose-50 text-[#E61C5D]"
+                  }`}>
+                    {seller.remaining} pkts in hand
+                  </span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs border-t border-zinc-100 pt-2.5">
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-500 block">
+                      Allocated
+                    </span>
+                    <span className="font-semibold text-zinc-800 text-xs block mt-0.5">
+                      {seller.assigned.toLocaleString("en-IN")} pkts
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-500 block">
+                      Confirmed Sold
+                    </span>
+                    <span className="font-bold text-[#156035] text-xs block mt-0.5">
+                      {seller.sold.toLocaleString("en-IN")} pkts
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-2.5 pt-2 border-t border-zinc-100 flex items-center justify-between gap-3 text-xs">
+                  <span className="text-[11px] font-medium text-zinc-500">Utilization Rate</span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-20 rounded-full bg-rose-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-[#E61C5D]"
+                        style={{ width: `${Math.min(100, utilization)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-bold text-zinc-800">{utilization}%</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {sellers.length === 0 && (
+            <p className="py-8 text-center text-xs text-zinc-500">
+              No field officer stock data available in your territory.
+            </p>
+          )}
+        </div>
+
+        {/* DESKTOP TABLE VIEW (640px and up) */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full min-w-180 text-left">
             <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-700">
               <tr>

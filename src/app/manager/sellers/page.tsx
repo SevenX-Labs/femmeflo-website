@@ -33,13 +33,13 @@ export default function ManagerSellersPage() {
       userDetail={userDetail}
       navigation={managerNavigation}
       eyebrow="Assigned team"
-      title="My sellers"
-      description="Onboard and supervise field sellers assigned to your territory. RBAC permissions grant seller creation and oversight."
-      primaryAction="Add seller"
+      title="Field Officers"
+      description="Onboard and supervise field officers assigned to your territory. Monitor customer coverage and packet balances."
+      primaryAction="Onboard Officer"
       primaryHref="/manager/sellers/new"
-      searchPlaceholder="Search your sellers by name, village, or phone"
+      searchPlaceholder="Search officers by name, village, or phone"
       columns={[
-        { key: "name", label: "Seller" },
+        { key: "name", label: "Field Officer" },
         { key: "location", label: "Location" },
         { key: "phone", label: "Phone" },
         { key: "customers", label: "Customers" },

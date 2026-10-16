@@ -162,7 +162,7 @@ export default function AdminApprovalsPage() {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search customer or seller"
+                  placeholder="Search customer or officer"
                   className="h-10 w-full sm:w-64 rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
                 />
               </div>
@@ -188,12 +188,117 @@ export default function AdminApprovalsPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* MOBILE CARD VIEW FOR APPROVALS (under 640px) */}
+          <div className="sm:hidden p-4 space-y-3.5">
+            {visibleSales.map((s) => {
+              const isPending = s.status === "PENDING_APPROVAL";
+              const isApproved = s.status === "CONFIRMED";
+              const unitPrice = s.unitPricePaise / 100;
+              const total = s.totalPaise / 100;
+
+              return (
+                <div
+                  key={`m-${s.id}`}
+                  className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-xs"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <button onClick={() => setSelected(s)} className="text-left">
+                        <h4 className="text-sm font-bold text-zinc-950 hover:text-[#E61C5D]">
+                          {s.customer?.shopName || "Retail Customer"}
+                        </h4>
+                        <span className="text-[10px] font-mono text-zinc-500 block mt-0.5">
+                          ID: {s.id.slice(0, 10)}...
+                        </span>
+                      </button>
+                    </div>
+
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                        isApproved
+                          ? "bg-emerald-50 text-[#157347]"
+                          : isPending
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-rose-50 text-[#E61C5D]"
+                      }`}
+                    >
+                      {isApproved ? "Approved" : isPending ? "Pending Review" : "Rejected"}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs border-t border-zinc-100 pt-3">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
+                        Field Officer
+                      </span>
+                      <span className="font-semibold text-zinc-900 block mt-0.5">
+                        {s.seller?.name || "Officer"}
+                      </span>
+                      <span className="text-[11px] text-zinc-600 block">
+                        {[s.seller?.village, s.seller?.district].filter(Boolean).join(", ") || "Territory"}
+                      </span>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
+                        Price vs Total
+                      </span>
+                      <span className="font-bold text-amber-700 block mt-0.5">
+                        ₹{unitPrice}/pkt <span className="text-zinc-600 font-normal">({s.quantity} pkts)</span>
+                      </span>
+                      <span className="font-extrabold text-[#156035] block text-sm">
+                        ₹{total.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3.5 pt-3 border-t border-zinc-100 flex items-center justify-between gap-2">
+                    <button
+                      onClick={() => setSelected(s)}
+                      className="text-xs font-bold text-zinc-700 hover:text-[#E61C5D]"
+                    >
+                      Inspect Details →
+                    </button>
+
+                    {isPending ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleReject(s)}
+                          disabled={processingId === s.id}
+                          className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-[#E61C5D] hover:bg-rose-100 disabled:opacity-50 transition"
+                        >
+                          <X className="h-3.5 w-3.5" /> Reject
+                        </button>
+                        <button
+                          onClick={() => handleApprove(s)}
+                          disabled={processingId === s.id}
+                          className="inline-flex items-center gap-1 rounded-xl bg-[#156035] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#0f4e2b] disabled:opacity-50 transition"
+                        >
+                          {processingId === s.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Check className="h-3.5 w-3.5" />
+                          )}
+                          Approve
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+            {visibleSales.length === 0 && (
+              <p className="py-10 text-center text-sm text-zinc-800">No approval requests in this filter.</p>
+            )}
+          </div>
+
+          {/* DESKTOP TABLE VIEW (640px and up) */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full min-w-220 text-left">
               <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-700">
                 <tr>
                   <th className="px-5 py-4">Request</th>
-                  <th className="px-5 py-4">Seller / territory</th>
+                  <th className="px-5 py-4">Officer / territory</th>
                   <th className="px-5 py-4">Packets</th>
                   <th className="px-5 py-4">Unit price</th>
                   <th className="px-5 py-4">Total</th>
