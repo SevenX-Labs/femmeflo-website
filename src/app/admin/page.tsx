@@ -263,7 +263,7 @@ export default function AdminOverviewDashboard() {
                 )}
               </div>
               <p className="text-xs text-zinc-700">
-                Hierarchical drilldown: State &rarr; District &rarr; Village &rarr; Manager &rarr; Seller &rarr; Category
+                Filter by: State &rarr; District &rarr; Area &rarr; Manager &rarr; Officer &rarr; Category
               </p>
             </div>
           </div>
@@ -375,7 +375,7 @@ export default function AdminOverviewDashboard() {
             {/* 5. Seller */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-800">
-                Field Seller
+                Field Officer
               </label>
               <select
                 value={selectedSellerId}
@@ -452,7 +452,7 @@ export default function AdminOverviewDashboard() {
             )}
             {selectedSellerId && (
               <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D]">
-                Seller: {availableSellers.find((s) => s.id === selectedSellerId)?.name || "Selected"}
+                Officer: {availableSellers.find((s) => s.id === selectedSellerId)?.name || "Selected"}
                 <button type="button" onClick={() => setSelectedSellerId("")} aria-label="Remove seller filter" className="cursor-pointer">
                   <X className="h-3 w-3 hover:text-black" />
                 </button>
@@ -489,12 +489,12 @@ export default function AdminOverviewDashboard() {
         <MetricCard
           label="Total Inventory"
           value={metrics.totalInventory.toLocaleString("en-IN")}
-          note="HQ, warehouses & sellers"
+          note="HQ, warehouses & field team"
           icon="package"
           tone="amber"
         />
         <MetricCard
-          label="Active Sellers"
+          label="Active Field Officers"
           value={metrics.totalSellers.toString()}
           note={`Supervised by ${metrics.totalManagers} managers`}
           icon="chart"
@@ -505,8 +505,8 @@ export default function AdminOverviewDashboard() {
       {/* Stock Distribution by Level */}
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <SectionCard
-          title="Stock by echelon"
-          description="Physical inventory position from central to field"
+          title="Where is your stock?"
+          description="See how many packets are at HQ, in regional warehouses, and with field officers"
           className="lg:col-span-2"
         >
           <div className="grid gap-4 sm:grid-cols-3">
@@ -541,12 +541,12 @@ export default function AdminOverviewDashboard() {
                 <span className="rounded-xl bg-white p-2.5 text-[#156035] shadow-sm">
                   <PackageCheck className="h-5 w-5" />
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700">Seller Handover</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700">With Field Officers</span>
               </div>
               <p className="mt-4 text-3xl font-bold font-sans tracking-tight text-zinc-900">
                 {metrics.sellerStock.toLocaleString("en-IN")}
               </p>
-              <p className="mt-1 text-xs text-zinc-800">Packets ready for retail</p>
+              <p className="mt-1 text-xs text-zinc-800">Packets with officers ready to sell</p>
             </div>
           </div>
 
@@ -555,21 +555,21 @@ export default function AdminOverviewDashboard() {
               href="/admin/inventory"
               className="text-xs font-bold text-[#E61C5D] hover:underline"
             >
-              View detailed stock reconciliation &rarr;
+              View full stock details & history &rarr;
             </Link>
             <span className="text-zinc-300">·</span>
             <Link
               href="/admin/inventory/transfers"
               className="text-xs font-bold text-[#156035] hover:underline"
             >
-              Transfer packets between depots &rarr;
+              Move packets between warehouses &rarr;
             </Link>
           </div>
         </SectionCard>
 
         <SectionCard
-          title="Field footprint"
-          description="Retail coverage and seller incentive"
+          title="Stores & Team Overview"
+          description="Total shops connected, active officers, and commission paid"
         >
           <div className="space-y-4">
             <div className="flex items-center justify-between rounded-xl border border-zinc-100 p-4">
@@ -579,7 +579,7 @@ export default function AdminOverviewDashboard() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Retailers / Shops</p>
-                  <p className="text-xs text-zinc-700">Onboarded customer accounts</p>
+                  <p className="text-xs text-zinc-700">Total verified retail shop partners</p>
                 </div>
               </div>
               <span className="text-xl font-bold font-sans tracking-tight text-[#156035]">
@@ -593,8 +593,8 @@ export default function AdminOverviewDashboard() {
                   <Users className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-bold text-zinc-800">Field Sellers</p>
-                  <p className="text-xs text-zinc-700">Active distribution agents</p>
+                  <p className="text-sm font-bold text-zinc-800">Field Officers</p>
+                  <p className="text-xs text-zinc-700">Active team members in the field</p>
                 </div>
               </div>
               <span className="text-xl font-bold font-sans tracking-tight text-[#E61C5D]">
@@ -609,7 +609,7 @@ export default function AdminOverviewDashboard() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-zinc-800">Incentives Earned</p>
-                  <p className="text-xs text-zinc-700">Calculated on confirmed sales</p>
+                  <p className="text-xs text-zinc-700">Total commission earned on confirmed sales</p>
                 </div>
               </div>
               <span className="text-xl font-bold font-sans tracking-tight text-amber-700">
