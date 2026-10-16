@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { DashboardShell, PageHeading, SectionCard } from "@/components/management/DashboardShell";
 import { adminNavigation } from "@/components/management/navigation";
 import { adminApi } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
+import { syncPermissionAliases } from "@/lib/permissions";
 
 export default function AdminAddManagerPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -42,9 +45,12 @@ export default function AdminAddManagerPage() {
         state,
         district,
         village: village || undefined,
-        permissions,
+        permissions: syncPermissionAliases(permissions),
       });
       setSaved(true);
+      setTimeout(() => {
+        router.push("/admin/managers");
+      }, 700);
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         if (err.isNetworkError || err.statusCode === 503) {
@@ -198,7 +204,7 @@ export default function AdminAddManagerPage() {
           {saved ? (
             <div className="space-y-3">
               <div className="rounded-xl bg-emerald-50 p-4 text-sm font-bold text-[#157347]">
-                ✓ Manager account successfully created in database!
+                ✓ Manager account successfully created! Redirecting to Managers Directory...
               </div>
               <Link
                 href="/admin/managers"

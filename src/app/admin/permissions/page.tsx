@@ -28,6 +28,7 @@ import {
   MANAGER_PERMISSIONS,
   PERMISSION_METADATA,
   syncPermissionAliases,
+  hasPermission,
 } from "@/lib/permissions";
 
 type ScopeMode = "specific" | "overall";
@@ -76,9 +77,7 @@ export default function AdminPermissionsPage() {
           : mgrList[0];
 
         setSelectedManagerId(initialMgr.id);
-        const active = (initialMgr.permissions || []).filter((p: string) =>
-          permsToUse.includes(p)
-        );
+        const active = permsToUse.filter((p) => hasPermission(initialMgr as any, p));
         setActivePermissions(active);
         setOverallPermissions(active);
       } else {
@@ -101,7 +100,7 @@ export default function AdminPermissionsPage() {
     setSelectedManagerId(id);
     const mgr = managers.find((m) => m.id === id);
     if (mgr) {
-      const active = (mgr.permissions || []).filter((p) => permissionsList.includes(p));
+      const active = permissionsList.filter((p) => hasPermission(mgr as any, p));
       setActivePermissions(active);
     }
   };
@@ -112,7 +111,7 @@ export default function AdminPermissionsPage() {
       const mgr = managers.find((m) => m.id === selectedManagerId) || managers[0];
       if (mgr) {
         setSelectedManagerId(mgr.id);
-        const active = (mgr.permissions || []).filter((p) => permissionsList.includes(p));
+        const active = permissionsList.filter((p) => hasPermission(mgr as any, p));
         setActivePermissions(active);
       }
     } else {

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, IndianRupee, Loader2, PackageCheck, ShieldAlert } from "lucide-react";
 import { DashboardShell, PageHeading, SectionCard } from "@/components/management/DashboardShell";
@@ -11,6 +12,7 @@ import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/context/AuthContext";
 
 export default function NewSellerSalePage() {
+  const router = useRouter();
   const { user } = useAuth();
   const userName = user?.name ?? "Seller";
   const userDetail = ["Seller", user?.village, user?.district].filter(Boolean).join(" · ") || "Field operations";
@@ -76,6 +78,9 @@ export default function NewSellerSalePage() {
       });
 
       setSubmitted(true);
+      setTimeout(() => {
+        router.push("/seller/sales");
+      }, 700);
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setError(err.message || "Failed to record sale.");
@@ -204,7 +209,7 @@ export default function NewSellerSalePage() {
           {submitted ? (
             <div className="space-y-3">
               <div className="rounded-xl bg-emerald-50 p-4 text-sm font-bold text-[#157347]">
-                ✓ {needsApproval ? "Approval request dispatched to Super Admin!" : "Sale confirmed and recorded in backend!"}
+                ✓ {needsApproval ? "Approval request dispatched! Redirecting to sales..." : "Sale recorded successfully! Redirecting to sales ledger..."}
               </div>
               <Link
                 href="/seller/sales"

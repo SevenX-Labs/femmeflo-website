@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Camera, CheckCircle2, ExternalLink, Image as ImageIcon, Loader2, MapPin, Sparkles, Trash2, Upload } from "lucide-react";
 import { DashboardShell, PageHeading, SectionCard } from "./DashboardShell";
@@ -31,6 +32,7 @@ export function OnboardingFormScreen({
   entity,
   backHref,
 }: Props) {
+  const router = useRouter();
   const seller = entity === "seller";
 
   // Common Fields
@@ -368,6 +370,9 @@ export function OnboardingFormScreen({
       }
 
       setSaved(true);
+      setTimeout(() => {
+        router.push(backHref);
+      }, 700);
     } catch (err: unknown) {
       setErrorMessage(
         err instanceof ApiError
@@ -936,8 +941,8 @@ export function OnboardingFormScreen({
                   <CheckCircle2 className="h-5 w-5 text-[#157347]" />
                   <span>
                     {seller
-                      ? "Field Officer successfully onboarded!"
-                      : "Customer record and storefront photo successfully saved!"}
+                      ? "Field Officer successfully onboarded! Redirecting to directory..."
+                      : "Customer record successfully saved! Redirecting to directory..."}
                   </span>
                 </div>
                 {(uploadedPhotoUrl || photoPreview) && (
