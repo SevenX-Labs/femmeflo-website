@@ -97,10 +97,18 @@ export default function AdminSellersPage() {
       return {
         id: s.id,
         name: s.name,
-        code: (s as any).code || `FF-S${String(idx + 1).padStart(3, "0")}`,
+        designation: s.designation || "Field Sales Officer",
+        employeeCode: s.employeeCode || (s as any).code || `FF-S${String(idx + 1).padStart(3, "0")}`,
+        code: s.employeeCode || (s as any).code || `FF-S${String(idx + 1).padStart(3, "0")}`,
         territory: [s.village, s.district, s.state].filter(Boolean).join(", ") || "Field Scope",
         phone: s.phone || "—",
+        alternatePhone: s.alternatePhone || "—",
+        email: s.email || "—",
+        address: [s.address, s.village, s.district, s.state, s.pincode].filter(Boolean).join(", ") || "—",
         manager: managerName,
+        aadharNumber: s.aadharNumber || "—",
+        drivingLicense: s.drivingLicense || "—",
+        education: s.education || "—",
         customers: s._count?.customers?.toString() || (s as any).customersCount?.toString() || "0",
         packets: String(resolvedPackets),
         status: s.active ? "Active" : "Inactive",
@@ -123,11 +131,12 @@ export default function AdminSellersPage() {
       searchPlaceholder="Search officer, territory or phone"
       columns={[
         { key: "name", label: "Field Officer" },
-        { key: "code", label: "Officer Code" },
-        { key: "territory", label: "Territory" },
-        { key: "phone", label: "Phone" },
-        { key: "manager", label: "Reporting manager" },
-        { key: "packets", label: "Current packets" },
+        { key: "code", label: "Employee Code" },
+        { key: "designation", label: "Designation" },
+        { key: "phone", label: "Primary Phone" },
+        { key: "alternatePhone", label: "Alternate Phone" },
+        { key: "manager", label: "Reporting Manager" },
+        { key: "packets", label: "Current Packets" },
         { key: "status", label: "Status" },
       ]}
       fetchData={fetchSellers}

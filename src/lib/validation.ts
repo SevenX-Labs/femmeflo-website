@@ -117,3 +117,30 @@ export function validateEmail(raw?: string | null): { isValid: boolean; normaliz
 
   return { isValid: true, normalized: trimmed };
 }
+
+/**
+ * Validates and formats 12-digit Indian Aadhaar number.
+ */
+export function validateAadharNumber(raw?: string | null): { isValid: boolean; normalized?: string; formatted?: string; error?: string } {
+  if (!raw || !raw.trim()) {
+    return { isValid: true, normalized: undefined };
+  }
+
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length !== 12) {
+    return {
+      isValid: false,
+      error: `Aadhaar number must be exactly 12 digits (currently ${digits.length} digits).`,
+    };
+  }
+
+  if (digits.startsWith("0") || digits.startsWith("1")) {
+    return {
+      isValid: false,
+      error: "Aadhaar number cannot start with 0 or 1.",
+    };
+  }
+
+  const formatted = `${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8, 12)}`;
+  return { isValid: true, normalized: digits, formatted };
+}

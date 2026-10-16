@@ -9,6 +9,7 @@ import type {
   SaleItem,
   SellerItem,
   UpdateCustomerPayload,
+  UpdateUserPayload,
 } from "./types";
 
 export const managerApi = {
@@ -61,6 +62,16 @@ export const managerApi = {
   ): Promise<{ seller: SellerItem }> {
     return apiRequest<{ seller: SellerItem }>("manager/sellers", {
       method: "POST",
+      body: payload,
+    });
+  },
+
+  async updateSeller(
+    id: string,
+    payload: UpdateUserPayload
+  ): Promise<{ seller: SellerItem }> {
+    return apiRequest<{ seller: SellerItem }>(`manager/sellers/${id}`, {
+      method: "PATCH",
       body: payload,
     });
   },

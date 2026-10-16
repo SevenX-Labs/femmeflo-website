@@ -2,6 +2,7 @@
 
 import { CustomerDetailModal } from "./CustomerDetailModal";
 import { ManagerDetailModal } from "./ManagerDetailModal";
+import { SellerDetailModal } from "./SellerDetailModal";
 
 import { Camera, CheckCircle2, Download, Eye, ExternalLink, FileText, Image as ImageIcon, Loader2, Mail, MapPin, Package, Phone, RefreshCw, Search, SlidersHorizontal, Upload, User, Users, X } from "lucide-react";
 import Link from "next/link";
@@ -829,6 +830,32 @@ export function ResourceListScreen({
                           [updated.village, updated.district, updated.state]
                             .filter(Boolean)
                             .join(", ") || "General Scope",
+                        status: updated.active ? "Active" : "Inactive",
+                      }
+                    : r
+                )
+              );
+            }}
+          />
+        ) : (eyebrow.toLowerCase().includes("seller") || title.toLowerCase().includes("seller") || eyebrow.toLowerCase().includes("officer") || title.toLowerCase().includes("officer")) ? (
+          <SellerDetailModal
+            role={role}
+            sellerId={String(selectedRow.id)}
+            onClose={() => setSelectedRow(null)}
+            onSellerUpdated={(updated) => {
+              setDataRows((prev) =>
+                prev.map((r) =>
+                  r.id === updated.id
+                    ? {
+                        ...r,
+                        name: updated.name,
+                        designation: updated.designation || "Field Sales Officer",
+                        employeeCode: updated.employeeCode || (r as any).employeeCode || "—",
+                        phone: updated.phone || "—",
+                        alternatePhone: updated.alternatePhone || "—",
+                        email: updated.email || "—",
+                        location: [updated.village, updated.district].filter(Boolean).join(", ") || (r as any).location,
+                        territory: [updated.village, updated.district, updated.state].filter(Boolean).join(", ") || (r as any).territory,
                         status: updated.active ? "Active" : "Inactive",
                       }
                     : r

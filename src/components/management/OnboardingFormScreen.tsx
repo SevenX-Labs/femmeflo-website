@@ -12,7 +12,7 @@ import { sellerApi } from "@/lib/api/seller";
 import { categoryApi } from "@/lib/api/categories";
 import type { Category, ManagerItem, PincodeLookupResponse, SellerItem } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
-import { validateMobileNumber, validateEmail } from "@/lib/validation";
+import { validateMobileNumber, validateEmail, validateAadharNumber } from "@/lib/validation";
 
 type Props = {
   role: "Super Admin" | "Manager" | "Seller";
@@ -46,9 +46,17 @@ export function OnboardingFormScreen({
   const [district, setDistrict] = useState("");
   const [village, setVillage] = useState("");
 
-  // Seller-specific fields
+  // Seller / Field Officer specific fields
   const [managers, setManagers] = useState<ManagerItem[]>([]);
   const [selectedManagerId, setSelectedManagerId] = useState("");
+  const [designation, setDesignation] = useState("Field Sales Officer");
+  const [employeeCode, setEmployeeCode] = useState("");
+  const [alternatePhone, setAlternatePhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [officerStatus, setOfficerStatus] = useState<"Active" | "Inactive">("Active");
+  const [aadharNumber, setAadharNumber] = useState("");
+  const [drivingLicense, setDrivingLicense] = useState("");
+  const [education, setEducation] = useState("12th Standard / HSC");
 
   // Customer-specific fields
   const [categories, setCategories] = useState<Category[]>([]);
@@ -301,28 +309,86 @@ export function OnboardingFormScreen({
 
     try {
       if (seller) {
-        // Create Seller
+        // Primary phone validation
+        const phoneVal = validateMobileNumber(phone);
+        if (!phoneVal.isValid) {
+          setErrorMessage(phoneVal.error || "Please enter a valid 10-digit primary mobile number.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Alternate phone validation (Phone 2) with NO DUPLICATION check
+        let altPhoneNormalized = undefined;
+        if (alternatePhone && alternatePhone.trim()) {
+          const altVal = validateMobileNumber(alternatePhone);
+          if (!altVal.isValid) {
+            setErrorMessage("Alternate phone: " + (altVal.error || "Please enter a valid 10-digit mobile number."));
+            setIsSubmitting(false);
+            return;
+          }
+          const p1 = phoneVal.normalized.replace(/\D/g, "").slice(-10);
+          const p2 = altVal.normalized.replace(/\D/g, "").slice(-10);
+          if (p1 === p2) {
+            setErrorMessage("Phone number 2 / alternate phone cannot be the same as Phone number 1 (no duplication allowed).");
+            setIsSubmitting(false);
+            return;
+          }
+          altPhoneNormalized = altVal.normalized;
+        }
+
+        // Email validation
+        if (email && email.trim()) {
+          const emailVal = validateEmail(email);
+          if (!emailVal.isValid) {
+            setErrorMessage(emailVal.error || "Please enter a valid email address.");
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
+        // Aadhaar number validation
+        let aadharNormalized = undefined;
+        if (aadharNumber && aadharNumber.trim()) {
+          const aadharVal = validateAadharNumber(aadharNumber);
+          if (!aadharVal.isValid) {
+            setErrorMessage(aadharVal.error || "Please enter a valid 12-digit Aadhaar number.");
+            setIsSubmitting(false);
+            return;
+          }
+          aadharNormalized = aadharVal.normalized;
+        }
+
+        // Super Admin must select reporting manager if managers exist
+        if (role === "Super Admin" && !selectedManagerId && managers.length > 0) {
+          setErrorMessage("Please select a reporting Manager for this field officer.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        const sellerPayload = {
+          name: name.trim(),
+          designation: designation.trim() || "Field Sales Officer",
+          employeeCode: employeeCode.trim() || undefined,
+          phone: phoneVal.normalized,
+          alternatePhone: altPhoneNormalized,
+          email: email.trim() || undefined,
+          password,
+          address: (address.trim() || [streetName, shopNumber].filter(Boolean).join(", ").trim()) || undefined,
+          pincode: pincode.trim() || undefined,
+          state: state.trim(),
+          district: district.trim(),
+          village: village.trim(),
+          active: officerStatus === "Active",
+          aadharNumber: aadharNormalized,
+          drivingLicense: drivingLicense.trim() || undefined,
+          education: education.trim() || undefined,
+          managerId: role === "Super Admin" ? selectedManagerId || undefined : undefined,
+        };
+
         if (role === "Super Admin") {
-          await adminApi.createSeller({
-            name,
-            phone: phoneVal.normalized,
-            email: email || undefined,
-            password,
-            managerId: selectedManagerId || undefined,
-            state,
-            district,
-            village,
-          });
+          await adminApi.createSeller(sellerPayload);
         } else {
-          await managerApi.createSeller({
-            name,
-            phone: phoneVal.normalized,
-            email: email || undefined,
-            password,
-            state,
-            district,
-            village,
-          });
+          await managerApi.createSeller(sellerPayload);
         }
       } else {
         // If Manager or Admin, sellerId is required
@@ -458,103 +524,363 @@ export function OnboardingFormScreen({
           )}
 
           {seller ? (
-            <>
-              <div className="grid gap-5 sm:grid-cols-2">
-                <label className="block text-xs font-bold text-zinc-700">
-                  Officer name *
-                  <input
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                    placeholder="Enter full name"
-                  />
-                </label>
-                <label className="block text-xs font-bold text-zinc-700">
-                  Contact number (with country code) *
-                  <input
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                    placeholder="Enter 10-digit mobile number"
-                  />
-                </label>
-              </div>
+            <div className="space-y-6">
+              {/* Section 1: Employee Role & Identity */}
+              <div className="space-y-4">
+                <div className="border-b border-zinc-200/60 pb-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#E61C5D]">
+                    1. Employee Identity &amp; Role Assignment
+                  </h3>
+                  <p className="text-[11px] text-zinc-600">
+                    Official officer identification, designation, status, and reporting manager
+                  </p>
+                </div>
 
-              <div className="grid gap-5 sm:grid-cols-3">
-                <label className="block text-xs font-bold text-zinc-700">
-                  Login email
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                    placeholder="Enter seller email address"
-                  />
-                </label>
-                <label className="block text-xs font-bold text-zinc-700">
-                  Temporary password *
-                  <input
-                    type="text"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                    placeholder="At least 12 chars"
-                  />
-                </label>
-                {role === "Super Admin" && managers.length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <label className="block text-xs font-bold text-zinc-700">
-                    Reporting manager
-                    <select
-                      value={selectedManagerId}
-                      onChange={(e) => setSelectedManagerId(e.target.value)}
-                      className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
-                    >
-                      {managers.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name} ({m.district || "Territory"})
-                        </option>
-                      ))}
-                    </select>
+                    Employee Name *
+                    <input
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="e.g. Rahul Patil"
+                    />
                   </label>
-                )}
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Designation *
+                    <input
+                      required
+                      list="designation-list"
+                      value={designation}
+                      onChange={(e) => setDesignation(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="e.g. Field Sales Officer"
+                    />
+                    <datalist id="designation-list">
+                      <option value="Field Sales Officer" />
+                      <option value="Senior Field Executive" />
+                      <option value="Area Sales Representative" />
+                      <option value="Territory Distribution Officer" />
+                      <option value="Field Business Associate" />
+                    </datalist>
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Employee Code
+                    <input
+                      value={employeeCode}
+                      onChange={(e) => setEmployeeCode(e.target.value.toUpperCase())}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 font-mono text-sm uppercase outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="e.g. FF-FO-001"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <span className="block text-xs font-bold text-zinc-700 mb-1.5">Employment Status</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setOfficerStatus("Active")}
+                        className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition border cursor-pointer ${
+                          officerStatus === "Active"
+                            ? "bg-emerald-50 border-emerald-300 text-[#156035] ring-2 ring-emerald-100"
+                            : "bg-[#FAF8F5] border-zinc-200 text-zinc-600 hover:bg-zinc-100"
+                        }`}
+                      >
+                        ✓ Active (Authorized)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOfficerStatus("Inactive")}
+                        className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition border cursor-pointer ${
+                          officerStatus === "Inactive"
+                            ? "bg-zinc-200 border-zinc-400 text-zinc-800 ring-2 ring-zinc-200"
+                            : "bg-[#FAF8F5] border-zinc-200 text-zinc-600 hover:bg-zinc-100"
+                        }`}
+                      >
+                        Inactive (Suspended)
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-700">
+                      Assigned Reporting Manager *
+                      {role === "Super Admin" ? (
+                        managers.length > 0 ? (
+                          <select
+                            required
+                            value={selectedManagerId}
+                            onChange={(e) => setSelectedManagerId(e.target.value)}
+                            className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300"
+                          >
+                            <option value="">Select Reporting Manager</option>
+                            {managers.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {m.name} ({[m.village, m.district, m.state].filter(Boolean).join(", ") || "Territory"})
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <p className="mt-1.5 rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+                            No regional managers registered. Onboard a manager first.
+                          </p>
+                        )
+                      ) : (
+                        <div className="mt-1.5 flex h-11 items-center rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 text-xs font-bold text-[#156035]">
+                          Assigned to your territory supervision ({userName})
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-3">
-                <label className="block text-xs font-bold text-zinc-700">
-                  State *
-                  <input
-                    required
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
-                    placeholder="Maharashtra"
-                  />
-                </label>
-                <label className="block text-xs font-bold text-zinc-700">
-                  District *
-                  <input
-                    required
-                    value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
-                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
-                    placeholder="Thane"
-                  />
-                </label>
-                <label className="block text-xs font-bold text-zinc-700">
-                  Village / town *
-                  <input
-                    required
-                    value={village}
-                    onChange={(e) => setVillage(e.target.value)}
-                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm"
-                    placeholder="Diva"
-                  />
-                </label>
+              {/* Section 2: Contact Information & Login Password */}
+              <div className="space-y-4 pt-2">
+                <div className="border-b border-zinc-200/60 pb-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#E61C5D]">
+                    2. Contact Numbers &amp; Login Credentials
+                  </h3>
+                  <p className="text-[11px] text-zinc-600">
+                    Primary mobile number, distinct alternate phone, optional email, and login credentials
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Phone Number 1 (Primary Contact) *
+                    <input
+                      required
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="10-digit mobile number (e.g. 9876543210)"
+                    />
+                    <span className="mt-1 block text-[10px] text-zinc-500">
+                      Primary number used for authentication and SMS notifications
+                    </span>
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Phone Number 2 / Alternate Phone (No duplication)
+                    <input
+                      type="tel"
+                      value={alternatePhone}
+                      onChange={(e) => setAlternatePhone(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="Alternate 10-digit mobile number"
+                    />
+                    <span className="mt-1 block text-[10px] text-zinc-500">
+                      Must be different from Phone Number 1
+                    </span>
+                  </label>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Email ID (Optional)
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="officer@femmeflo.in"
+                    />
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Initial Account Password *
+                    <input
+                      type="text"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="Minimum 8 characters"
+                    />
+                    <span className="mt-1 block text-[10px] text-zinc-500">
+                      Temporary password used by officer to log in
+                    </span>
+                  </label>
+                </div>
               </div>
-            </>
+
+              {/* Section 3: Identity Documents & Education */}
+              <div className="space-y-4 pt-2">
+                <div className="border-b border-zinc-200/60 pb-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#E61C5D]">
+                    3. Identification Documents &amp; Qualification
+                  </h3>
+                  <p className="text-[11px] text-zinc-600">
+                    Government identification documents and educational background
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Aadhaar Card Number
+                    <input
+                      type="text"
+                      maxLength={14}
+                      value={aadharNumber}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, "").slice(0, 12);
+                        const parts = [];
+                        for (let i = 0; i < raw.length; i += 4) {
+                          parts.push(raw.slice(i, i + 4));
+                        }
+                        setAadharNumber(parts.join(" "));
+                      }}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 font-mono text-sm tracking-wider outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="XXXX XXXX XXXX"
+                    />
+                    <span className="mt-1 block text-[10px] text-zinc-500">12-digit Indian Aadhaar number</span>
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Driving License Number
+                    <input
+                      type="text"
+                      value={drivingLicense}
+                      onChange={(e) => setDrivingLicense(e.target.value.toUpperCase())}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 font-mono text-sm uppercase tracking-wide outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                      placeholder="e.g. MH14 20210001234"
+                    />
+                    <span className="mt-1 block text-[10px] text-zinc-500">For field travel validation</span>
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Educational Qualification
+                    <select
+                      value={education}
+                      onChange={(e) => setEducation(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300"
+                    >
+                      <option value="10th Standard">10th Standard / Matriculation</option>
+                      <option value="12th Standard / HSC">12th Standard / HSC / Intermediate</option>
+                      <option value="Graduate (B.A. / B.Com / B.Sc / BBA)">Graduate (B.A. / B.Com / B.Sc / BBA)</option>
+                      <option value="Graduate (Technical / Engineering)">Graduate (Technical / Engineering)</option>
+                      <option value="Post Graduate / Master'">Post Graduate / Master's</option>
+                      <option value="Diploma / ITI Certification">Diploma / ITI Certification</option>
+                      <option value="Other">Other Qualification</option>
+                    </select>
+                    <span className="mt-1 block text-[10px] text-zinc-500">Officer background</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Section 4: Complete Residential Address & Territory */}
+              <div className="space-y-4 pt-2">
+                <div className="border-b border-zinc-200/60 pb-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#E61C5D]">
+                    4. Complete Address &amp; Territory
+                  </h3>
+                  <p className="text-[11px] text-zinc-600">
+                    Residential address with PIN code lookup for territory jurisdiction
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="sm:col-span-1">
+                    <label className="block text-xs font-bold text-zinc-700">
+                      PIN Code *
+                      <div className="relative mt-1.5">
+                        <input
+                          required
+                          type="text"
+                          maxLength={6}
+                          value={pincode}
+                          onChange={(e) => handlePincodeChange(e.target.value)}
+                          className="h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                          placeholder="6-digit PIN"
+                        />
+                        {isPincodeLoading && (
+                          <div className="absolute right-3 top-3">
+                            <Loader2 className="h-5 w-5 animate-spin text-[#E61C5D]" />
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                    {pincodeMessage && (
+                      <p className={`mt-1.5 text-[11px] font-medium ${
+                        pincodeMessage.startsWith("✓") ? "text-emerald-700" : "text-amber-700"
+                      }`}>
+                        {pincodeMessage}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-zinc-700">
+                      Complete Address / Street Name / House / Building
+                      <input
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                        placeholder="House no., Building name, Street, Landmark"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <label className="block text-xs font-bold text-zinc-700">
+                    Village / Town / Locality *
+                    {availableVillages.length > 0 ? (
+                      <select
+                        required
+                        value={village}
+                        onChange={(e) => setVillage(e.target.value)}
+                        className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300"
+                      >
+                        <option value="">Select Village / Locality</option>
+                        {availableVillages.map((v) => (
+                          <option key={v} value={v}>
+                            {v}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        required
+                        value={village}
+                        onChange={(e) => setVillage(e.target.value)}
+                        className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300"
+                        placeholder="e.g. Diva / Panvel"
+                      />
+                    )}
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    District *
+                    <input
+                      required
+                      value={district}
+                      onChange={(e) => setDistrict(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300"
+                      placeholder="e.g. Thane"
+                    />
+                  </label>
+
+                  <label className="block text-xs font-bold text-zinc-700">
+                    State *
+                    <input
+                      required
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300"
+                      placeholder="e.g. Maharashtra"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
           ) : (
             <>
               {/* Section A: Shopkeeper & Store Details */}

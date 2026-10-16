@@ -75,6 +75,14 @@ export interface PublicUser {
   name: string;
   email: string | null;
   phone: string | null;
+  alternatePhone?: string | null;
+  designation?: string | null;
+  employeeCode?: string | null;
+  address?: string | null;
+  pincode?: string | null;
+  aadharNumber?: string | null;
+  drivingLicense?: string | null;
+  education?: string | null;
   role: Role;
   active: boolean;
   managerId?: string | null;
@@ -162,12 +170,21 @@ export interface CreateManagerPayload {
 
 export interface UpdateUserPayload {
   name?: string;
+  designation?: string;
+  employeeCode?: string;
   phone?: string;
+  alternatePhone?: string;
   email?: string;
+  address?: string;
+  pincode?: string;
   state?: string;
   district?: string;
   village?: string;
   active?: boolean;
+  aadharNumber?: string;
+  drivingLicense?: string;
+  education?: string;
+  managerId?: string;
 }
 
 export interface SellerItem extends PublicUser {
@@ -191,13 +208,22 @@ export interface SellerItem extends PublicUser {
 
 export interface CreateSellerPayload {
   name: string;
+  designation?: string;
+  employeeCode?: string;
   phone: string;
+  alternatePhone?: string;
   email?: string;
   password: string;
-  managerId?: string;
-  state?: string;
-  district?: string;
+  address?: string;
+  pincode?: string;
   village?: string;
+  district?: string;
+  state?: string;
+  managerId?: string;
+  active?: boolean;
+  aadharNumber?: string;
+  drivingLicense?: string;
+  education?: string;
 }
 
 // ==========================================

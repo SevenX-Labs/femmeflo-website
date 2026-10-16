@@ -20,11 +20,19 @@ export default function ManagerSellersPage() {
     if (!canManage) return [];
     const res = await managerApi.listSellers({ pageSize: 100 });
     const sellers = res?.sellers ?? (res as any)?.items ?? [];
-    return sellers.map((s) => ({
+    return sellers.map((s, idx) => ({
       id: s.id,
       name: s.name,
+      designation: s.designation || "Field Sales Officer",
+      employeeCode: s.employeeCode || (s as any).code || `FF-S${String(idx + 1).padStart(3, "0")}`,
       location: [s.village, s.district].filter(Boolean).join(", ") || "Territory Field",
       phone: s.phone || "—",
+      alternatePhone: s.alternatePhone || "—",
+      email: s.email || "—",
+      address: [s.address, s.village, s.district, s.state, s.pincode].filter(Boolean).join(", ") || "—",
+      aadharNumber: s.aadharNumber || "—",
+      drivingLicense: s.drivingLicense || "—",
+      education: s.education || "—",
       customers: s._count?.customers?.toString() || "0",
       packets: s.stockLocation ? String(s.stockLocation.balance) : "0",
       status: s.active ? "Active" : "Inactive",
@@ -82,10 +90,12 @@ export default function ManagerSellersPage() {
       searchPlaceholder="Search officers by name, village, or phone"
       columns={[
         { key: "name", label: "Field Officer" },
-        { key: "location", label: "Location" },
-        { key: "phone", label: "Phone" },
-        { key: "customers", label: "Customers" },
-        { key: "packets", label: "Current stock" },
+        { key: "employeeCode", label: "Employee Code" },
+        { key: "designation", label: "Designation" },
+        { key: "phone", label: "Primary Phone" },
+        { key: "alternatePhone", label: "Alternate Phone" },
+        { key: "location", label: "Territory" },
+        { key: "packets", label: "Current Stock" },
         { key: "status", label: "Status" },
       ]}
       fetchData={fetchSellers}
