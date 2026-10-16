@@ -77,9 +77,9 @@ export function DashboardShell({ role, workspace, userName, userDetail, navigati
   }, []);
 
   return (
-    <main className="min-h-screen bg-[#FAF8F5] font-jakarta text-zinc-800">
-      <div className="flex min-h-screen">
-        <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r border-rose-100 bg-white px-5 py-6 transition-transform duration-300 lg:static lg:translate-x-0 ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+    <main className="h-screen w-full overflow-hidden bg-[#FAF8F5] font-jakarta text-zinc-800">
+      <div className="flex h-full w-full">
+        <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r border-rose-100 bg-white px-5 py-6 transition-transform duration-300 lg:static lg:h-full lg:translate-x-0 overflow-y-auto shrink-0 select-none ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="flex items-start justify-between px-2">
             <Link href={role === "Super Admin" ? "/admin" : role === "Manager" ? "/manager" : "/seller"} onClick={() => setMenuOpen(false)}>
               <Image src="/logo-copy.png" alt="Femmeflo" width={170} height={58} priority className="h-10 w-auto object-contain object-left" />
@@ -118,7 +118,7 @@ export function DashboardShell({ role, workspace, userName, userDetail, navigati
           </div>
         </aside>
         {menuOpen && <button onClick={() => setMenuOpen(false)} className="fixed inset-0 z-30 bg-zinc-900/20 lg:hidden" aria-label="Close navigation overlay" />}
-        <section className="relative min-w-0 flex-1">
+        <section className="relative min-w-0 flex-1 h-full overflow-y-auto">
           <div className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-rose-100/80 bg-white/90 px-4 backdrop-blur-md lg:hidden">
             <div className="flex items-center gap-2.5">
               <button onClick={() => setMenuOpen(true)} className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-100 bg-white text-[#E61C5D] shadow-xs transition hover:bg-rose-50" aria-label="Open workspace navigation"><Menu className="h-5 w-5" /></button>
