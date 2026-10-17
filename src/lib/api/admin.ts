@@ -9,6 +9,8 @@ import type {
   CustomerItem,
   DashboardFilterOptions,
   IncentiveSummaryItem,
+  AdminIncentivesResponse,
+  AdminUserIncentiveDetailsResponse,
   InventoryReportData,
   InventorySummaryData,
   InvoiceItem,
@@ -476,17 +478,69 @@ export const adminApi = {
   // ----------------------------------------------------
   // Incentives
   // ----------------------------------------------------
-  async getIncentives(): Promise<{
-    currentRatePaise: number | null;
-    sellers: Array<{
-      seller: { id: string; name: string; phone?: string | null };
-      totalConfirmedPackets: number;
-      totalIncentivePaise: number;
-      totalIncentiveRupees: number;
-    }>;
-  }> {
-    return apiRequest("admin/incentives", {
+  async getIncentives(params?: {
+    role?: string;
+    managerId?: string;
+    status?: string;
+    year?: number;
+    month?: number;
+    search?: string;
+  }): Promise<AdminIncentivesResponse> {
+    return apiRequest<AdminIncentivesResponse>("admin/incentives", {
       method: "GET",
+      params: {
+        role: params?.role,
+        managerId: params?.managerId,
+        status: params?.status,
+        year: params?.year,
+        month: params?.month,
+        search: params?.search,
+      },
+    });
+  },
+
+  async getUserIncentiveDetails(userId: string): Promise<AdminUserIncentiveDetailsResponse> {
+    return apiRequest<AdminUserIncentiveDetailsResponse>(`admin/incentives/users/${userId}`, {
+      method: "GET",
+    });
+  },
+
+  async updateUserRate(
+    userId: string,
+    payload: { ratePaise: number; effectiveDate?: string; reason?: string }
+  ): Promise<{ user: any; history: any }> {
+    return apiRequest<{ user: any; history: any }>(`admin/incentives/users/${userId}/rate`, {
+      method: "PATCH",
+      body: payload,
+    });
+  },
+
+  async createAdjustment(
+    userId: string,
+    payload: { type: "ADD" | "DEDUCT"; amountPaise: number; reason: string; adjustmentDate?: string }
+  ): Promise<{ adjustment: any }> {
+    return apiRequest<{ adjustment: any }>(`admin/incentives/users/${userId}/adjustments`, {
+      method: "POST",
+      body: payload,
+    });
+  },
+
+  async createPayout(
+    userId: string,
+    payload: {
+      amountPaise: number;
+      paymentMethod: string;
+      referenceId?: string;
+      remarks?: string;
+      paymentDate?: string;
+      requestKey?: string;
+      periodYear?: number;
+      periodMonth?: number;
+    }
+  ): Promise<{ payout: any }> {
+    return apiRequest<{ payout: any }>(`admin/incentives/users/${userId}/payouts`, {
+      method: "POST",
+      body: payload,
     });
   },
 

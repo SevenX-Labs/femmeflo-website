@@ -3,6 +3,7 @@ import type {
   CreateCustomerPayload,
   CreateSellerPayload,
   CustomerItem,
+  ManagerIncentiveData,
   ManagerDashboardData,
   PaginationMeta,
   PincodeLookupResponse,
@@ -255,6 +256,15 @@ export const managerApi = {
 
   async getSale(id: string): Promise<{ sale: SaleItem }> {
     return apiRequest<{ sale: SaleItem }>(`manager/sales/${id}`, {
+      method: "GET",
+    });
+  },
+
+  // ----------------------------------------------------
+  // Incentives & Team Earnings
+  // ----------------------------------------------------
+  async getIncentives(): Promise<ManagerIncentiveData> {
+    return apiRequest<ManagerIncentiveData>("manager/incentives", {
       method: "GET",
     });
   },

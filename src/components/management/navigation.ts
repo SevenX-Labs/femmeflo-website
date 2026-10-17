@@ -51,6 +51,7 @@ export const managerNavigation: NavigationItem[] = [
   { label: "Customers", href: "/manager/customers", icon: "store" },
   { label: "Sales", href: "/manager/sales", icon: "sales" },
   { label: "Inventory", href: "/manager/inventory", icon: "inventory" },
+  { label: "Incentives", href: "/manager/incentives", icon: "incentives" },
   { label: "Notifications", href: "/manager/notifications", icon: "notifications" },
 ];
 
@@ -93,6 +94,7 @@ export function getManagerNavigation(user?: PublicUser | null): NavigationItem[]
     );
   }
 
+  items.push({ label: "Incentives", href: "/manager/incentives", icon: "incentives" });
   items.push({ label: "Notifications", href: "/manager/notifications", icon: "notifications" });
   return items;
 }

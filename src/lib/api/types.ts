@@ -478,15 +478,175 @@ export interface BusinessSettings {
   updatedAt: string;
 }
 
+export interface PeriodEarning {
+  year: number;
+  month: number;
+  label: string;
+  confirmedPackets: number;
+  salesIncentivePaise: number;
+  additionsPaise: number;
+  deductionsPaise: number;
+  adjustedEntitlementPaise: number;
+  allocatedPaidPaise: number;
+  outstandingPaise: number;
+  status: "UNPAID" | "PARTIALLY_PAID" | "PAID";
+}
+
+export interface IncentiveAdjustmentItem {
+  id: string;
+  type: "ADD" | "DEDUCT";
+  amountPaise: number;
+  reason: string;
+  adjustmentDate?: string;
+  createdAt: string;
+  createdBy?: { id: string; name: string };
+}
+
+export interface IncentivePayoutAllocationItem {
+  id: string;
+  payoutId: string;
+  periodYear: number;
+  periodMonth: number;
+  amountPaise: number;
+  createdAt: string;
+}
+
+export interface IncentivePayoutItem {
+  id: string;
+  amountPaise: number;
+  paymentDate: string;
+  paymentMethod: string;
+  referenceId?: string | null;
+  remarks?: string | null;
+  createdAt: string;
+  createdBy?: { id: string; name: string };
+  allocations?: IncentivePayoutAllocationItem[];
+}
+
+export interface IncentiveRateHistoryItem {
+  id: string;
+  previousRatePaise?: number | null;
+  newRatePaise: number;
+  effectiveDate: string;
+  reason?: string | null;
+  createdAt: string;
+  changedBy?: { id: string; name: string };
+}
+
 export interface IncentiveSummaryItem {
   sellerId: string;
   sellerName: string;
+  role?: string;
+  manager?: { id: string; name: string; phone?: string | null } | null;
   territory: string;
-  confirmedPackets: number;
+  isCustomRate?: boolean;
   ratePerPacketPaise: number;
   ratePerPacketRupees: number;
+  confirmedPackets: number;
+  totalConfirmedPackets: number;
   totalIncentivePaise: number;
   totalIncentiveRupees: number;
+  earnedPaise: number;
+  additionsPaise: number;
+  deductionsPaise: number;
+  adjustedEntitlementPaise: number;
+  totalPaidPaise: number;
+  outstandingPaise: number;
+  status: "UNPAID" | "PARTIALLY_PAID" | "PAID";
+  currentMonth: PeriodEarning;
+  previousMonth: PeriodEarning;
+  olderPendingPaise: number;
+  periods?: PeriodEarning[];
+}
+
+export interface AdminIncentiveCompanySummary {
+  totalEarnedPaise: number;
+  totalEarnedRupees: number;
+  totalAdditionsPaise: number;
+  totalAdditionsRupees: number;
+  totalDeductionsPaise: number;
+  totalDeductionsRupees: number;
+  totalAdjustedEntitlementPaise: number;
+  totalAdjustedEntitlementRupees: number;
+  totalPaidPaise: number;
+  totalPaidRupees: number;
+  totalPendingPaise: number;
+  totalPendingRupees: number;
+  currentMonth: {
+    year: number;
+    month: number;
+    earnedPaise: number;
+    earnedRupees: number;
+    paidPaise: number;
+    paidRupees: number;
+    pendingPaise: number;
+    pendingRupees: number;
+  };
+  previousMonth: {
+    year: number;
+    month: number;
+    earnedPaise: number;
+    earnedRupees: number;
+    paidPaise: number;
+    paidRupees: number;
+    pendingPaise: number;
+    pendingRupees: number;
+  };
+  olderPendingPaise: number;
+  olderPendingRupees: number;
+  pendingEmployeesCount: number;
+}
+
+export interface AdminIncentivesResponse {
+  summary: AdminIncentiveCompanySummary;
+  currentRatePaise: number | null;
+  sellers: IncentiveSummaryItem[];
+  users: IncentiveSummaryItem[];
+}
+
+export interface AdminUserIncentiveDetailsResponse {
+  user: {
+    id: string;
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    role: string;
+    employeeCode?: string | null;
+    designation?: string | null;
+    state?: string | null;
+    district?: string | null;
+    village?: string | null;
+    manager?: { id: string; name: string; phone?: string | null } | null;
+    incentiveRatePaise?: number | null;
+    effectiveRatePaise: number;
+    effectiveRateRupees: number;
+    isCustomRate: boolean;
+  };
+  summary: {
+    totalConfirmedPackets: number;
+    salesIncentivePaise: number;
+    additionsPaise: number;
+    deductionsPaise: number;
+    adjustedEntitlementPaise: number;
+    totalPaidPaise: number;
+    outstandingPaise: number;
+    status: "UNPAID" | "PARTIALLY_PAID" | "PAID";
+    currentMonth: PeriodEarning;
+    previousMonth: PeriodEarning;
+    olderPendingPaise: number;
+    periods: PeriodEarning[];
+  };
+  rateHistory: IncentiveRateHistoryItem[];
+  adjustments: IncentiveAdjustmentItem[];
+  payouts: IncentivePayoutItem[];
+  sales: Array<{
+    id: string;
+    confirmedAt: string;
+    customer: { id: string; shopName: string; contactName: string; phone?: string | null };
+    quantity: number;
+    incentiveRatePaise: number | null;
+    incentiveAmountPaise: number | null;
+  }>;
 }
 
 export interface SellerIncentiveData {
@@ -494,6 +654,21 @@ export interface SellerIncentiveData {
     totalPacketsSold: number;
     totalIncentivePaise: number;
     totalIncentiveRupees: number;
+    additionsPaise?: number;
+    additionsRupees?: number;
+    deductionsPaise?: number;
+    deductionsRupees?: number;
+    adjustedEntitlementPaise?: number;
+    adjustedEntitlementRupees?: number;
+    totalPaidPaise?: number;
+    totalPaidRupees?: number;
+    outstandingPaise?: number;
+    outstandingRupees?: number;
+    status?: "UNPAID" | "PARTIALLY_PAID" | "PAID";
+    currentMonth?: PeriodEarning;
+    previousMonth?: PeriodEarning;
+    olderPendingPaise?: number;
+    olderPendingRupees?: number;
   };
   items: Array<{
     saleId: string;
@@ -503,6 +678,74 @@ export interface SellerIncentiveData {
     incentiveRatePaise: number | null;
     incentiveAmountPaise: number;
   }>;
+  months?: PeriodEarning[];
+  adjustments?: IncentiveAdjustmentItem[];
+  payouts?: IncentivePayoutItem[];
+}
+
+export interface ManagerIncentiveMemberSummary {
+  sellerId: string;
+  sellerName: string;
+  phone?: string | null;
+  territory: string;
+  confirmedPackets: number;
+  earnedPaise: number;
+  earnedRupees: number;
+  additionsPaise: number;
+  deductionsPaise: number;
+  adjustedEntitlementPaise: number;
+  adjustedEntitlementRupees: number;
+  totalPaidPaise: number;
+  totalPaidRupees: number;
+  outstandingPaise: number;
+  outstandingRupees: number;
+  status: "UNPAID" | "PARTIALLY_PAID" | "PAID";
+  currentMonth: PeriodEarning;
+  previousMonth: PeriodEarning;
+  olderPendingPaise: number;
+}
+
+export interface ManagerIncentiveData {
+  personal: SellerIncentiveData;
+  team: {
+    summary: {
+      assignedSellersCount: number;
+      totalPacketsSold: number;
+      totalIncentiveEarnedPaise: number;
+      totalIncentiveEarnedRupees: number;
+      totalAdditionsPaise: number;
+      totalDeductionsPaise: number;
+      totalAdjustedEntitlementPaise: number;
+      totalAdjustedEntitlementRupees: number;
+      totalPaidPaise: number;
+      totalPaidRupees: number;
+      totalPendingPaise: number;
+      totalPendingRupees: number;
+      currentMonth: {
+        year: number;
+        month: number;
+        earnedPaise: number;
+        earnedRupees: number;
+        paidPaise: number;
+        paidRupees: number;
+        pendingPaise: number;
+        pendingRupees: number;
+      };
+      previousMonth: {
+        year: number;
+        month: number;
+        earnedPaise: number;
+        earnedRupees: number;
+        paidPaise: number;
+        paidRupees: number;
+        pendingPaise: number;
+        pendingRupees: number;
+      };
+      olderPendingPaise: number;
+      olderPendingRupees: number;
+    };
+    members: ManagerIncentiveMemberSummary[];
+  };
 }
 
 export interface NotificationItem {
