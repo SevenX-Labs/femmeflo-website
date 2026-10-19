@@ -36,6 +36,7 @@ import { sellerApi } from "@/lib/api/seller";
 import { categoryApi } from "@/lib/api/categories";
 import type { Category } from "@/lib/api/types";
 import type { CustomerItem, SaleItem, InvoiceItem } from "@/lib/api/types";
+import { compressImageToWebp } from "@/lib/imageCompression";
 
 export interface CustomerDetailModalProps {
   role: "Super Admin" | "Manager" | "Seller";
@@ -330,21 +331,23 @@ export function CustomerDetailModal({
       setPhotoMessage("Please upload a JPG, PNG, or WebP photo.");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setPhotoMessage("Photo size must be under 5 MB.");
+    if (file.size > 10 * 1024 * 1024) {
+      setPhotoMessage("Photo size must be under 10 MB.");
       return;
     }
 
     setIsUploadingPhoto(true);
-    setPhotoMessage(null);
+    setPhotoMessage("Compressing image...");
     try {
+      const compressed = await compressImageToWebp(file);
+
       let res: { customer: CustomerItem; photoUrl: string };
       if (role === "Super Admin") {
-        res = await adminApi.uploadCustomerPhoto(customer.id, file);
+        res = await adminApi.uploadCustomerPhoto(customer.id, compressed);
       } else if (role === "Manager") {
-        res = await managerApi.uploadCustomerPhoto(customer.id, file);
+        res = await managerApi.uploadCustomerPhoto(customer.id, compressed);
       } else {
-        res = await sellerApi.uploadCustomerPhoto(customer.id, file);
+        res = await sellerApi.uploadCustomerPhoto(customer.id, compressed);
       }
 
       const updated = { ...customer, photoPath: res.photoUrl || (res.customer?.photoPath ?? customer.photoPath) };

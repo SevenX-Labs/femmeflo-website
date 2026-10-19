@@ -15,6 +15,7 @@ import { ApiError } from "@/lib/api/client";
 import { validateMobileNumber, validateEmail, validateAadharNumber, validateDrivingLicense } from "@/lib/validation";
 import { reverseGeocode } from "@/lib/geocoding";
 import { geoApi } from "@/lib/api/geo";
+import { compressImageToWebp } from "@/lib/imageCompression";
 
 type Props = {
   role: "Super Admin" | "Manager" | "Seller";
@@ -194,7 +195,9 @@ export function OnboardingFormScreen({
     };
   }, [photoPreview]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isCompressing, setIsCompressing] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setPhotoError(null);
     if (!file) return;
@@ -205,8 +208,8 @@ export function OnboardingFormScreen({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setPhotoError("Image size must be 5 MB or less.");
+    if (file.size > 10 * 1024 * 1024) {
+      setPhotoError("Image size must be 10 MB or less.");
       return;
     }
 
@@ -214,8 +217,16 @@ export function OnboardingFormScreen({
       URL.revokeObjectURL(photoPreview);
     }
 
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
+    setIsCompressing(true);
+    try {
+      const compressed = await compressImageToWebp(file);
+      setPhotoFile(compressed);
+      setPhotoPreview(URL.createObjectURL(compressed));
+    } catch {
+      setPhotoError("Failed to compress image. Please try a different photo.");
+    } finally {
+      setIsCompressing(false);
+    }
   };
 
   const handleRemovePhoto = () => {
@@ -1628,7 +1639,7 @@ export function OnboardingFormScreen({
                           </p>
                         </div>
                         <p className="text-[11px] text-zinc-800">
-                          {photoFile ? `${(photoFile.size / (1024 * 1024)).toFixed(2)} MB · Ready to upload` : ""}
+                          {photoFile ? `${(photoFile.size / (1024 * 1024)).toFixed(2)} MB · WebP · Ready to upload` : ""}
                         </p>
                         <div className="mt-1 flex items-center gap-2">
                           <label className="cursor-pointer text-[11px] font-bold text-[#E61C5D] hover:underline">
@@ -1659,7 +1670,7 @@ export function OnboardingFormScreen({
                         <span className="text-xs font-bold">Upload / capture shop photo</span>
                       </div>
                       <span className="text-[11px] text-zinc-700">
-                        JPEG, PNG, WebP up to 5 MB
+                        JPEG, PNG, WebP — auto-compressed to WebP &lt; 1 MB
                       </span>
                       <input
                         type="file"
@@ -1669,6 +1680,12 @@ export function OnboardingFormScreen({
                         onChange={handleFileChange}
                       />
                     </label>
+                  )}
+                  {isCompressing && (
+                    <div className="mt-2 flex items-center gap-2 text-xs font-medium text-[#E61C5D]">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Compressing to WebP...
+                    </div>
                   )}
                   {photoError && (
                     <p className="mt-2 text-xs font-medium text-rose-600">{photoError}</p>
