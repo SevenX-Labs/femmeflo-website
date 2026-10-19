@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AlertCircle, ArrowLeft, Camera, CheckCircle2, ExternalLink, Image as ImageIcon, Loader2, MapPin, Sparkles, Trash2, Upload, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, Camera, CheckCircle2, ExternalLink, Image as ImageIcon, Loader2, MapPin, Mic, MicOff, Sparkles, Trash2, Upload, Volume2, X } from "lucide-react";
 import { DashboardShell, PageHeading, SectionCard } from "./DashboardShell";
 import type { NavigationItem } from "./DashboardShell";
 import { adminApi } from "@/lib/api/admin";
@@ -23,6 +23,64 @@ type Props = {
   entity: "seller" | "customer";
   backHref: string;
 };
+
+// Pure rule-based voice parser for Customer Onboarding (No AI required)
+function parseCustomerVoiceInput(transcript: string): {
+  shopName?: string;
+  contactName?: string;
+  phone?: string;
+  pincode?: string;
+  shopNumber?: string;
+  streetName?: string;
+  village?: string;
+  district?: string;
+  state?: string;
+} {
+  const text = transcript.trim();
+  const parsed: {
+    shopName?: string;
+    contactName?: string;
+    phone?: string;
+    pincode?: string;
+    shopNumber?: string;
+    streetName?: string;
+    village?: string;
+    district?: string;
+    state?: string;
+  } = {};
+
+  // Extract 10-digit mobile number
+  const phoneMatch = text.match(/(?:phone|mobile|number|contact|no|मोबाइल|फ़ोन|नंबर)[^0-9]*([6-9]\d{9})/i) || text.match(/\b([6-9]\d{9})\b/);
+  if (phoneMatch) {
+    parsed.phone = phoneMatch[1];
+  }
+
+  // Extract 6-digit PIN code (make sure it does not overlap with phone digits)
+  const pinMatch = text.match(/(?:pin\s*code|pincode|pin|पिन\s*कोड)[^0-9]*([1-9]\d{5})/i) || text.match(/\b([1-9]\d{5})\b/);
+  if (pinMatch && (!parsed.phone || (!parsed.phone.includes(pinMatch[1])))) {
+    parsed.pincode = pinMatch[1];
+  }
+
+  // Helper to extract text following field keyword up to next boundary
+  const extractField = (triggers: string[]) => {
+    const triggerPattern = triggers.map((t) => t.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")).join("|");
+    const nextBoundaries = "shop|store|owner|person|contact|customer|phone|mobile|pin|pincode|village|town|city|district|state|street|road|landmark|number";
+    const pattern = new RegExp(`(?:${triggerPattern})[:\\s]+([^,;]+?)(?=\\s+(?:${nextBoundaries})\\b|[,;]|$|\\.)`, "i");
+    const match = text.match(pattern);
+    if (!match) return undefined;
+    return match[1].replace(/^(is|hai|h|ka|ke)\s+/i, "").trim() || undefined;
+  };
+
+  parsed.shopName = extractField(["shop name", "store name", "store", "shop", "dukan ka naam", "dukan", "दुकान का नाम", "दुकान"]);
+  parsed.contactName = extractField(["shopkeeper name", "shopkeeper", "owner name", "owner", "contact name", "customer name", "malik ka naam", "malik", "naam", "नाम", "मालिक"]);
+  parsed.village = extractField(["village", "town", "locality", "gaon", "gao", "गांव", "गाँव", "कस्बा"]);
+  parsed.district = extractField(["district", "jila", "zilla", "ज़िला", "जिला"]);
+  parsed.state = extractField(["state", "rajya", "राज्य"]);
+  parsed.streetName = extractField(["street name", "street", "landmark", "road", "rasta", "रास्ता", "सड़क"]);
+  parsed.shopNumber = extractField(["shop number", "unit number", "shop no", "दुकान नंबर"]);
+
+  return parsed;
+}
 
 export function OnboardingFormScreen({
   role,
@@ -69,6 +127,13 @@ export function OnboardingFormScreen({
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
   const [submissionStep, setSubmissionStep] = useState<string>("");
+
+  // Speech-to-Text state for Customer Onboarding (Option B - Rule-based auto-fill without AI)
+  const [isListening, setIsListening] = useState(false);
+  const [speechTranscript, setSpeechTranscript] = useState<string>("");
+  const [speechSuccessMessage, setSpeechSuccessMessage] = useState<string | null>(null);
+  const [speechErrorMessage, setSpeechErrorMessage] = useState<string | null>(null);
+  const [activeSpeechField, setActiveSpeechField] = useState<string | null>(null);
   const [location, setLocation] = useState("");
   const [lat, setLat] = useState<number | undefined>(undefined);
   const [lng, setLng] = useState<number | undefined>(undefined);
@@ -247,6 +312,134 @@ export function OnboardingFormScreen({
         maximumAge: 0,
       }
     );
+  };
+
+  // Speech-to-Text handler for Customer Onboarding (Browser Web Speech API without external AI)
+  const handleStartVoiceAutofill = (targetSpecificField?: string) => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.");
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-IN"; // English (India) with support for Hindi phrases
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      setIsListening(true);
+      setActiveSpeechField(targetSpecificField || "multi");
+      setSpeechTranscript("");
+      setSpeechSuccessMessage(null);
+      setSpeechErrorMessage(null);
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results?.[0]?.[0]?.transcript || "";
+        setSpeechTranscript(transcript);
+
+        if (targetSpecificField) {
+          // Field-specific dictation
+          const cleaned = transcript.trim();
+          if (targetSpecificField === "shopName") setName(cleaned);
+          else if (targetSpecificField === "contactName") setContactName(cleaned);
+          else if (targetSpecificField === "phone") {
+            const num = cleaned.replace(/\D/g, "").slice(-10);
+            if (num) setPhone(num);
+          } else if (targetSpecificField === "pincode") {
+            const pin = cleaned.replace(/\D/g, "").slice(0, 6);
+            if (pin) handlePincodeChange(pin);
+          } else if (targetSpecificField === "shopNumber") setShopNumber(cleaned);
+          else if (targetSpecificField === "streetName") setStreetName(cleaned);
+          else if (targetSpecificField === "village") setVillage(cleaned);
+          else if (targetSpecificField === "district") setDistrict(cleaned);
+          else if (targetSpecificField === "state") setState(cleaned);
+
+          setSpeechSuccessMessage(`✓ Filled from voice: "${cleaned}"`);
+        } else {
+          // Option B: Multi-field smart voice autofill using pure rule-based keyword extraction
+          const parsed = parseCustomerVoiceInput(transcript);
+          const fieldsPopulated: string[] = [];
+
+          if (parsed.shopName) {
+            setName(parsed.shopName);
+            fieldsPopulated.push("Store Name");
+          }
+          if (parsed.contactName) {
+            setContactName(parsed.contactName);
+            fieldsPopulated.push("Shopkeeper");
+          }
+          if (parsed.phone) {
+            setPhone(parsed.phone);
+            fieldsPopulated.push("Phone");
+          }
+          if (parsed.pincode) {
+            handlePincodeChange(parsed.pincode);
+            fieldsPopulated.push("PIN Code");
+          }
+          if (parsed.shopNumber) {
+            setShopNumber(parsed.shopNumber);
+            fieldsPopulated.push("Shop No.");
+          }
+          if (parsed.streetName) {
+            setStreetName(parsed.streetName);
+            fieldsPopulated.push("Street/Landmark");
+          }
+          if (parsed.village) {
+            setVillage(parsed.village);
+            fieldsPopulated.push("Village");
+          }
+          if (parsed.district) {
+            setDistrict(parsed.district);
+            fieldsPopulated.push("District");
+          }
+          if (parsed.state) {
+            setState(parsed.state);
+            fieldsPopulated.push("State");
+          }
+
+          if (fieldsPopulated.length > 0) {
+            setSpeechSuccessMessage(
+              `✓ Autofilled ${fieldsPopulated.length} field${fieldsPopulated.length > 1 ? "s" : ""} (${fieldsPopulated.join(", ")}) from voice.`
+            );
+          } else {
+            // Fallback: If no keywords detected, populate Store Name with full transcript
+            setName(transcript.trim());
+            setSpeechSuccessMessage(`✓ Filled Store Name: "${transcript.trim()}" (Tip: Say "Shop name...", "Owner...", "Phone...", "Pincode..." to fill all at once)`);
+          }
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        setIsListening(false);
+        setActiveSpeechField(null);
+        if (event.error === "not-allowed") {
+          setSpeechErrorMessage("Microphone access was denied. Please allow microphone permissions in your browser.");
+        } else if (event.error === "no-speech") {
+          setSpeechErrorMessage("No speech was detected. Please click the mic and speak again.");
+        } else {
+          setSpeechErrorMessage(`Speech recognition error: ${event.error || "Please try again."}`);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        setActiveSpeechField(null);
+      };
+
+      recognition.start();
+    } catch (err: any) {
+      setIsListening(false);
+      setActiveSpeechField(null);
+      setSpeechErrorMessage(err.message || "Could not start speech recognition.");
+    }
   };
 
   // Automatic PIN Code Lookup Helper
@@ -918,6 +1111,72 @@ export function OnboardingFormScreen({
             </div>
           ) : (
             <>
+              {/* Voice Autofill Banner (Customer-Only, Rule-Based, No AI) */}
+              <div className="rounded-2xl border border-rose-200 bg-gradient-to-r from-rose-50/80 via-white to-rose-50/40 p-4 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-bold text-[#E61C5D]">
+                        <Sparkles className="h-3 w-3" />
+                        Speech-to-Text Autofill
+                      </span>
+                      <span className="text-[11px] font-medium text-zinc-500">
+                        Voice Dictation (Rule-based)
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-750 font-medium">
+                      Speak shop details to auto-fill multiple fields at once, or use the mic next to any field.
+                    </p>
+                    <p className="text-[11px] text-zinc-500 italic">
+                      Example: &ldquo;Shop name Sai Store, owner Ramesh Patel, mobile 9876543210, pincode 400053, village Diva&rdquo;
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleStartVoiceAutofill()}
+                    disabled={isListening}
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition shadow-xs shrink-0 cursor-pointer ${
+                      isListening && activeSpeechField === "multi"
+                        ? "bg-rose-600 text-white animate-pulse ring-4 ring-rose-200"
+                        : "bg-[#E61C5D] text-white hover:bg-[#c91550]"
+                    }`}
+                  >
+                    {isListening && activeSpeechField === "multi" ? (
+                      <>
+                        <MicOff className="h-4 w-4 animate-bounce" />
+                        <span>Listening... Speak now</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="h-4 w-4" />
+                        <span>Speak Shop Details</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Voice Feedback Alerts */}
+                {speechTranscript && (
+                  <div className="mt-3 rounded-xl border border-zinc-200 bg-white p-2.5 text-xs text-zinc-800">
+                    <span className="font-bold text-zinc-600">Transcribed: </span>
+                    <span className="italic">&ldquo;{speechTranscript}&rdquo;</span>
+                  </div>
+                )}
+                {speechSuccessMessage && (
+                  <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-xs font-semibold text-emerald-800 flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>{speechSuccessMessage}</span>
+                  </div>
+                )}
+                {speechErrorMessage && (
+                  <div className="mt-2 rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-xs font-semibold text-rose-800 flex items-center gap-1.5">
+                    <AlertCircle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+                    <span>{speechErrorMessage}</span>
+                  </div>
+                )}
+              </div>
+
               {/* Section A: Shopkeeper & Store Details */}
               <div className="space-y-4">
                 <div className="border-b border-zinc-200/60 pb-2">
@@ -931,7 +1190,22 @@ export function OnboardingFormScreen({
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-xs font-bold text-zinc-700">
-                    Store name *
+                    <span className="flex items-center justify-between">
+                      <span>Store name *</span>
+                      <button
+                        type="button"
+                        onClick={() => handleStartVoiceAutofill("shopName")}
+                        title="Speak store name"
+                        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition ${
+                          isListening && activeSpeechField === "shopName"
+                            ? "bg-rose-600 text-white animate-pulse"
+                            : "bg-rose-50 text-[#E61C5D] hover:bg-rose-100"
+                        }`}
+                      >
+                        <Mic className="h-3 w-3" />
+                        <span>Voice</span>
+                      </button>
+                    </span>
                     <input
                       required
                       value={name}
@@ -942,7 +1216,22 @@ export function OnboardingFormScreen({
                   </label>
 
                   <label className="block text-xs font-bold text-zinc-700">
-                    Shopkeeper name *
+                    <span className="flex items-center justify-between">
+                      <span>Shopkeeper name *</span>
+                      <button
+                        type="button"
+                        onClick={() => handleStartVoiceAutofill("contactName")}
+                        title="Speak shopkeeper name"
+                        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition ${
+                          isListening && activeSpeechField === "contactName"
+                            ? "bg-rose-600 text-white animate-pulse"
+                            : "bg-rose-50 text-[#E61C5D] hover:bg-rose-100"
+                        }`}
+                      >
+                        <Mic className="h-3 w-3" />
+                        <span>Voice</span>
+                      </button>
+                    </span>
                     <input
                       required
                       value={contactName}
