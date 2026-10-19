@@ -377,7 +377,20 @@ export const adminApi = {
     });
   },
 
-  async transferStock(payload: StockTransferPayload): Promise<{ transfer: StockTransactionItem }> {
+  async updateLocationBalance(
+    locationId: string,
+    payload: { balance: number; reason?: string }
+  ): Promise<{ location: WarehouseItem; movement: StockTransactionItem | null; diff: number }> {
+    return apiRequest<{ location: WarehouseItem; movement: StockTransactionItem | null; diff: number }>(
+      `admin/inventory/locations/${locationId}/balance`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }
+    );
+  },
+
+    async transferStock(payload: StockTransferPayload): Promise<{ transfer: StockTransactionItem }> {
     return apiRequest<{ transfer: StockTransactionItem }>("admin/inventory/transfers", {
       method: "POST",
       body: payload,

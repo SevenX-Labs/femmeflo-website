@@ -21,10 +21,17 @@ import {
   ArrowUpRight,
   ShieldCheck,
   ShoppingBag,
+  Edit3,
+  Save,
+  AlertCircle,
+  Building2,
+  Hash,
 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import { managerApi } from "@/lib/api/manager";
 import { sellerApi } from "@/lib/api/seller";
+import { categoryApi } from "@/lib/api/categories";
+import type { Category } from "@/lib/api/types";
 import type { CustomerItem, SaleItem, InvoiceItem } from "@/lib/api/types";
 
 export interface CustomerDetailModalProps {
@@ -54,6 +61,27 @@ export function CustomerDetailModal({
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [photoMessage, setPhotoMessage] = useState<string | null>(null);
 
+  // Edit Mode state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+
+  // Editable Form fields
+  const [editShopName, setEditShopName] = useState("");
+  const [editContactName, setEditContactName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editCategoryId, setEditCategoryId] = useState("");
+  const [editShopNumber, setEditShopNumber] = useState("");
+  const [editStreetName, setEditStreetName] = useState("");
+  const [editVillage, setEditVillage] = useState("");
+  const [editDistrict, setEditDistrict] = useState("");
+  const [editState, setEditState] = useState("");
+  const [editPincode, setEditPincode] = useState("");
+  const [editActive, setEditActive] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+
   // Fetch customer details, sales history, and invoices
   useEffect(() => {
     let isMounted = true;
@@ -73,6 +101,19 @@ export function CustomerDetailModal({
 
         if (!isMounted) return;
         setCustomer(custRes.customer);
+        const c = custRes.customer;
+        setEditShopName(c.shopName || "");
+        setEditContactName(c.contactName || "");
+        setEditPhone(c.phone || "");
+        setEditEmail(c.email || "");
+        setEditCategoryId(c.categoryId || "");
+        setEditShopNumber(c.shopNumber || "");
+        setEditStreetName(c.streetName || "");
+        setEditVillage(c.village || "");
+        setEditDistrict(c.district || "");
+        setEditState(c.state || "");
+        setEditPincode(c.pincode || "");
+        setEditActive(c.active ?? true);
 
         // 2. Fetch sales for this customer
         let salesList: SaleItem[] = [];
@@ -93,6 +134,15 @@ export function CustomerDetailModal({
 
         if (!isMounted) return;
         setSales(salesList);
+
+        // Fetch categories for edit dropdown
+        try {
+          const catRes = await categoryApi.listCategories({ pageSize: 50 });
+          const cats = catRes.categories || [];
+          if (isMounted) setCategories(cats);
+        } catch {
+          // fallback
+        }
 
         // 3. For Super Admin, also fetch invoices matched to this customer
         if (role === "Super Admin") {
@@ -171,6 +221,62 @@ export function CustomerDetailModal({
       setPdfError("Unable to load invoice PDF. Please try again.");
     } finally {
       setPdfLoadingId(null);
+    }
+  };
+
+  const handleSaveCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customer) return;
+
+    setIsSaving(true);
+    setSaveError(null);
+    setSaveSuccess(null);
+
+    const cleanPhone = editPhone.replace(/\D/g, "").slice(-10);
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      setSaveError("Please provide a valid 10-digit mobile number.");
+      setIsSaving(false);
+      return;
+    }
+
+    const payload = {
+      shopName: editShopName.trim(),
+      contactName: editContactName.trim(),
+      phone: cleanPhone,
+      email: editEmail.trim() || undefined,
+      categoryId: editCategoryId || undefined,
+      shopNumber: editShopNumber.trim() || undefined,
+      streetName: editStreetName.trim() || undefined,
+      village: editVillage.trim(),
+      district: editDistrict.trim(),
+      state: editState.trim(),
+      pincode: editPincode.trim() || undefined,
+      active: editActive,
+    };
+
+    try {
+      let res: { customer: CustomerItem };
+      if (role === "Super Admin") {
+        res = await adminApi.updateCustomer(customer.id, payload);
+      } else if (role === "Manager") {
+        res = await managerApi.updateCustomer(customer.id, payload);
+      } else {
+        res = await sellerApi.updateCustomer(customer.id, payload);
+      }
+
+      setCustomer(res.customer);
+      setSaveSuccess("Customer details updated successfully!");
+      if (onCustomerUpdated) {
+        onCustomerUpdated(res.customer);
+      }
+      setTimeout(() => {
+        setIsEditMode(false);
+        setSaveSuccess(null);
+      }, 1200);
+    } catch (err: any) {
+      setSaveError(err.message || "Failed to update customer details.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -294,13 +400,47 @@ export function CustomerDetailModal({
               </h2>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-xl p-2 text-zinc-700 hover:bg-rose-50 hover:text-zinc-700 transition"
-            aria-label="Close modal"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {customer && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isEditMode && customer) {
+                    setEditShopName(customer.shopName || "");
+                    setEditContactName(customer.contactName || "");
+                    setEditPhone(customer.phone || "");
+                    setEditEmail(customer.email || "");
+                    setEditCategoryId(customer.categoryId || "");
+                    setEditShopNumber(customer.shopNumber || "");
+                    setEditStreetName(customer.streetName || "");
+                    setEditVillage(customer.village || "");
+                    setEditDistrict(customer.district || "");
+                    setEditState(customer.state || "");
+                    setEditPincode(customer.pincode || "");
+                    setEditActive(customer.active ?? true);
+                  }
+                  setIsEditMode(!isEditMode);
+                  setSaveError(null);
+                  setSaveSuccess(null);
+                }}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition shadow-xs cursor-pointer ${
+                  isEditMode
+                    ? "bg-zinc-800 text-white hover:bg-zinc-900"
+                    : "border border-rose-200 bg-white text-[#E61C5D] hover:bg-rose-50"
+                }`}
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+                <span>{isEditMode ? "Cancel Edit" : "Edit Customer"}</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="rounded-xl p-2 text-zinc-700 hover:bg-rose-50 hover:text-zinc-700 transition cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content Body */}
@@ -315,8 +455,248 @@ export function CustomerDetailModal({
               {error}
             </div>
           ) : customer ? (
-            <>
-              {/* TOP GRID: Shopkeeper Photo & Core Details */}
+            isEditMode ? (
+              /* ========================================================= */
+              /* EDIT MODE: Customer Shop & Contact Details Form          */
+              /* ========================================================= */
+              <form onSubmit={handleSaveCustomer} className="space-y-6">
+                {saveSuccess && (
+                  <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-900 shadow-xs">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <span>{saveSuccess}</span>
+                  </div>
+                )}
+
+                {saveError && (
+                  <div className="flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-900 shadow-xs">
+                    <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+                    <span>{saveError}</span>
+                  </div>
+                )}
+
+                {/* Section 1: Store & Contact Info */}
+                <div className="rounded-2xl border border-zinc-200 bg-[#FCFAF6] p-4.5 space-y-4">
+                  <div className="flex items-center justify-between border-b border-zinc-200/70 pb-2.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#156035] flex items-center gap-1.5">
+                      <Store className="h-4 w-4 text-[#156035]" />
+                      Store & Contact Information
+                    </span>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-zinc-700">
+                      <span>Customer Active</span>
+                      <input
+                        type="checkbox"
+                        checked={editActive}
+                        onChange={(e) => setEditActive(e.target.checked)}
+                        className="h-4 w-4 rounded border-zinc-300 text-[#156035] focus:ring-[#156035] cursor-pointer"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        Store Name <span className="text-[#E61C5D]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editShopName}
+                        onChange={(e) => setEditShopName(e.target.value)}
+                        placeholder="e.g. Sai Kirana & General Store"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        Shopkeeper / Contact Name <span className="text-[#E61C5D]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editContactName}
+                        onChange={(e) => setEditContactName(e.target.value)}
+                        placeholder="e.g. Ramesh Patel"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        Contact Phone <span className="text-[#E61C5D]">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        maxLength={10}
+                        value={editPhone}
+                        onChange={(e) => setEditPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                        placeholder="10-digit mobile number"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        Email Address <span className="font-normal text-zinc-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={editEmail}
+                        onChange={(e) => setEditEmail(e.target.value)}
+                        placeholder="e.g. store@gmail.com"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        Retail Category <span className="text-[#E61C5D]">*</span>
+                      </label>
+                      <select
+                        value={editCategoryId}
+                        onChange={(e) => setEditCategoryId(e.target.value)}
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      >
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Address & Location Details */}
+                <div className="rounded-2xl border border-zinc-200 bg-[#FCFAF6] p-4.5 space-y-4">
+                  <div className="border-b border-zinc-200/70 pb-2.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#156035] flex items-center gap-1.5">
+                      <MapPin className="h-4 w-4 text-[#156035]" />
+                      Store Address & Location
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        Shop / Unit Number <span className="font-normal text-zinc-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editShopNumber}
+                        onChange={(e) => setEditShopNumber(e.target.value)}
+                        placeholder="e.g. Shop No. 4"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        Street Name / Landmark <span className="font-normal text-zinc-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editStreetName}
+                        onChange={(e) => setEditStreetName(e.target.value)}
+                        placeholder="e.g. Near Station Road"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        Village / Locality <span className="text-[#E61C5D]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editVillage}
+                        onChange={(e) => setEditVillage(e.target.value)}
+                        placeholder="e.g. Diva East"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        District <span className="text-[#E61C5D]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editDistrict}
+                        onChange={(e) => setEditDistrict(e.target.value)}
+                        placeholder="e.g. Thane"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        State <span className="text-[#E61C5D]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editState}
+                        onChange={(e) => setEditState(e.target.value)}
+                        placeholder="e.g. Maharashtra"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        Pincode <span className="font-normal text-zinc-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        value={editPincode}
+                        onChange={(e) => setEditPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        placeholder="6-digit PIN code"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Edit Form Actions */}
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditMode(false);
+                      setSaveError(null);
+                      setSaveSuccess(null);
+                    }}
+                    className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#156035] px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#0f4e2b] disabled:opacity-50 transition cursor-pointer"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Saving Changes...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-3.5 w-3.5" />
+                        <span>Save Customer Changes</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                {/* TOP GRID: Shopkeeper Photo & Core Details */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
                 {/* 1. Storefront / Shopkeeper Photo Card */}
                 <div className="md:col-span-5 flex flex-col justify-between rounded-2xl border border-zinc-200 bg-[#FAF8F5] p-4">
@@ -676,6 +1056,7 @@ export function CustomerDetailModal({
                 )}
               </div>
             </>
+            )
           ) : null}
         </div>
 
@@ -684,12 +1065,40 @@ export function CustomerDetailModal({
           <p className="text-xs text-zinc-800">
             Femmeflo Customer Verification • Secure GST Records
           </p>
-          <button
-            onClick={onClose}
-            className="rounded-xl bg-[#156035] px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#0f4e2b] transition"
-          >
-            Done
-          </button>
+          <div className="flex items-center gap-2.5">
+            {!isEditMode && customer && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditShopName(customer.shopName || "");
+                  setEditContactName(customer.contactName || "");
+                  setEditPhone(customer.phone || "");
+                  setEditEmail(customer.email || "");
+                  setEditCategoryId(customer.categoryId || "");
+                  setEditShopNumber(customer.shopNumber || "");
+                  setEditStreetName(customer.streetName || "");
+                  setEditVillage(customer.village || "");
+                  setEditDistrict(customer.district || "");
+                  setEditState(customer.state || "");
+                  setEditPincode(customer.pincode || "");
+                  setEditActive(customer.active ?? true);
+                  setIsEditMode(true);
+                  setSaveError(null);
+                  setSaveSuccess(null);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-4 py-2 text-xs font-bold text-[#E61C5D] hover:bg-rose-50 transition cursor-pointer"
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+                <span>Edit Customer</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="rounded-xl bg-[#156035] px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#0f4e2b] transition cursor-pointer"
+            >
+              Done
+            </button>
+          </div>
         </div>
       </div>
     </div>

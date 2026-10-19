@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   Boxes,
   Building2,
+  Edit3,
   Calendar,
   CheckCircle2,
   ChevronLeft,
@@ -64,6 +65,14 @@ export default function AdminInventoryPage() {
   // History filtering
   const [historyFilterType, setHistoryFilterType] = useState<string>("ALL");
   const [historySearch, setHistorySearch] = useState("");
+
+  // Adjust / Edit Available Stock modal state
+  const [editingLocation, setEditingLocation] = useState<WarehouseItem | null>(null);
+  const [editStockValue, setEditStockValue] = useState<number | string>("");
+  const [editStockReason, setEditStockReason] = useState("");
+  const [isEditStockSubmitting, setIsEditStockSubmitting] = useState(false);
+  const [editStockError, setEditStockError] = useState<string | null>(null);
+  const [editStockNotice, setEditStockNotice] = useState<string | null>(null);
 
   // Inward stock modal state
   const [showInwardModal, setShowInwardModal] = useState(false);
@@ -128,6 +137,43 @@ export default function AdminInventoryPage() {
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  const handleUpdateStockBalance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLocation) return;
+
+    const num = Number(editStockValue);
+    if (isNaN(num) || num < 0) {
+      setEditStockError("Please enter a valid stock balance (0 or greater).");
+      return;
+    }
+
+    setIsEditStockSubmitting(true);
+    setEditStockError(null);
+    setEditStockNotice(null);
+
+    try {
+      await adminApi.updateLocationBalance(editingLocation.id, {
+        balance: num,
+        reason: editStockReason.trim() || undefined,
+      });
+
+      setEditStockNotice(`Stock balance updated to ${num.toLocaleString("en-IN")} packets.`);
+      await fetchSummary();
+      await fetchTransactions(1, historyFilterType === "ALL" ? undefined : historyFilterType);
+
+      setTimeout(() => {
+        setEditingLocation(null);
+        setEditStockNotice(null);
+        setEditStockError(null);
+        setEditStockReason("");
+      }, 1000);
+    } catch (err: any) {
+      setEditStockError(err.message || "Failed to update stock balance.");
+    } finally {
+      setIsEditStockSubmitting(false);
+    }
+  };
 
   const handleInwardStock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1150,12 +1196,28 @@ export default function AdminInventoryPage() {
                       <span className="text-[11px] text-zinc-500 font-medium">
                         Last movement: {lastMoveText}
                       </span>
-                      <Link
-                        href={`/admin/inventory/transfers?source=${loc.id}`}
-                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1 text-[11px] font-bold text-zinc-800 hover:text-[#E61C5D] hover:border-rose-200"
-                      >
-                        Transfer <ArrowRight className="h-3 w-3" />
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingLocation(loc);
+                            setEditStockValue(loc.balance);
+                            setEditStockReason("");
+                            setEditStockError(null);
+                            setEditStockNotice(null);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-900 hover:bg-amber-100 transition cursor-pointer"
+                        >
+                          <Edit3 className="h-3 w-3" />
+                          <span>Edit Stock</span>
+                        </button>
+                        <Link
+                          href={`/admin/inventory/transfers?source=${loc.id}`}
+                          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1 text-[11px] font-bold text-zinc-800 hover:text-[#E61C5D] hover:border-rose-200"
+                        >
+                          Transfer <ArrowRight className="h-3 w-3" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1300,12 +1362,29 @@ export default function AdminInventoryPage() {
 
                         {/* Action */}
                         <td className="py-3.5 px-3 text-center">
-                          <Link
-                            href={`/admin/inventory/transfers?source=${loc.id}`}
-                            className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1 text-[11px] font-bold text-zinc-800 hover:border-rose-200 hover:text-[#E61C5D] hover:bg-rose-50/50 transition"
-                          >
-                            Transfer <ArrowRight className="h-3 w-3" />
-                          </Link>
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingLocation(loc);
+                                setEditStockValue(loc.balance);
+                                setEditStockReason("");
+                                setEditStockError(null);
+                                setEditStockNotice(null);
+                              }}
+                              className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-900 hover:bg-amber-100 hover:border-amber-300 transition cursor-pointer shadow-2xs"
+                              title="Edit available stock balance for this location"
+                            >
+                              <Edit3 className="h-3 w-3 text-amber-700" />
+                              <span>Edit Stock</span>
+                            </button>
+                            <Link
+                              href={`/admin/inventory/transfers?source=${loc.id}`}
+                              className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-2 py-1 text-[11px] font-bold text-zinc-800 hover:border-rose-200 hover:text-[#E61C5D] hover:bg-rose-50/50 transition"
+                            >
+                              Transfer <ArrowRight className="h-3 w-3" />
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1713,6 +1792,112 @@ export default function AdminInventoryPage() {
       {/* ======================================================== */}
       {/* 6. MODALS */}
       {/* ======================================================== */}
+
+      {/* Edit Available Stock Modal */}
+      {editingLocation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <span className="rounded-xl bg-amber-50 p-2 text-amber-800">
+                  <Edit3 className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="font-playfair text-lg font-bold text-zinc-950">
+                    Edit Available Stock
+                  </h3>
+                  <p className="text-xs text-zinc-600">
+                    Update current physical packet count for <span className="font-bold text-zinc-900">{editingLocation.name}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingLocation(null)}
+                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateStockBalance} className="mt-5 space-y-4">
+              {editStockError && (
+                <p className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-[#B4234D]">
+                  {editStockError}
+                </p>
+              )}
+              {editStockNotice && (
+                <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-semibold text-emerald-800">
+                  {editStockNotice}
+                </p>
+              )}
+
+              <div className="rounded-xl bg-zinc-50 p-3 border border-zinc-200/80 text-xs flex items-center justify-between">
+                <span className="font-bold text-zinc-600">Current Balance:</span>
+                <span className="font-extrabold text-zinc-900 text-sm">
+                  {editingLocation.balance.toLocaleString("en-IN")} packets
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-800">
+                  New Available Stock Balance (packets) *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  value={editStockValue}
+                  onChange={(e) =>
+                    setEditStockValue(e.target.value === "" ? "" : Number(e.target.value))
+                  }
+                  placeholder="e.g. 50"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                />
+                <p className="mt-1 text-[11px] text-zinc-500">
+                  Directly adjust available stock if physical count differs or stock is low.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-800">
+                  Reason for Adjustment <span className="font-normal text-zinc-500">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={editStockReason}
+                  onChange={(e) => setEditStockReason(e.target.value)}
+                  placeholder="e.g. Physical inventory count discrepancy / low stock top-up"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-xs font-medium outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingLocation(null)}
+                  className="h-10 rounded-xl px-4 text-xs font-bold text-zinc-600 hover:bg-zinc-100 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isEditStockSubmitting}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 px-5 text-xs font-bold text-white shadow-xs disabled:opacity-50 transition cursor-pointer"
+                >
+                  {isEditStockSubmitting ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving...
+                    </>
+                  ) : (
+                    "Update Stock Balance"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Inward Stock Modal */}
       {showInwardModal && (
