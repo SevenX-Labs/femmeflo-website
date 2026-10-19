@@ -13,6 +13,8 @@ import { categoryApi } from "@/lib/api/categories";
 import type { Category, ManagerItem, PincodeLookupResponse, SellerItem } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
 import { validateMobileNumber, validateEmail, validateAadharNumber, validateDrivingLicense } from "@/lib/validation";
+import { reverseGeocode } from "@/lib/geocoding";
+import { geoApi } from "@/lib/api/geo";
 
 type Props = {
   role: "Super Admin" | "Manager" | "Seller";
@@ -96,8 +98,11 @@ export function OnboardingFormScreen({
   const [location, setLocation] = useState("");
   const [lat, setLat] = useState<number | undefined>(undefined);
   const [lng, setLng] = useState<number | undefined>(undefined);
+  const [accuracy, setAccuracy] = useState<number | undefined>(undefined);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [isVerifyingLocation, setIsVerifyingLocation] = useState(false);
+  const [verifiedAddress, setVerifiedAddress] = useState<string | null>(null);
 
   // Address & Pincode Auto-lookup states
   const [pincode, setPincode] = useState("");
@@ -222,7 +227,7 @@ export function OnboardingFormScreen({
     setPhotoError(null);
   };
 
-  // Capturing Live GPS Location in Frontend
+  // Capturing Live GPS Location in Frontend + Reverse Geocoding for Address Auto-fill
   const handleGetCurrentLocation = () => {
     if (!navigator.geolocation) {
       showErrorModal("Geolocation is not supported by your browser/device.", "Location Access Error");
@@ -234,16 +239,58 @@ export function OnboardingFormScreen({
     setLocationError(null);
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const latitude = Number(position.coords.latitude.toFixed(6));
         const longitude = Number(position.coords.longitude.toFixed(6));
+        const gpsAccuracy = position.coords.accuracy;
 
         setLat(latitude);
         setLng(longitude);
+        setAccuracy(gpsAccuracy);
         setLocation(`${latitude}, ${longitude}`);
-        setIsLocating(false);
+        setVerifiedAddress(null);
 
-        console.log("Captured Location:", { latitude, longitude });
+        console.log("Captured GPS Location:", { latitude, longitude, accuracy: gpsAccuracy });
+
+        // Reverse Geocode: Auto-fill address fields from coordinates
+        try {
+          const geoResult = await reverseGeocode(latitude, longitude);
+          if (geoResult) {
+            console.log("Reverse Geocode Result:", geoResult);
+
+            if (geoResult.formattedAddress) {
+              setLocation(geoResult.formattedAddress);
+            }
+
+            // Auto-fill or update state, district, village, pincode from GPS
+            if (geoResult.state) setState(geoResult.state);
+            if (geoResult.district) setDistrict(geoResult.district);
+            if (geoResult.village) {
+              setVillage(geoResult.village);
+              setAvailableVillages((prev) => Array.from(new Set([...prev, geoResult.village])));
+            }
+            if (geoResult.pincode) {
+              setPincode(geoResult.pincode);
+              setPincodeMessage(`Auto-filled from GPS: ${geoResult.village ? geoResult.village + ", " : ""}${geoResult.district}`);
+            }
+            if (geoResult.streetName && !streetName) setStreetName(geoResult.streetName);
+            if (geoResult.shopNumber && !shopNumber) setShopNumber(geoResult.shopNumber);
+
+            console.log("Address auto-filled from GPS:", {
+              state: geoResult.state,
+              district: geoResult.district,
+              village: geoResult.village,
+              pincode: geoResult.pincode,
+              streetName: geoResult.streetName,
+              formattedAddress: geoResult.formattedAddress,
+            });
+          }
+        } catch (geoErr) {
+          // Non-blocking: GPS coordinates are captured even if reverse geocode fails
+          console.warn("Reverse geocoding failed (non-blocking):", geoErr);
+        }
+
+        setIsLocating(false);
       },
       (error) => {
         setIsLocating(false);
@@ -267,7 +314,7 @@ export function OnboardingFormScreen({
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
         maximumAge: 0,
       }
     );
@@ -443,6 +490,31 @@ export function OnboardingFormScreen({
     }
   };
 
+  const handleVerifyLocation = async () => {
+    const addressParts = [village, district, state, pincode].filter(Boolean);
+    if (addressParts.length === 0) {
+      showErrorModal("Please fill in at least village/district/state to verify location.", "Address Required");
+      return;
+    }
+    const addressString = addressParts.join(", ");
+    setIsVerifyingLocation(true);
+    setVerifiedAddress(null);
+    try {
+      const result = await geoApi.lookup(addressString);
+      if (result.latitude && result.longitude) {
+        setLat(result.latitude);
+        setLng(result.longitude);
+        setAccuracy(undefined);
+        setLocation(result.formattedAddress || addressString);
+        setVerifiedAddress(result.formattedAddress || addressString);
+      }
+    } catch {
+      showErrorModal("Could not verify location from address. The form can still be submitted — the server will attempt geocoding.", "Location Lookup Unavailable");
+    } finally {
+      setIsVerifyingLocation(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
@@ -597,9 +669,10 @@ export function OnboardingFormScreen({
         formData.append("district", district);
         formData.append("village", village);
 
-        // GPS Coordinates (from Get Current Location)
+        // GPS Coordinates & Accuracy (from Get Current Location)
         if (lat !== undefined) formData.append("latitude", lat.toString());
         if (lng !== undefined) formData.append("longitude", lng.toString());
+        if (accuracy !== undefined) formData.append("accuracy", String(accuracy));
 
         // Storefront Photo File (Captured via camera or file picker)
         if (photoFile) {
@@ -1642,20 +1715,50 @@ export function OnboardingFormScreen({
                       )}
                     </button>
 
+                    {/* GPS Accuracy Indicator */}
+                    {accuracy !== undefined && lat !== undefined && (
+                      accuracy > 500 ? (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] font-medium text-amber-900 space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                            <span className="font-bold">Low GPS accuracy (~{accuracy >= 1000 ? `${(accuracy / 1000).toFixed(1)} km` : `${Math.round(accuracy)} m`})</span>
+                          </div>
+                          <p className="text-amber-800">
+                            Location will be determined from your address fields. Ensure village, district, state, and PIN code are accurate.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-800 flex items-center gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                          Location captured accurately (~{Math.round(accuracy)} m)
+                        </div>
+                      )
+                    )}
+
                     {lat !== undefined && lng !== undefined ? (
-                      <div className="rounded-lg border border-emerald-200 bg-white p-2.5 text-xs shadow-xs">
+                      <div className="rounded-lg border border-emerald-200 bg-white p-2.5 text-xs shadow-xs space-y-1.5">
                         <div className="flex items-center justify-between font-mono text-[11px] text-zinc-700">
                           <span>Lat: <strong>{lat.toFixed(6)}</strong></span>
                           <span>Lng: <strong>{lng.toFixed(6)}</strong></span>
                         </div>
-                        <div className="mt-1.5 flex items-center justify-between">
+                        {location && location !== `${lat}, ${lng}` && (
+                          <div className="rounded bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-800 line-clamp-2">
+                            {location}
+                          </div>
+                        )}
+                        {verifiedAddress && (
+                          <div className="rounded bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-800 line-clamp-2">
+                            Verified: {verifiedAddress}
+                          </div>
+                        )}
+                        <div className="mt-1 flex items-center justify-between">
                           <a
                             href={`https://www.google.com/maps?q=${lat},${lng}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline"
                           >
-                            📍 View on Google Maps
+                            View on Google Maps
                             <ExternalLink className="h-3 w-3" />
                           </a>
                           <span className="text-[10px] text-zinc-700 font-mono">6-decimal GPS</span>
@@ -1666,6 +1769,26 @@ export function OnboardingFormScreen({
                         Tap &apos;Get Current Location&apos; to capture device GPS
                       </span>
                     )}
+
+                    {/* Verify Location from Address Button */}
+                    <button
+                      type="button"
+                      onClick={handleVerifyLocation}
+                      disabled={isVerifyingLocation || (!village && !district && !state)}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white py-2 px-3 text-xs font-bold text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      {isVerifyingLocation ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>Verifying address...</span>
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="h-3.5 w-3.5" />
+                          <span>Verify / Lookup from Address</span>
+                        </>
+                      )}
+                    </button>
 
                     {locationError && (
                       <p className="text-[11px] font-medium text-rose-600">{locationError}</p>
