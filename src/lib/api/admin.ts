@@ -184,26 +184,32 @@ export const adminApi = {
   },
 
   async getSeller(id: string): Promise<{ seller: SellerItem }> {
-    return apiRequest<{ seller: SellerItem }>(`admin/sellers/${id}`, {
+    const raw = await apiRequest<{ seller?: SellerItem; user?: SellerItem }>(`admin/sellers/${id}`, {
       method: "GET",
     });
+    const seller = (raw?.seller ?? raw?.user)!;
+    return { seller };
   },
 
   async createSeller(payload: CreateSellerPayload): Promise<{ seller: SellerItem }> {
-    return apiRequest<{ seller: SellerItem }>("admin/sellers", {
+    const raw = await apiRequest<{ seller?: SellerItem; user?: SellerItem }>("admin/sellers", {
       method: "POST",
       body: payload,
     });
+    const seller = (raw?.seller ?? raw?.user)!;
+    return { seller };
   },
 
   async updateSeller(
     id: string,
     payload: UpdateUserPayload
   ): Promise<{ seller: SellerItem }> {
-    return apiRequest<{ seller: SellerItem }>(`admin/sellers/${id}`, {
+    const raw = await apiRequest<{ seller?: SellerItem; user?: SellerItem }>(`admin/sellers/${id}`, {
       method: "PATCH",
       body: payload,
     });
+    const seller = (raw?.seller ?? raw?.user)!;
+    return { seller };
   },
 
   // ----------------------------------------------------

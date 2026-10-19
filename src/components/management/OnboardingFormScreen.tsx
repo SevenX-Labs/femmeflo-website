@@ -142,9 +142,6 @@ export function OnboardingFormScreen({
             if (active && mgrRes.managers.length > 0) {
               setManagers(mgrRes.managers);
               setSelectedManagerId(mgrRes.managers[0].id);
-              const firstMgr = mgrRes.managers[0];
-              if (firstMgr.state) setState((prev) => prev || firstMgr.state || "");
-              if (firstMgr.district) setDistrict((prev) => prev || firstMgr.district || "");
             }
           }
         }
@@ -648,13 +645,7 @@ export function OnboardingFormScreen({
                             required
                             value={selectedManagerId}
                             onChange={(e) => {
-                              const newMgrId = e.target.value;
-                              setSelectedManagerId(newMgrId);
-                              const selectedMgr = managers.find((m) => m.id === newMgrId);
-                              if (selectedMgr) {
-                                if (selectedMgr.state) setState(selectedMgr.state);
-                                if (selectedMgr.district) setDistrict(selectedMgr.district);
-                              }
+                              setSelectedManagerId(e.target.value);
                             }}
                             className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300"
                           >
@@ -665,17 +656,7 @@ export function OnboardingFormScreen({
                               </option>
                             ))}
                           </select>
-                          {selectedManagerId && (() => {
-                            const selectedMgr = managers.find((m) => m.id === selectedManagerId);
-                            if (selectedMgr && (selectedMgr.district || selectedMgr.state)) {
-                              return (
-                                <p className="mt-1.5 text-[11px] font-medium text-emerald-800 flex items-center gap-1">
-                                  ✓ Manager jurisdiction: {[selectedMgr.district, selectedMgr.state].filter(Boolean).join(", ")}
-                                </p>
-                              );
-                            }
-                            return null;
-                          })()}
+
                           </>
                         ) : (
                           <p className="mt-1.5 rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">

@@ -53,28 +53,34 @@ export const managerApi = {
   },
 
   async getSeller(id: string): Promise<{ seller: SellerItem }> {
-    return apiRequest<{ seller: SellerItem }>(`manager/sellers/${id}`, {
+    const raw = await apiRequest<{ seller?: SellerItem; user?: SellerItem }>(`manager/sellers/${id}`, {
       method: "GET",
     });
+    const seller = (raw?.seller ?? raw?.user)!;
+    return { seller };
   },
 
   async createSeller(
     payload: Omit<CreateSellerPayload, "managerId">
   ): Promise<{ seller: SellerItem }> {
-    return apiRequest<{ seller: SellerItem }>("manager/sellers", {
+    const raw = await apiRequest<{ seller?: SellerItem; user?: SellerItem }>("manager/sellers", {
       method: "POST",
       body: payload,
     });
+    const seller = (raw?.seller ?? raw?.user)!;
+    return { seller };
   },
 
   async updateSeller(
     id: string,
     payload: UpdateUserPayload
   ): Promise<{ seller: SellerItem }> {
-    return apiRequest<{ seller: SellerItem }>(`manager/sellers/${id}`, {
+    const raw = await apiRequest<{ seller?: SellerItem; user?: SellerItem }>(`manager/sellers/${id}`, {
       method: "PATCH",
       body: payload,
     });
+    const seller = (raw?.seller ?? raw?.user)!;
+    return { seller };
   },
 
   // ----------------------------------------------------

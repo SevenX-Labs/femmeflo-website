@@ -101,14 +101,17 @@ export function SellerDetailModal({
       let sellerData: SellerItem;
       if (role === "Manager") {
         const res = await managerApi.getSeller(sellerId);
-        sellerData = res.seller;
+        sellerData = (res?.seller ?? (res as any)?.user) as SellerItem;
       } else {
         const [sRes, mRes] = await Promise.all([
           adminApi.getSeller(sellerId),
           adminApi.listManagers({ pageSize: 100 }).catch(() => ({ managers: [] })),
         ]);
-        sellerData = sRes.seller;
+        sellerData = (sRes?.seller ?? (sRes as any)?.user) as SellerItem;
         setManagers(mRes.managers || []);
+      }
+      if (!sellerData) {
+        throw new Error("Officer record was not found or could not be loaded.");
       }
       setSeller(sellerData);
       populateForm(sellerData);
