@@ -95,6 +95,7 @@ export default function AdminProductsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formSubmitting) return;
     const name = formName.trim();
     if (!name) { setFormError("Product name is required."); return; }
 
