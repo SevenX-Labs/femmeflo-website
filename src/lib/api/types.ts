@@ -396,6 +396,13 @@ export interface StockTransactionItem {
 // Sales & Approvals
 // ==========================================
 
+export interface UpdateSalePayload {
+  customerId?: string;
+  quantity?: number;
+  unitPricePaise?: number;
+  paymentMode?: PaymentMode;
+}
+
 export interface SaleItem {
   id: string;
   sellerId: string;

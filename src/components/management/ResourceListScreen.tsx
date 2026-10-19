@@ -3,6 +3,7 @@
 import { CustomerDetailModal } from "./CustomerDetailModal";
 import { ManagerDetailModal } from "./ManagerDetailModal";
 import { SellerDetailModal } from "./SellerDetailModal";
+import { SaleDetailModal } from "./SaleDetailModal";
 
 import { Camera, CheckCircle2, Download, Eye, ExternalLink, FileText, Image as ImageIcon, Loader2, Mail, MapPin, Package, Phone, RefreshCw, Search, SlidersHorizontal, Upload, User, Users, X } from "lucide-react";
 import Link from "next/link";
@@ -791,7 +792,28 @@ export function ResourceListScreen({
       </SectionCard>
 
       {selectedRow && (
-        (eyebrow.toLowerCase().includes("customer") || title.toLowerCase().includes("customer")) ? (
+        (eyebrow.toLowerCase().includes("sale") || title.toLowerCase().includes("sale")) ? (
+          <SaleDetailModal
+            role={role}
+            saleId={String(selectedRow.id)}
+            onClose={() => setSelectedRow(null)}
+            onSaleUpdated={(updated) => {
+              setDataRows((prev) =>
+                prev.map((r) =>
+                  r.id === updated.id
+                    ? {
+                        ...r,
+                        customer: updated.customer?.shopName || (r as any).customer,
+                        packets: updated.quantity.toString(),
+                        amount: `₹${(updated.totalPaise / 100).toLocaleString("en-IN")}`,
+                        payment: updated.paymentMode === "CASH" ? "Cash" : updated.paymentMode === "BANK" ? "Bank" : "Pending",
+                      }
+                    : r
+                )
+              );
+            }}
+          />
+        ) : (eyebrow.toLowerCase().includes("customer") || title.toLowerCase().includes("customer")) ? (
           <CustomerDetailModal
             role={role}
             customerId={String(selectedRow.id)}

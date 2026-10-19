@@ -12,6 +12,7 @@ import type {
   SellerIncentiveData,
   StockTransactionItem,
   UpdateCustomerPayload,
+  UpdateSalePayload,
   UpdateUserPayload,
 } from "./types";
 
@@ -227,6 +228,16 @@ export const sellerApi = {
       items: list,
       pagination: raw?.pagination ?? { page: 1, pageSize: 20, total: list.length, totalPages: 1 },
     };
+  },
+
+  async updateSale(
+    id: string,
+    payload: UpdateSalePayload
+  ): Promise<{ sale: SaleItem }> {
+    return apiRequest<{ sale: SaleItem }>(`seller/sales/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
   },
 
   async getSale(id: string): Promise<{ sale: SaleItem }> {

@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Clock,
   Download,
+  Edit3,
   FileText,
   Filter,
   Loader2,
@@ -21,6 +22,7 @@ import { DashboardShell, PageHeading, SectionCard } from "@/components/managemen
 import { sellerNavigation } from "@/components/management/navigation";
 import { sellerApi } from "@/lib/api/seller";
 import type { SaleItem } from "@/lib/api/types";
+import { SaleDetailModal } from "@/components/management/SaleDetailModal";
 import { useAuth } from "@/context/AuthContext";
 
 type StatusTab = "ALL" | "CONFIRMED" | "PENDING_APPROVAL" | "REJECTED";
@@ -37,6 +39,7 @@ export default function SellerSalesPage() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0, totalPages: 1 });
   const [isPending, startTransition] = useTransition();
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
 
   const loadSales = async (tab = activeTab, pageNum = page, searchQuery = search) => {
     setLoading(true);
@@ -170,6 +173,7 @@ export default function SellerSalesPage() {
                 <th className="pb-3.5">Date & Time</th>
                 <th className="pb-3.5">Approval Status</th>
                 <th className="pb-3.5 text-right">Tax Invoice</th>
+                <th className="pb-3.5 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -260,13 +264,37 @@ export default function SellerSalesPage() {
                         <span className="text-xs text-zinc-400">—</span>
                       )}
                     </td>
+                    <td className="py-4 text-center">
+                      {(() => {
+                        const now = new Date();
+                        const createdAt = new Date(s.createdAt);
+                        const diffHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+                        const canEdit = diffHours <= 48 && s.status !== "REJECTED";
+
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedSaleId(s.id)}
+                            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition shadow-2xs cursor-pointer ${
+                              canEdit
+                                ? "border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:border-amber-300"
+                                : "border border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-zinc-100"
+                            }`}
+                            title={canEdit ? `Editable (${Math.floor(48 - diffHours)}h left)` : "View sale details (48h edit period closed)"}
+                          >
+                            <Edit3 className="h-3 w-3" />
+                            <span>{canEdit ? "Edit" : "View"}</span>
+                          </button>
+                        );
+                      })()}
+                    </td>
                   </tr>
                 );
               })}
 
               {!loading && sales.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-sm text-zinc-500">
+                  <td colSpan={9} className="py-12 text-center text-sm text-zinc-500">
                     No sales records found for this filter.
                   </td>
                 </tr>
@@ -274,7 +302,7 @@ export default function SellerSalesPage() {
 
               {loading && (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-sm text-zinc-500">
+                  <td colSpan={9} className="py-12 text-center text-sm text-zinc-500">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-5 w-5 animate-spin text-[#E61C5D]" />
                       <span>Loading sales records...</span>
@@ -311,6 +339,16 @@ export default function SellerSalesPage() {
           </div>
         )}
       </SectionCard>
+          {selectedSaleId && (
+        <SaleDetailModal
+          role="Seller"
+          saleId={selectedSaleId}
+          onClose={() => setSelectedSaleId(null)}
+          onSaleUpdated={(updated) => {
+            setSales((prev) => prev.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)));
+          }}
+        />
+      )}
     </DashboardShell>
   );
 }
