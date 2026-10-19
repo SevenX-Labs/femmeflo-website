@@ -60,6 +60,7 @@ export function CustomerDetailModal({
   // PDF actions state
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const pdfCacheRef = React.useRef<Map<string, string>>(new Map());
 
   // Photo upload state
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -184,6 +185,50 @@ export function CustomerDetailModal({
     };
   }, [customerId, role]);
 
+  // Pre-fetch invoice PDFs in the background so "View" is instant
+  useEffect(() => {
+    if (sales.length === 0 && invoices.length === 0) return;
+
+    const ids = new Set<string>();
+    invoices.forEach((inv) => ids.add(inv.id));
+    sales.forEach((s) => { if (s.invoice?.id) ids.add(s.invoice.id); });
+
+    let cancelled = false;
+    const cache = pdfCacheRef.current;
+
+    ids.forEach((id) => {
+      if (cache.has(id)) return;
+      (async () => {
+        try {
+          let blob: Blob;
+          if (role === "Super Admin") {
+            blob = await adminApi.downloadInvoicePdf(id, false);
+          } else if (role === "Manager") {
+            blob = await managerApi.downloadInvoicePdf(id, false);
+          } else {
+            blob = await sellerApi.downloadInvoicePdf(id, false);
+          }
+          if (!cancelled) {
+            cache.set(id, URL.createObjectURL(blob));
+          }
+        } catch {
+          // Silent — will fetch on demand if prefetch fails
+        }
+      })();
+    });
+
+    return () => { cancelled = true; };
+  }, [sales, invoices, role]);
+
+  // Clean up cached blob URLs on unmount
+  useEffect(() => {
+    const cache = pdfCacheRef.current;
+    return () => {
+      cache.forEach((url) => URL.revokeObjectURL(url));
+      cache.clear();
+    };
+  }, []);
+
   const handleShareEmail = (invoiceNumber: string, amount?: string) => {
     const toEmail = customer?.email || "";
     const shop = customer?.shopName || "Customer";
@@ -227,6 +272,32 @@ export function CustomerDetailModal({
     invoiceNumber?: string,
     mode: "view" | "download" = "view"
   ) => {
+    const cache = pdfCacheRef.current;
+    const cached = cache.get(invoiceId);
+
+    // If cached, open instantly without any loading state
+    if (cached) {
+      if (mode === "view") {
+        const win = window.open(cached, "_blank");
+        if (!win) {
+          const a = document.createElement("a");
+          a.href = cached;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.click();
+        }
+      } else {
+        const a = document.createElement("a");
+        a.href = cached;
+        a.download = `Invoice-${invoiceNumber || invoiceId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+      return;
+    }
+
+    // Fallback: fetch on demand if prefetch hasn't completed yet
     const actionKey = `${invoiceId}-${mode}`;
     setPdfLoadingId(actionKey);
     setPdfError(null);
@@ -241,6 +312,8 @@ export function CustomerDetailModal({
       }
 
       const blobUrl = URL.createObjectURL(blob);
+      cache.set(invoiceId, blobUrl);
+
       if (mode === "view") {
         const win = window.open(blobUrl, "_blank");
         if (!win) {
@@ -257,7 +330,6 @@ export function CustomerDetailModal({
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
       }
     } catch {
       setPdfError("Unable to load invoice PDF. Please try again.");
