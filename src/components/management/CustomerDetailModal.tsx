@@ -26,6 +26,9 @@ import {
   AlertCircle,
   Building2,
   Hash,
+  Share2,
+  Send,
+  MessageCircle,
 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import { managerApi } from "@/lib/api/manager";
@@ -179,6 +182,44 @@ export function CustomerDetailModal({
       isMounted = false;
     };
   }, [customerId, role]);
+
+  const handleShareEmail = (invoiceNumber: string, amount?: string) => {
+    const toEmail = customer?.email || "";
+    const shop = customer?.shopName || "Customer";
+    const subject = encodeURIComponent(`Tax Invoice ${invoiceNumber} - Masako Enterprises / FemmeFlo`);
+    const body = encodeURIComponent(
+      `Dear ${shop},\n\n` +
+      `Thank you for your business. Please find details for your official Tax Invoice ${invoiceNumber}.\n\n` +
+      `Invoice Number: ${invoiceNumber}\n` +
+      (amount ? `Invoice Amount: ${amount}\n` : "") +
+      `Customer: ${shop}\n` +
+      `Issued By: MASAKO ENTERPRISES PRIVATE LIMITED (FemmeFlo)\n\n` +
+      `This verified computer-generated tax invoice has been generated for your recent stock purchase.\n\n` +
+      `Best regards,\n` +
+      `FemmeFlo Distribution Team`
+    );
+    window.open(`mailto:${toEmail}?subject=${subject}&body=${body}`, "_blank");
+  };
+
+  const handleShareWhatsApp = (invoiceNumber: string, amount?: string) => {
+    const rawPhone = customer?.phone || "";
+    const cleanPhone = rawPhone.replace(/\D/g, "");
+    const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+    const shop = customer?.shopName || "Customer";
+    const text = encodeURIComponent(
+      `*Tax Invoice from Masako Enterprises / FemmeFlo*\n\n` +
+      `Hello *${shop}*,\n` +
+      `Your official Tax Invoice *${invoiceNumber}* has been issued.\n\n` +
+      (amount ? `💰 *Amount:* ${amount}\n` : "") +
+      `📄 *Invoice No:* ${invoiceNumber}\n` +
+      `🏢 *Issued By:* MASAKO ENTERPRISES PRIVATE LIMITED\n\n` +
+      `Thank you for your partnership with FemmeFlo!`
+    );
+    const url = formattedPhone
+      ? `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${text}`
+      : `https://api.whatsapp.com/send?text=${text}`;
+    window.open(url, "_blank");
+  };
 
   const handleInvoicePdf = async (
     invoiceId: string,
@@ -929,7 +970,7 @@ export function CustomerDetailModal({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 self-end sm:self-auto">
+                          <div className="flex flex-wrap items-center gap-1.5 self-end sm:self-auto">
                             <button
                               type="button"
                               onClick={() => handleInvoicePdf(inv.id, inv.number, "view")}
@@ -941,7 +982,7 @@ export function CustomerDetailModal({
                               ) : (
                                 <Eye className="h-3.5 w-3.5" />
                               )}
-                              <span>View PDF</span>
+                              <span>View</span>
                             </button>
 
                             <button
@@ -956,6 +997,26 @@ export function CustomerDetailModal({
                                 <Download className="h-3.5 w-3.5" />
                               )}
                               <span>Download</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleShareWhatsApp(inv.number, inv.amount)}
+                              title="Share invoice via WhatsApp"
+                              className="inline-flex items-center gap-1 rounded-lg bg-[#25D366] px-2.5 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-[#1ebd5a] transition cursor-pointer"
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                              <span>WhatsApp</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleShareEmail(inv.number, inv.amount)}
+                              title="Share invoice via Email"
+                              className="inline-flex items-center gap-1 rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-bold text-zinc-700 shadow-2xs hover:bg-zinc-50 transition cursor-pointer"
+                            >
+                              <Mail className="h-3.5 w-3.5 text-[#E61C5D]" />
+                              <span>Email</span>
                             </button>
                           </div>
                         </div>

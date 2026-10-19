@@ -13,6 +13,8 @@ export default function AdminInvoicesPage() {
       id: inv.id,
       invoice: inv.number,
       customer: inv.sale?.customer?.shopName || "Customer",
+      customerPhone: inv.sale?.customer?.phone,
+      customerEmail: (inv.sale?.customer as any)?.email,
       seller: inv.sale?.seller?.name || "Officer",
       amount: inv.sale ? `₹${(inv.sale.totalPaise / 100).toLocaleString("en-IN")}` : "₹250",
       delivery: inv.deliveries?.map((d) => d.channel).join(" · ") || "Email · WhatsApp",

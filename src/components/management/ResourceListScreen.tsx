@@ -5,7 +5,7 @@ import { ManagerDetailModal } from "./ManagerDetailModal";
 import { SellerDetailModal } from "./SellerDetailModal";
 import { SaleDetailModal } from "./SaleDetailModal";
 
-import { Camera, CheckCircle2, Download, Eye, ExternalLink, FileText, Image as ImageIcon, Loader2, Mail, MapPin, Package, Phone, RefreshCw, Search, SlidersHorizontal, Upload, User, Users, X } from "lucide-react";
+import { Camera, CheckCircle2, Download, Eye, ExternalLink, FileText, Image as ImageIcon, Loader2, Mail, MapPin, MessageCircle, Package, Phone, RefreshCw, Search, SlidersHorizontal, Upload, User, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DashboardShell, NavigationItem, PageHeading, SectionCard } from "./DashboardShell";
@@ -78,6 +78,44 @@ export function ResourceListScreen({
     } else {
       return sellerApi.getInvoicePdfUrl(invoiceId, download);
     }
+  };
+
+  const handleShareEmail = (row: ResourceRow | null, invoiceNumber: string, amount?: string) => {
+    const toEmail = String(row?.email || row?.customerEmail || "");
+    const shop = String(row?.customer || row?.shopName || "Customer");
+    const subject = encodeURIComponent(`Tax Invoice ${invoiceNumber} - Masako Enterprises / FemmeFlo`);
+    const body = encodeURIComponent(
+      `Dear ${shop},\n\n` +
+      `Thank you for your business. Please find details for your official Tax Invoice ${invoiceNumber}.\n\n` +
+      `Invoice Number: ${invoiceNumber}\n` +
+      (amount ? `Invoice Amount: ${amount}\n` : "") +
+      `Customer: ${shop}\n` +
+      `Issued By: MASAKO ENTERPRISES PRIVATE LIMITED (FemmeFlo)\n\n` +
+      `This verified computer-generated tax invoice has been generated for your recent purchase.\n\n` +
+      `Best regards,\n` +
+      `FemmeFlo Distribution Team`
+    );
+    window.open(`mailto:${toEmail}?subject=${subject}&body=${body}`, "_blank");
+  };
+
+  const handleShareWhatsApp = (row: ResourceRow | null, invoiceNumber: string, amount?: string) => {
+    const rawPhone = String(row?.phone || row?.customerPhone || "");
+    const cleanPhone = rawPhone.replace(/\D/g, "");
+    const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+    const shop = String(row?.customer || row?.shopName || "Customer");
+    const text = encodeURIComponent(
+      `*Tax Invoice from Masako Enterprises / FemmeFlo*\n\n` +
+      `Hello *${shop}*,\n` +
+      `Your official Tax Invoice *${invoiceNumber}* has been issued.\n\n` +
+      (amount ? `💰 *Amount:* ${amount}\n` : "") +
+      `📄 *Invoice No:* ${invoiceNumber}\n` +
+      `🏢 *Issued By:* MASAKO ENTERPRISES PRIVATE LIMITED\n\n` +
+      `Thank you for your partnership with FemmeFlo!`
+    );
+    const url = formattedPhone
+      ? `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${text}`
+      : `https://api.whatsapp.com/send?text=${text}`;
+    window.open(url, "_blank");
   };
 
   const handleInvoicePdf = async (
@@ -979,6 +1017,26 @@ export function ResourceListScreen({
                         <Download className="h-3.5 w-3.5" />
                       )}
                       Download PDF
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleShareWhatsApp(selectedRow, inv.invoiceNumber, selectedRow?.amount as string)}
+                      title="Share invoice via WhatsApp"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] px-3.5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-[#1ebd5a] cursor-pointer"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      WhatsApp
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleShareEmail(selectedRow, inv.invoiceNumber, selectedRow?.amount as string)}
+                      title="Share invoice via Email"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-xs font-bold text-zinc-700 shadow-xs transition hover:bg-zinc-50 cursor-pointer"
+                    >
+                      <Mail className="h-3.5 w-3.5 text-[#E61C5D]" />
+                      Email
                     </button>
 
                     <a
