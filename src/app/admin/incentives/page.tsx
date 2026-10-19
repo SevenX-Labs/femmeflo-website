@@ -385,70 +385,83 @@ export default function AdminIncentivesPage() {
 
       {/* Monthly Aging Breakdown Overview */}
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs">
+        <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-[0_4px_20px_rgba(21,96,53,0.04)] transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Current Month Pending ({summary.currentMonth.month}/{summary.currentMonth.year})
             </span>
-            <Clock className="h-4 w-4 text-emerald-600" />
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+              <Clock className="h-4 w-4" />
+            </span>
           </div>
-          <p className="mt-2 text-2xl font-black text-zinc-900">
+          <p className="mt-2 text-2xl font-black font-sans tracking-tight text-zinc-900">
             ₹{summary.currentMonth.pendingRupees.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </p>
-          <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
-            <span>Accrued: ₹{summary.currentMonth.earnedRupees.toLocaleString("en-IN")}</span>
-            <span>Paid: ₹{summary.currentMonth.paidRupees.toLocaleString("en-IN")}</span>
+          <div className="mt-3 flex items-center justify-between border-t border-zinc-100 pt-2 text-xs font-medium text-zinc-500">
+            <span>Accrued: <strong className="text-zinc-700">₹{summary.currentMonth.earnedRupees.toLocaleString("en-IN")}</strong></span>
+            <span>Paid: <strong className="text-emerald-700">₹{summary.currentMonth.paidRupees.toLocaleString("en-IN")}</strong></span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs">
+        <div className="rounded-2xl border border-amber-100 bg-white p-5 shadow-[0_4px_20px_rgba(217,119,6,0.04)] transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Previous Month Pending ({summary.previousMonth.month}/{summary.previousMonth.year})
             </span>
-            <History className="h-4 w-4 text-amber-600" />
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
+              <History className="h-4 w-4" />
+            </span>
           </div>
-          <p className="mt-2 text-2xl font-black text-amber-600">
+          <p className="mt-2 text-2xl font-black font-sans tracking-tight text-amber-600">
             ₹{summary.previousMonth.pendingRupees.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </p>
-          <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
-            <span>Accrued: ₹{summary.previousMonth.earnedRupees.toLocaleString("en-IN")}</span>
-            <span>Paid: ₹{summary.previousMonth.paidRupees.toLocaleString("en-IN")}</span>
+          <div className="mt-3 flex items-center justify-between border-t border-zinc-100 pt-2 text-xs font-medium text-zinc-500">
+            <span>Accrued: <strong className="text-zinc-700">₹{summary.previousMonth.earnedRupees.toLocaleString("en-IN")}</strong></span>
+            <span>Paid: <strong className="text-emerald-700">₹{summary.previousMonth.paidRupees.toLocaleString("en-IN")}</strong></span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs">
+        <div className="rounded-2xl border border-rose-100 bg-white p-5 shadow-[0_4px_20px_rgba(230,28,93,0.04)] transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
               Older Unpaid Balances
             </span>
-            <AlertCircle className="h-4 w-4 text-rose-600" />
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-[#E61C5D]">
+              <AlertCircle className="h-4 w-4" />
+            </span>
           </div>
-          <p className="mt-2 text-2xl font-black text-rose-600">
+          <p className="mt-2 text-2xl font-black font-sans tracking-tight text-[#E61C5D]">
             ₹{summary.olderPendingRupees.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </p>
-          <p className="mt-2 text-xs text-zinc-500">
+          <p className="mt-3 border-t border-zinc-100 pt-2 text-xs font-medium text-zinc-500">
             Outstanding from earlier payment periods
           </p>
         </div>
       </div>
 
       {/* Main Employee Incentive Register */}
-      <SectionCard
-        title="Personnel Incentive & Settlement Register"
-        description="Every Seller and Manager's eligible sales volume, per-packet rate, adjustments, cumulative entitlement, disbursed payments, and outstanding liability."
-        className="mt-8"
-        action={
-          <div className="flex flex-wrap items-center gap-3">
+      <section className="mt-8 rounded-2xl border border-rose-100 bg-white p-5 sm:p-6 shadow-[0_8px_30px_rgba(104,48,66,0.04)]">
+        {/* Header with Title and Search/Filters cleanly separated */}
+        <div className="flex flex-col gap-4 border-b border-rose-100/70 pb-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="font-playfair text-xl sm:text-2xl font-bold text-[#156035]">
+              Personnel Incentive & Settlement Register
+            </h2>
+            <p className="mt-1 text-xs text-zinc-600 font-medium">
+              Every Seller and Manager's eligible sales volume, per-packet rate, adjustments, cumulative entitlement, disbursed payments, and outstanding liability.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
             {/* Search Input */}
             <div className="relative flex items-center">
-              <Search className="absolute left-3 h-3.5 w-3.5 text-zinc-400" />
+              <Search className="absolute left-3.5 h-3.5 w-3.5 text-zinc-400" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search name, phone, code..."
-                className="h-9 w-48 sm:w-64 rounded-xl border border-zinc-200 bg-[#FAF8F5] pl-8 pr-3 text-xs font-medium text-zinc-800 placeholder-zinc-400 outline-none focus:border-rose-300"
+                className="h-10 w-full sm:w-64 rounded-xl border border-zinc-200 bg-[#FAF8F5] pl-9 pr-3 text-xs font-medium text-zinc-800 placeholder-zinc-400 outline-none transition focus:border-rose-300 focus:bg-white focus:ring-2 focus:ring-rose-100"
               />
             </div>
 
@@ -458,8 +471,10 @@ export default function AdminIncentivesPage() {
                 <button
                   key={r}
                   onClick={() => setRoleFilter(r)}
-                  className={`rounded-lg px-2.5 py-1 transition ${
-                    roleFilter === r ? "bg-white text-zinc-900 shadow-xs" : "hover:text-zinc-900"
+                  className={`rounded-lg px-3 py-1.5 transition ${
+                    roleFilter === r
+                      ? "bg-white text-zinc-900 shadow-xs"
+                      : "text-zinc-600 hover:text-zinc-900"
                   }`}
                 >
                   {r === "ALL" ? "All Roles" : r === "SELLER" ? "Field Officers" : "Managers"}
@@ -473,8 +488,10 @@ export default function AdminIncentivesPage() {
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s)}
-                  className={`rounded-lg px-2.5 py-1 transition ${
-                    statusFilter === s ? "bg-white text-zinc-900 shadow-xs" : "hover:text-zinc-900"
+                  className={`rounded-lg px-3 py-1.5 transition ${
+                    statusFilter === s
+                      ? "bg-white text-zinc-900 shadow-xs"
+                      : "text-zinc-600 hover:text-zinc-900"
                   }`}
                 >
                   {s === "ALL" ? "All Status" : s === "UNPAID" ? "Unpaid" : s === "PARTIALLY_PAID" ? "Partial" : "Settled"}
@@ -482,11 +499,11 @@ export default function AdminIncentivesPage() {
               ))}
             </div>
           </div>
-        }
-      >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[960px] text-left">
-            <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-600">
+        </div>
+
+        <div className="mt-4 overflow-x-auto rounded-xl border border-zinc-100">
+          <table className="w-full min-w-[980px] text-left">
+            <thead className="bg-[#FFF5F7] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-700 border-b border-rose-100/70">
               <tr>
                 <th className="px-4 py-3.5">Employee</th>
                 <th className="px-4 py-3.5">Role & Team</th>
@@ -647,7 +664,7 @@ export default function AdminIncentivesPage() {
             </tbody>
           </table>
         </div>
-      </SectionCard>
+      </section>
 
       {/* 1. Global Default Rate Modal */}
       {ruleModalOpen && (
