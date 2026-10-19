@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Edit2, Loader2, Plus, RefreshCw, Tags, Trash2, X } from "lucide-react";
+import { AlertCircle, Check, Edit2, Loader2, Plus, RefreshCw, Tags, Trash2, X } from "lucide-react";
 import { DashboardShell, PageHeading, SectionCard } from "@/components/management/DashboardShell";
 import { adminNavigation } from "@/components/management/navigation";
 import { categoryApi } from "@/lib/api/categories";
@@ -12,6 +12,8 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [value, setValue] = useState("");
   const [message, setMessage] = useState("");
+  const [errorDialog, setErrorDialog] = useState<{ title: string; message: string } | null>(null);
+  const [deleteConfirmCat, setDeleteConfirmCat] = useState<Category | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,6 +25,24 @@ export default function CategoriesPage() {
 
   // Delete state
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const getFriendlyErrorMessage = (err: unknown, defaultMsg: string): string => {
+    if (err instanceof ApiError) {
+      const msg = err.message || "";
+      if (err.statusCode === 401) {
+        return "Your session has expired. Please log in again.";
+      }
+      if (err.statusCode === 403) {
+        return "You do not have permission to perform this action.";
+      }
+      if (err.statusCode === 409) {
+        return "A category with this name already exists.";
+      }
+      const cleaned = msg.replace(/^Error:\s*/i, "").replace(/\{.*?\}/g, "").trim();
+      return cleaned || defaultMsg;
+    }
+    return defaultMsg;
+  };
 
   const loadCategories = async () => {
     setLoading(true);
@@ -59,11 +79,12 @@ export default function CategoriesPage() {
       setMessage(`"${name}" added to customer categories.`);
       setTimeout(() => setMessage(""), 3500);
     } catch (err: unknown) {
-      if (err instanceof ApiError) {
-        setErrorMessage(err.message || "Failed to create category.");
-      } else {
-        setErrorMessage("Failed to create category.");
-      }
+      const friendlyMsg = getFriendlyErrorMessage(err, "Failed to create category. Please try again.");
+      setErrorMessage(friendlyMsg);
+      setErrorDialog({
+        title: "Could Not Add Category",
+        message: friendlyMsg,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -108,34 +129,35 @@ export default function CategoriesPage() {
       setMessage(`Category updated to "${res.category.name}".`);
       setTimeout(() => setMessage(""), 3500);
     } catch (err: unknown) {
-      if (err instanceof ApiError) {
-        setErrorMessage(err.message || "Failed to update category.");
-      } else {
-        setErrorMessage("Failed to update category.");
-      }
+      const friendlyMsg = getFriendlyErrorMessage(err, "Failed to update category. Please try again.");
+      setErrorMessage(friendlyMsg);
+      setErrorDialog({
+        title: "Could Not Update Category",
+        message: friendlyMsg,
+      });
     } finally {
       setIsEditing(false);
     }
   };
 
-  const deleteCategory = async (cat: Category) => {
-    if (!window.confirm(`Are you sure you want to delete "${cat.name}"?`)) {
-      return;
-    }
-
+  const confirmDeleteCategory = async () => {
+    if (!deleteConfirmCat) return;
+    const cat = deleteConfirmCat;
     setDeletingId(cat.id);
+    setDeleteConfirmCat(null);
     setErrorMessage("");
     try {
       await categoryApi.deleteCategory(cat.id);
       setCategories((prev) => prev.filter((c) => c.id !== cat.id));
-      setMessage(`Category "${cat.name}" deleted.`);
+      setMessage(`Category "${cat.name}" removed successfully.`);
       setTimeout(() => setMessage(""), 3500);
     } catch (err: unknown) {
-      if (err instanceof ApiError) {
-        setErrorMessage(err.message || "Failed to delete category.");
-      } else {
-        setErrorMessage("Failed to delete category.");
-      }
+      const friendlyMsg = getFriendlyErrorMessage(err, `Unable to delete "${cat.name}". Please try again.`);
+      setErrorMessage(friendlyMsg);
+      setErrorDialog({
+        title: "Category Deletion Notice",
+        message: friendlyMsg,
+      });
     } finally {
       setDeletingId(null);
     }
@@ -275,7 +297,7 @@ export default function CategoriesPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => deleteCategory(c)}
+                            onClick={() => setDeleteConfirmCat(c)}
                             disabled={isItemDeleting}
                             title="Delete category"
                             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-[#B4234D] disabled:opacity-50"
@@ -296,6 +318,91 @@ export default function CategoriesPage() {
           )}
         </SectionCard>
       </div>
+      {/* Confirmation Dialog for Category Deletion */}
+      {deleteConfirmCat && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setDeleteConfirmCat(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-black/10 transform transition-all animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-[#E61C5D]">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold text-zinc-900">Delete Category?</h3>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-600">
+                  Are you sure you want to delete <span className="font-bold text-zinc-800">"{deleteConfirmCat.name}"</span>?
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmCat(null)}
+                className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteCategory}
+                className="rounded-xl bg-[#E61C5D] px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#c91550] transition focus:outline-none focus:ring-2 focus:ring-[#E61C5D] focus:ring-offset-2"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clean User-Friendly Error Dialog */}
+      {errorDialog && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setErrorDialog(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-black/10 transform transition-all animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-[#E61C5D]">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold text-zinc-900">{errorDialog.title}</h3>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-600">{errorDialog.message}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorDialog(null)}
+                className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setErrorDialog(null)}
+                className="w-full rounded-xl bg-[#E61C5D] px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#c91550] transition"
+              >
+                Okay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardShell>
   );
 }
