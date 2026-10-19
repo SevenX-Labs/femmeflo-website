@@ -4,6 +4,7 @@ import type {
   BusinessSettings,
   CreateCustomerPayload,
   CreateManagerPayload,
+  CreateProductPayload,
   CreateSellerPayload,
   CreateWarehousePayload,
   CustomerItem,
@@ -17,14 +18,18 @@ import type {
   ManagerItem,
   PaginationMeta,
   PincodeLookupResponse,
+  ProductItem,
   SaleItem,
   SalesReportData,
   SalesReportQuery,
   SellerItem,
   StockReceiptPayload,
+  StockReceiptMultiPayload,
   StockTransactionItem,
   StockTransferPayload,
+  StockTransferMultiPayload,
   UpdateCustomerPayload,
+  UpdateProductPayload,
   UpdateSalePayload,
   UpdateUserPayload,
   WarehouseItem,
@@ -328,6 +333,42 @@ export const adminApi = {
   },
 
   // ----------------------------------------------------
+  // Products
+  // ----------------------------------------------------
+  async listProducts(params?: { page?: number; pageSize?: number; active?: string; search?: string }): Promise<{ items: ProductItem[]; pagination: PaginationMeta }> {
+    return apiRequest<{ items: ProductItem[]; pagination: PaginationMeta }>("admin/products", {
+      method: "GET",
+      params,
+    });
+  },
+
+  async createProduct(payload: CreateProductPayload): Promise<{ product: ProductItem }> {
+    return apiRequest<{ product: ProductItem }>("admin/products", {
+      method: "POST",
+      body: payload,
+    });
+  },
+
+  async getProduct(id: string): Promise<{ product: ProductItem }> {
+    return apiRequest<{ product: ProductItem }>(`admin/products/${id}`, {
+      method: "GET",
+    });
+  },
+
+  async updateProduct(id: string, payload: UpdateProductPayload): Promise<{ product: ProductItem }> {
+    return apiRequest<{ product: ProductItem }>(`admin/products/${id}`, {
+      method: "PATCH",
+      body: payload,
+    });
+  },
+
+  async toggleProduct(id: string): Promise<{ product: ProductItem }> {
+    return apiRequest<{ product: ProductItem }>(`admin/products/${id}/toggle`, {
+      method: "PATCH",
+    });
+  },
+
+  // ----------------------------------------------------
   // Inventory
   // ----------------------------------------------------
   async getInventorySummary(): Promise<InventorySummaryData> {
@@ -344,6 +385,7 @@ export const adminApi = {
       totalReceived: raw?.totalReceived ?? 0,
       totalTransferred: raw?.totalTransferred ?? 0,
       totalSold: raw?.totalSold ?? 0,
+      products: raw?.products ?? [],
       warehouses: allLocations,
       locations: allLocations,
       sellers: raw?.sellers ?? [],
@@ -371,7 +413,7 @@ export const adminApi = {
     });
   },
 
-  async addReceipt(payload: StockReceiptPayload): Promise<{ receipt: StockTransactionItem }> {
+  async addReceipt(payload: StockReceiptPayload | StockReceiptMultiPayload): Promise<{ receipt: StockTransactionItem }> {
     return apiRequest<{ receipt: StockTransactionItem }>("admin/inventory/receipts", {
       method: "POST",
       body: payload,
@@ -391,7 +433,7 @@ export const adminApi = {
     );
   },
 
-    async transferStock(payload: StockTransferPayload): Promise<{ transfer: StockTransactionItem }> {
+    async transferStock(payload: StockTransferPayload | StockTransferMultiPayload): Promise<{ transfer: StockTransactionItem }> {
     return apiRequest<{ transfer: StockTransactionItem }>("admin/inventory/transfers", {
       method: "POST",
       body: payload,

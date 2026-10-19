@@ -7,6 +7,7 @@ import type {
   ManagerDashboardData,
   PaginationMeta,
   PincodeLookupResponse,
+  ProductItem,
   SaleItem,
   SellerItem,
   UpdateCustomerPayload,
@@ -15,6 +16,15 @@ import type {
 } from "./types";
 
 export const managerApi = {
+  // ----------------------------------------------------
+  // Products
+  // ----------------------------------------------------
+  async listProducts(): Promise<{ items: Array<{ id: string; name: string; sku: string | null; basePricePaise: number; minimumPricePaise: number }> }> {
+    return apiRequest<{ items: Array<{ id: string; name: string; sku: string | null; basePricePaise: number; minimumPricePaise: number }> }>("manager/products", {
+      method: "GET",
+    });
+  },
+
   // ----------------------------------------------------
   // Dashboard
   // ----------------------------------------------------

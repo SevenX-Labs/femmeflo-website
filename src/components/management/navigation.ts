@@ -20,6 +20,7 @@ export type NavigationIcon =
   | "permissions"
   | "notifications"
   | "categories"
+  | "products"
   | "settings";
 
 export type NavigationItem = {
@@ -34,6 +35,7 @@ export const adminNavigation: NavigationItem[] = [
   { label: "Field Officers", href: "/admin/sellers", icon: "store" },
   { label: "Customers", href: "/admin/customers", icon: "customers" },
   { label: "Inventory", href: "/admin/inventory", icon: "inventory" },
+  { label: "Products", href: "/admin/products", icon: "products" },
   { label: "Categories", href: "/admin/categories", icon: "categories" },
   { label: "Sales", href: "/admin/sales", icon: "sales" },
   { label: "Approvals", href: "/admin/approvals", icon: "approvals" },

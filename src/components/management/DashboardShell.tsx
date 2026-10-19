@@ -30,6 +30,7 @@ const navigationIconMap: Record<NavigationIcon, LucideIcon> = {
   permissions: ScrollText,
   notifications: Bell,
   categories: Tags,
+  products: Package,
   settings: Settings,
 };
 

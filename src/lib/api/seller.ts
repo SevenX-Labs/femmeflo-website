@@ -2,10 +2,12 @@ import { apiRequest, API_BASE_URL, tokenStorage } from "./client";
 import type {
   CollectPaymentPayload,
   CreateCustomerPayload,
+  CreateMultiProductSalePayload,
   CreateSalePayload,
   CustomerItem,
   PaginationMeta,
   PincodeLookupResponse,
+  ProductItem,
   PublicUser,
   SaleItem,
   SellerDashboardData,
@@ -141,6 +143,15 @@ export const sellerApi = {
   },
 
   // ----------------------------------------------------
+  // Products
+  // ----------------------------------------------------
+  async listProducts(): Promise<{ items: Array<{ id: string; name: string; sku: string | null; basePricePaise: number; minimumPricePaise: number }> }> {
+    return apiRequest<{ items: Array<{ id: string; name: string; sku: string | null; basePricePaise: number; minimumPricePaise: number }> }>("seller/products", {
+      method: "GET",
+    });
+  },
+
+  // ----------------------------------------------------
   // Inventory
   // ----------------------------------------------------
   async getInventory(): Promise<{
@@ -152,6 +163,7 @@ export const sellerApi = {
     sold?: number;
     locationName: string;
     name?: string;
+    products?: Array<{ productId: string; productName: string; productSku?: string | null; balance: number; assigned: number; sold: number }>;
   }> {
     return apiRequest<{
       balance: number;
@@ -162,6 +174,7 @@ export const sellerApi = {
       sold?: number;
       locationName: string;
       name?: string;
+      products?: Array<{ productId: string; productName: string; productSku?: string | null; balance: number; assigned: number; sold: number }>;
     }>("seller/inventory", {
       method: "GET",
     });
@@ -194,7 +207,7 @@ export const sellerApi = {
   // ----------------------------------------------------
   // Sales
   // ----------------------------------------------------
-  async createSale(payload: CreateSalePayload): Promise<{ sale: SaleItem }> {
+  async createSale(payload: CreateSalePayload | CreateMultiProductSalePayload): Promise<{ sale: SaleItem }> {
     return apiRequest<{ sale: SaleItem }>("seller/sales", {
       method: "POST",
       body: payload,

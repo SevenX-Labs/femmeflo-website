@@ -404,17 +404,42 @@ export default function AdminApprovalsPage() {
                 <span className="text-zinc-800">Seller</span>
                 <strong>{selected.seller?.name}</strong>
               </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-800">Packets</span>
-                <strong>{selected.quantity}</strong>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-800">Per packet</span>
-                <strong className="text-amber-700">₹{selected.unitPricePaise / 100}</strong>
-              </div>
+              {selected.lineItems && selected.lineItems.length > 0 ? (
+                <>
+                  <div className="border-t border-rose-100 pt-3">
+                    <p className="text-xs font-bold text-zinc-600 uppercase tracking-wider mb-2">Line Items</p>
+                    <div className="space-y-2">
+                      {selected.lineItems.map((li) => (
+                        <div key={li.id} className="flex items-center justify-between rounded-lg bg-white p-2.5">
+                          <div>
+                            <p className="text-xs font-bold text-zinc-900">{li.product?.name || "Product"}</p>
+                            <p className="text-[11px] text-zinc-500">{li.quantity} pkts × ₹{li.unitPricePaise / 100}</p>
+                          </div>
+                          <span className="text-xs font-bold text-zinc-800">₹{li.totalPaise / 100}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-800">Total packets</span>
+                    <strong>{selected.quantity}</strong>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-800">Packets</span>
+                    <strong>{selected.quantity}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-800">Per packet</span>
+                    <strong className="text-amber-700">₹{selected.unitPricePaise / 100}</strong>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between border-t border-rose-100 pt-3">
                 <span className="font-bold">Total amount</span>
-                <strong className="text-[#156035]">₹{selected.totalPaise / 100}</strong>
+                <strong className="text-[#156035]">₹{(selected.totalPaise / 100).toLocaleString("en-IN")}</strong>
               </div>
             </div>
             {selected.status === "PENDING_APPROVAL" ? (

@@ -4,19 +4,24 @@ import { useEffect, useState } from "react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
-  CheckCircle2,
-  Filter,
   Loader2,
-  PackageCheck,
+  Package,
   RefreshCw,
-  Send,
-  Truck,
 } from "lucide-react";
 import { DashboardShell, MetricCard, PageHeading, SectionCard } from "@/components/management/DashboardShell";
 import { sellerNavigation } from "@/components/management/navigation";
 import { sellerApi } from "@/lib/api/seller";
 import type { StockTransactionItem } from "@/lib/api/types";
 import { useAuth } from "@/context/AuthContext";
+
+interface ProductBalance {
+  productId: string;
+  productName: string;
+  productSku?: string | null;
+  balance: number;
+  assigned: number;
+  sold: number;
+}
 
 export default function SellerInventoryPage() {
   const { user } = useAuth();
@@ -27,6 +32,7 @@ export default function SellerInventoryPage() {
   const [assigned, setAssigned] = useState(0);
   const [sold, setSold] = useState(0);
   const [locationName, setLocationName] = useState("Seller stock");
+  const [productBalances, setProductBalances] = useState<ProductBalance[]>([]);
   const [transactions, setTransactions] = useState<StockTransactionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -50,6 +56,16 @@ export default function SellerInventoryPage() {
         setAssigned(invRes.assignedPackets ?? invRes.assigned ?? 0);
         setSold(invRes.soldPackets ?? invRes.sold ?? 0);
         setLocationName(invRes.locationName ?? invRes.name ?? "Seller stock");
+        if (invRes.products && invRes.products.length > 0) {
+          setProductBalances(invRes.products.map((p) => ({
+            productId: p.productId,
+            productName: p.productName,
+            productSku: p.productSku,
+            balance: p.balance,
+            assigned: p.assigned,
+            sold: p.sold,
+          })));
+        }
       }
 
       if (txRes) {
@@ -118,6 +134,54 @@ export default function SellerInventoryPage() {
           tone="amber"
         />
       </div>
+
+      {/* Per-Product Balances */}
+      {productBalances.length > 0 && (
+        <SectionCard
+          title="Product-wise Stock"
+          description="Per-product inventory breakdown at your location"
+          className="mt-8"
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-[#FFF8FA] text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-700">
+                <tr>
+                  <th className="px-4 py-3">Product</th>
+                  <th className="px-4 py-3 text-right">Assigned</th>
+                  <th className="px-4 py-3 text-right">Sold</th>
+                  <th className="px-4 py-3 text-right">Remaining</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {productBalances.map((pb) => (
+                  <tr key={pb.productId} className="hover:bg-zinc-50/50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-[#156035]">
+                          <Package className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-zinc-900">{pb.productName}</p>
+                          {pb.productSku && <p className="text-[11px] text-zinc-500">{pb.productSku}</p>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-zinc-700">{pb.assigned}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-[#156035]">{pb.sold}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                        pb.balance > 0 ? "bg-emerald-50 text-[#157347]" : "bg-rose-50 text-[#E61C5D]"
+                      }`}>
+                        {pb.balance}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+      )}
 
       <SectionCard
         title="Complete Stock Movement History"
@@ -192,6 +256,7 @@ export default function SellerInventoryPage() {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
+                        {t.product ? ` · ${t.product.name}` : ""}
                         {t.saleId ? ` · Order #${t.saleId.slice(0, 8)}` : ""}
                       </p>
                     </div>

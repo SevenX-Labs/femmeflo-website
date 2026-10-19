@@ -310,6 +310,55 @@ export interface UpdateCustomerPayload extends Partial<CreateCustomerPayload> {
 }
 
 // ==========================================
+// Products
+// ==========================================
+
+export interface ProductItem {
+  id: string;
+  name: string;
+  sku: string | null;
+  basePricePaise: number;
+  minimumPricePaise: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProductPayload {
+  name: string;
+  sku?: string;
+  basePricePaise: number;
+  minimumPricePaise: number;
+  active?: boolean;
+}
+
+export interface UpdateProductPayload {
+  name?: string;
+  sku?: string | null;
+  basePricePaise?: number;
+  minimumPricePaise?: number;
+  active?: boolean;
+}
+
+export interface SaleLineItemData {
+  id: string;
+  productId: string;
+  product?: { id: string; name: string; sku?: string | null };
+  quantity: number;
+  unitPricePaise: number;
+  totalPaise: number;
+}
+
+export interface ProductBalanceItem {
+  productId: string;
+  productName: string;
+  productSku?: string | null;
+  balance: number;
+  assigned?: number;
+  sold?: number;
+}
+
+// ==========================================
 // Inventory & Stock
 // ==========================================
 
@@ -329,6 +378,7 @@ export interface WarehouseItem {
     name: string;
     phone?: string | null;
   } | null;
+  productBalances?: ProductBalanceItem[];
   createdAt: string;
   updatedAt: string;
 }
@@ -342,6 +392,15 @@ export interface InventorySummaryData {
   totalReceived?: number;
   totalTransferred?: number;
   totalSold?: number;
+  products?: Array<{
+    id: string;
+    name: string;
+    sku: string | null;
+    totalBalance: number;
+    hqBalance: number;
+    warehouseBalance: number;
+    sellerBalance: number;
+  }>;
   warehouses: WarehouseItem[];
   locations?: WarehouseItem[];
   sellers?: Array<{
@@ -389,6 +448,12 @@ export interface StockTransactionItem {
     name: string;
     role: Role;
   };
+  productId?: string | null;
+  product?: {
+    id: string;
+    name: string;
+    sku?: string | null;
+  } | null;
   saleId?: string | null;
   sale?: {
     id: string;
@@ -449,6 +514,7 @@ export interface SaleItem {
   incentiveAmountPaise?: number | null;
   createdAt: string;
   updatedAt: string;
+  lineItems?: SaleLineItemData[];
   invoice?: {
     id: string;
     number: string;
@@ -467,6 +533,33 @@ export interface CreateSalePayload {
   unitPricePaise: number;
   paymentMode: PaymentMode;
   requestKey?: string;
+}
+
+export interface CreateMultiProductSalePayload {
+  customerId: string;
+  items: Array<{
+    productId: string;
+    quantity: number;
+    unitPricePaise: number;
+  }>;
+  paymentMode: PaymentMode;
+  requestKey?: string;
+}
+
+export interface StockReceiptMultiPayload {
+  items: Array<{
+    productId: string;
+    quantity: number;
+  }>;
+}
+
+export interface StockTransferMultiPayload {
+  sourceId: string;
+  destinationId: string;
+  items: Array<{
+    productId: string;
+    quantity: number;
+  }>;
 }
 
 export interface CollectPaymentPayload {

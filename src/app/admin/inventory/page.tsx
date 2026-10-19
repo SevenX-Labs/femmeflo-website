@@ -74,6 +74,10 @@ export default function AdminInventoryPage() {
   const [editStockError, setEditStockError] = useState<string | null>(null);
   const [editStockNotice, setEditStockNotice] = useState<string | null>(null);
 
+  // Products for inward modal
+  const [inwardProducts, setInwardProducts] = useState<Array<{ id: string; name: string; sku: string | null }>>([]);
+  const [inwardItems, setInwardItems] = useState<Array<{ productId: string; quantity: number | string }>>([]);
+
   // Inward stock modal state
   const [showInwardModal, setShowInwardModal] = useState(false);
   const [inwardQty, setInwardQty] = useState<number | string>(500);
@@ -127,9 +131,22 @@ export default function AdminInventoryPage() {
     }
   };
 
+  const fetchProducts = async () => {
+    try {
+      const res = await adminApi.listProducts({ active: "true" });
+      const items = res?.items ?? [];
+      setInwardProducts(items.map((p) => ({ id: p.id, name: p.name, sku: p.sku })));
+      if (items.length > 0) {
+        setInwardItems([{ productId: items[0].id, quantity: 500 }]);
+      }
+    } catch {
+      // Ignored
+    }
+  };
+
   const fetchAllData = async () => {
     setLoading(true);
-    await Promise.all([fetchSummary(), fetchTransactions(1, historyFilterType)]);
+    await Promise.all([fetchSummary(), fetchTransactions(1, historyFilterType), fetchProducts()]);
     setTxPage(1);
     setLoading(false);
   };
@@ -177,29 +194,67 @@ export default function AdminInventoryPage() {
 
   const handleInwardStock = async (e: React.FormEvent) => {
     e.preventDefault();
-    const qty = Number(inwardQty);
-    if (!qty || qty <= 0 || !Number.isInteger(qty)) {
-      setInwardError("Please enter a valid positive packet quantity.");
-      return;
-    }
 
-    setIsInwardSubmitting(true);
-    setInwardError("");
-    setInwardNotice("");
+    if (inwardProducts.length > 0) {
+      const validItems = inwardItems.filter((it) => it.productId && Number(it.quantity) > 0);
+      if (validItems.length === 0) {
+        setInwardError("Add at least one product with a valid quantity.");
+        return;
+      }
+      for (const it of validItems) {
+        const qty = Number(it.quantity);
+        if (!Number.isInteger(qty) || qty <= 0) {
+          setInwardError("All quantities must be positive integers.");
+          return;
+        }
+      }
 
-    try {
-      await adminApi.addReceipt({ quantity: qty });
-      setInwardNotice(`Successfully inwarded ${qty.toLocaleString("en-IN")} packets to HQ Central.`);
-      setInwardQty(500);
-      await fetchAllData();
-      setTimeout(() => {
-        setShowInwardModal(false);
-        setInwardNotice("");
-      }, 1200);
-    } catch (err: unknown) {
-      setInwardError(err instanceof Error ? err.message : "Failed to process stock inward.");
-    } finally {
-      setIsInwardSubmitting(false);
+      setIsInwardSubmitting(true);
+      setInwardError("");
+      setInwardNotice("");
+
+      try {
+        await adminApi.addReceipt({
+          items: validItems.map((it) => ({ productId: it.productId, quantity: Number(it.quantity) })),
+        });
+        const totalQty = validItems.reduce((s, it) => s + Number(it.quantity), 0);
+        setInwardNotice(`Successfully inwarded ${totalQty.toLocaleString("en-IN")} packets to HQ Central.`);
+        setInwardItems(inwardProducts.length > 0 ? [{ productId: inwardProducts[0].id, quantity: 500 }] : []);
+        await fetchAllData();
+        setTimeout(() => {
+          setShowInwardModal(false);
+          setInwardNotice("");
+        }, 1200);
+      } catch (err: unknown) {
+        setInwardError(err instanceof Error ? err.message : "Failed to process stock inward.");
+      } finally {
+        setIsInwardSubmitting(false);
+      }
+    } else {
+      const qty = Number(inwardQty);
+      if (!qty || qty <= 0 || !Number.isInteger(qty)) {
+        setInwardError("Please enter a valid positive packet quantity.");
+        return;
+      }
+
+      setIsInwardSubmitting(true);
+      setInwardError("");
+      setInwardNotice("");
+
+      try {
+        await adminApi.addReceipt({ quantity: qty });
+        setInwardNotice(`Successfully inwarded ${qty.toLocaleString("en-IN")} packets to HQ Central.`);
+        setInwardQty(500);
+        await fetchAllData();
+        setTimeout(() => {
+          setShowInwardModal(false);
+          setInwardNotice("");
+        }, 1200);
+      } catch (err: unknown) {
+        setInwardError(err instanceof Error ? err.message : "Failed to process stock inward.");
+      } finally {
+        setIsInwardSubmitting(false);
+      }
     }
   };
 
@@ -1938,25 +1993,87 @@ export default function AdminInventoryPage() {
                 </p>
               )}
 
-              <div>
-                <label className="block text-xs font-bold text-zinc-800">
-                  Packet Quantity to Inward *
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  required
-                  value={inwardQty}
-                  onChange={(e) =>
-                    setInwardQty(e.target.value === "" ? "" : Number(e.target.value))
-                  }
-                  placeholder="e.g. 500"
-                  className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                />
-                <p className="mt-1 text-[11px] text-zinc-500">
-                  Packets are incremented into the central Headquarters (HQ) reserve.
-                </p>
-              </div>
+              {inwardProducts.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-zinc-800">Products & Quantities *</label>
+                    {inwardItems.length < inwardProducts.length && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const unused = inwardProducts.find((p) => !inwardItems.some((it) => it.productId === p.id));
+                          if (unused) setInwardItems((prev) => [...prev, { productId: unused.id, quantity: 100 }]);
+                        }}
+                        className="text-xs font-bold text-[#E61C5D] hover:text-[#c91550]"
+                      >
+                        + Add product
+                      </button>
+                    )}
+                  </div>
+                  {inwardItems.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <select
+                        value={item.productId}
+                        onChange={(e) => {
+                          const newItems = [...inwardItems];
+                          newItems[idx] = { ...newItems[idx], productId: e.target.value };
+                          setInwardItems(newItems);
+                        }}
+                        className="h-10 flex-1 rounded-lg border border-zinc-200 bg-[#FAF8F5] px-2 text-xs font-semibold outline-none focus:border-rose-300"
+                      >
+                        {inwardProducts.map((p) => (
+                          <option key={p.id} value={p.id}>{p.name} {p.sku ? `(${p.sku})` : ""}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        min="1"
+                        required
+                        value={item.quantity}
+                        onChange={(e) => {
+                          const newItems = [...inwardItems];
+                          newItems[idx] = { ...newItems[idx], quantity: e.target.value === "" ? "" : Number(e.target.value) };
+                          setInwardItems(newItems);
+                        }}
+                        placeholder="Qty"
+                        className="h-10 w-24 rounded-lg border border-zinc-200 bg-[#FAF8F5] px-2 text-sm font-semibold outline-none focus:border-rose-300"
+                      />
+                      {inwardItems.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setInwardItems((prev) => prev.filter((_, i) => i !== idx))}
+                          className="rounded-lg p-1.5 text-zinc-400 hover:bg-rose-50 hover:text-[#E61C5D]"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <p className="text-[11px] text-zinc-500">
+                    Packets are incremented into the central Headquarters (HQ) reserve per product.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-bold text-zinc-800">
+                    Packet Quantity to Inward *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={inwardQty}
+                    onChange={(e) =>
+                      setInwardQty(e.target.value === "" ? "" : Number(e.target.value))
+                    }
+                    placeholder="e.g. 500"
+                    className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                  />
+                  <p className="mt-1 text-[11px] text-zinc-500">
+                    Packets are incremented into the central Headquarters (HQ) reserve.
+                  </p>
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
