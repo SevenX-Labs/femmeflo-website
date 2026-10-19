@@ -252,42 +252,33 @@ export function OnboardingFormScreen({
 
         console.log("Captured GPS Location:", { latitude, longitude, accuracy: gpsAccuracy });
 
-        // Reverse Geocode: Auto-fill address fields from coordinates
-        try {
-          const geoResult = await reverseGeocode(latitude, longitude);
-          if (geoResult) {
-            console.log("Reverse Geocode Result:", geoResult);
-
-            if (geoResult.formattedAddress) {
-              setLocation(geoResult.formattedAddress);
+        // Only auto-fill address from GPS when accuracy is good (<= 500m).
+        // Poor accuracy (IP-based) gives wrong addresses — don't overwrite user-entered data.
+        if (gpsAccuracy <= 500) {
+          try {
+            const geoResult = await reverseGeocode(latitude, longitude);
+            if (geoResult) {
+              if (geoResult.formattedAddress) {
+                setLocation(geoResult.formattedAddress);
+              }
+              if (geoResult.state) setState(geoResult.state);
+              if (geoResult.district) setDistrict(geoResult.district);
+              if (geoResult.village) {
+                setVillage(geoResult.village);
+                setAvailableVillages((prev) => Array.from(new Set([...prev, geoResult.village])));
+              }
+              if (geoResult.pincode) {
+                setPincode(geoResult.pincode);
+                setPincodeMessage(`Auto-filled from GPS: ${geoResult.village ? geoResult.village + ", " : ""}${geoResult.district}`);
+              }
+              if (geoResult.streetName && !streetName) setStreetName(geoResult.streetName);
+              if (geoResult.shopNumber && !shopNumber) setShopNumber(geoResult.shopNumber);
             }
-
-            // Auto-fill or update state, district, village, pincode from GPS
-            if (geoResult.state) setState(geoResult.state);
-            if (geoResult.district) setDistrict(geoResult.district);
-            if (geoResult.village) {
-              setVillage(geoResult.village);
-              setAvailableVillages((prev) => Array.from(new Set([...prev, geoResult.village])));
-            }
-            if (geoResult.pincode) {
-              setPincode(geoResult.pincode);
-              setPincodeMessage(`Auto-filled from GPS: ${geoResult.village ? geoResult.village + ", " : ""}${geoResult.district}`);
-            }
-            if (geoResult.streetName && !streetName) setStreetName(geoResult.streetName);
-            if (geoResult.shopNumber && !shopNumber) setShopNumber(geoResult.shopNumber);
-
-            console.log("Address auto-filled from GPS:", {
-              state: geoResult.state,
-              district: geoResult.district,
-              village: geoResult.village,
-              pincode: geoResult.pincode,
-              streetName: geoResult.streetName,
-              formattedAddress: geoResult.formattedAddress,
-            });
+          } catch {
+            console.warn("Reverse geocoding failed (non-blocking)");
           }
-        } catch (geoErr) {
-          // Non-blocking: GPS coordinates are captured even if reverse geocode fails
-          console.warn("Reverse geocoding failed (non-blocking):", geoErr);
+        } else {
+          setLocation("");
         }
 
         setIsLocating(false);
@@ -1718,14 +1709,35 @@ export function OnboardingFormScreen({
                     {/* GPS Accuracy Indicator */}
                     {accuracy !== undefined && lat !== undefined && (
                       accuracy > 500 ? (
-                        <div className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] font-medium text-amber-900 space-y-1">
+                        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-[11px] font-medium text-amber-900 space-y-1.5">
                           <div className="flex items-center gap-1.5">
-                            <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                            <span className="font-bold">Low GPS accuracy (~{accuracy >= 1000 ? `${(accuracy / 1000).toFixed(1)} km` : `${Math.round(accuracy)} m`})</span>
+                            <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                            <span className="font-bold text-xs">Approximate location only (~{accuracy >= 1000 ? `${(accuracy / 1000).toFixed(0)} km` : `${Math.round(accuracy)} m`} accuracy)</span>
                           </div>
-                          <p className="text-amber-800">
-                            Location will be determined from your address fields. Ensure village, district, state, and PIN code are accurate.
+                          <p className="text-amber-800 leading-relaxed">
+                            Your device returned an IP-based estimate, not real GPS. This is normal on desktop/laptop browsers.
+                            <strong> The coordinates shown may be wrong.</strong> Fill in the correct address below (village, district, state, PIN code) — the server will use your address to determine the accurate location.
                           </p>
+                          {(village || district || state) && (
+                            <button
+                              type="button"
+                              onClick={handleVerifyLocation}
+                              disabled={isVerifyingLocation}
+                              className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 py-2 px-3 text-xs font-bold text-white transition hover:bg-amber-700 disabled:opacity-50 cursor-pointer"
+                            >
+                              {isVerifyingLocation ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  <span>Looking up address...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <MapPin className="h-3.5 w-3.5" />
+                                  <span>Use my address to get correct coordinates</span>
+                                </>
+                              )}
+                            </button>
+                          )}
                         </div>
                       ) : (
                         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-800 flex items-center gap-1.5">
@@ -1736,19 +1748,25 @@ export function OnboardingFormScreen({
                     )}
 
                     {lat !== undefined && lng !== undefined ? (
-                      <div className="rounded-lg border border-emerald-200 bg-white p-2.5 text-xs shadow-xs space-y-1.5">
+                      <div className={`rounded-lg border p-2.5 text-xs shadow-xs space-y-1.5 ${accuracy !== undefined && accuracy > 500 ? "border-amber-200 bg-amber-50/30" : "border-emerald-200 bg-white"}`}>
                         <div className="flex items-center justify-between font-mono text-[11px] text-zinc-700">
                           <span>Lat: <strong>{lat.toFixed(6)}</strong></span>
                           <span>Lng: <strong>{lng.toFixed(6)}</strong></span>
                         </div>
+                        {accuracy !== undefined && accuracy > 500 && !verifiedAddress && (
+                          <div className="rounded bg-amber-100 px-2 py-1 text-[11px] font-medium text-amber-800">
+                            These coordinates are approximate — fill in your address and tap &quot;Use my address&quot; above
+                          </div>
+                        )}
                         {location && location !== `${lat}, ${lng}` && (
                           <div className="rounded bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-800 line-clamp-2">
                             {location}
                           </div>
                         )}
                         {verifiedAddress && (
-                          <div className="rounded bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-800 line-clamp-2">
-                            Verified: {verifiedAddress}
+                          <div className="rounded bg-blue-50 border border-blue-200 px-2 py-1.5 text-[11px] font-semibold text-blue-800 line-clamp-2">
+                            <CheckCircle2 className="inline h-3 w-3 mr-1 text-blue-600" />
+                            Verified from address: {verifiedAddress}
                           </div>
                         )}
                         <div className="mt-1 flex items-center justify-between">
@@ -1770,7 +1788,8 @@ export function OnboardingFormScreen({
                       </span>
                     )}
 
-                    {/* Verify Location from Address Button */}
+                    {/* Verify Location from Address Button — only show separately when accuracy is good or not yet captured */}
+                    {(accuracy === undefined || accuracy <= 500) && (
                     <button
                       type="button"
                       onClick={handleVerifyLocation}
@@ -1789,6 +1808,7 @@ export function OnboardingFormScreen({
                         </>
                       )}
                     </button>
+                    )}
 
                     {locationError && (
                       <p className="text-[11px] font-medium text-rose-600">{locationError}</p>
