@@ -12,7 +12,7 @@ import { sellerApi } from "@/lib/api/seller";
 import { categoryApi } from "@/lib/api/categories";
 import type { Category, ManagerItem, PincodeLookupResponse, SellerItem } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
-import { validateMobileNumber, validateEmail, validateAadharNumber } from "@/lib/validation";
+import { validateMobileNumber, validateEmail, validateAadharNumber, validateDrivingLicense } from "@/lib/validation";
 
 type Props = {
   role: "Super Admin" | "Manager" | "Seller";
@@ -355,17 +355,33 @@ export function OnboardingFormScreen({
           }
         }
 
-        // Aadhaar number validation
-        let aadharNormalized = undefined;
-        if (aadharNumber && aadharNumber.trim()) {
-          const aadharVal = validateAadharNumber(aadharNumber);
-          if (!aadharVal.isValid) {
-            showErrorModal(aadharVal.error || "Please enter a valid 12-digit Aadhaar number.", "Invalid Aadhaar Number");
-            setIsSubmitting(false);
-            return;
-          }
-          aadharNormalized = aadharVal.normalized;
+        // Aadhaar card validation (Mandatory)
+        if (!aadharNumber || !aadharNumber.trim()) {
+          showErrorModal("Aadhaar Card number is mandatory for field officer onboarding. Please enter a valid 12-digit Aadhaar number.", "Aadhaar Card Required");
+          setIsSubmitting(false);
+          return;
         }
+        const aadharVal = validateAadharNumber(aadharNumber);
+        if (!aadharVal.isValid || !aadharVal.normalized) {
+          showErrorModal(aadharVal.error || "Please enter a valid 12-digit Aadhaar number.", "Invalid Aadhaar Number");
+          setIsSubmitting(false);
+          return;
+        }
+        const aadharNormalized = aadharVal.normalized;
+
+        // Driving License validation (Mandatory)
+        if (!drivingLicense || !drivingLicense.trim()) {
+          showErrorModal("Driving License number is mandatory for field officer onboarding. Please enter a valid Driving License.", "Driving License Required");
+          setIsSubmitting(false);
+          return;
+        }
+        const dlVal = validateDrivingLicense(drivingLicense);
+        if (!dlVal.isValid || !dlVal.normalized) {
+          showErrorModal(dlVal.error || "Please enter a valid Indian Driving License number (e.g. MH1420210001234).", "Invalid Driving License");
+          setIsSubmitting(false);
+          return;
+        }
+        const dlNormalized = dlVal.normalized;
 
         // Super Admin must select reporting manager if managers exist
         if (role === "Super Admin" && !selectedManagerId && managers.length > 0) {
@@ -389,7 +405,7 @@ export function OnboardingFormScreen({
           village: village.trim() || undefined,
           active: officerStatus === "Active",
           aadharNumber: aadharNormalized,
-          drivingLicense: drivingLicense.trim() || undefined,
+          drivingLicense: dlNormalized,
           education: education.trim() || undefined,
           managerId: role === "Super Admin" ? selectedManagerId || undefined : undefined,
         };
@@ -760,9 +776,10 @@ export function OnboardingFormScreen({
 
                 <div className="grid gap-4 sm:grid-cols-3">
                   <label className="block text-xs font-bold text-zinc-700">
-                    Aadhaar Card Number
+                    Aadhaar Card Number <span className="text-[#E61C5D] font-extrabold">*</span>
                     <input
                       type="text"
+                      required
                       maxLength={14}
                       value={aadharNumber}
                       onChange={(e) => {
@@ -776,19 +793,20 @@ export function OnboardingFormScreen({
                       className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 font-mono text-sm tracking-wider outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
                       placeholder="XXXX XXXX XXXX"
                     />
-                    <span className="mt-1 block text-[10px] text-zinc-500">12-digit Indian Aadhaar number</span>
+                    <span className="mt-1 block text-[10px] font-medium text-zinc-500">Mandatory: 12-digit Indian Aadhaar number</span>
                   </label>
 
                   <label className="block text-xs font-bold text-zinc-700">
-                    Driving License Number
+                    Driving License Number <span className="text-[#E61C5D] font-extrabold">*</span>
                     <input
                       type="text"
+                      required
                       value={drivingLicense}
                       onChange={(e) => setDrivingLicense(e.target.value.toUpperCase())}
                       className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 font-mono text-sm uppercase tracking-wide outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
                       placeholder="e.g. MH14 20210001234"
                     />
-                    <span className="mt-1 block text-[10px] text-zinc-500">For field travel validation</span>
+                    <span className="mt-1 block text-[10px] font-medium text-zinc-500">Mandatory: Valid Indian Driving License for field travel</span>
                   </label>
 
                   <label className="block text-xs font-bold text-zinc-700">

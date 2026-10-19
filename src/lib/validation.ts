@@ -144,3 +144,41 @@ export function validateAadharNumber(raw?: string | null): { isValid: boolean; n
   const formatted = `${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8, 12)}`;
   return { isValid: true, normalized: digits, formatted };
 }
+
+/**
+ * Validates Indian Driving License Number.
+ * Format standard: SS-RR-YYYYNNNNNNN or SSRRYYYYNNNNNNN
+ * Where SS = 2-letter state code, RR = 2-digit RTO code, followed by year and unique digits (typically 15-16 alphanumeric chars)
+ */
+export function validateDrivingLicense(raw?: string | null): { isValid: boolean; normalized?: string; error?: string } {
+  if (!raw || !raw.trim()) {
+    return {
+      isValid: false,
+      error: "Driving License number is required.",
+    };
+  }
+
+  const cleaned = raw.trim().toUpperCase().replace(/[\s\-\/]/g, "");
+
+  // DL in India is typically between 10 to 16 alphanumeric characters starting with 2 letters (State code)
+  const dlRegex = /^[A-Z]{2}[0-9A-Z]{8,14}$/;
+
+  if (cleaned.length < 10) {
+    return {
+      isValid: false,
+      error: `Driving License must be at least 10 characters (currently ${cleaned.length}).`,
+    };
+  }
+
+  if (!dlRegex.test(cleaned)) {
+    return {
+      isValid: false,
+      error: "Please enter a valid Indian Driving License number (e.g. MH1420210001234 or DL-0420110012345).",
+    };
+  }
+
+  return {
+    isValid: true,
+    normalized: cleaned,
+  };
+}
