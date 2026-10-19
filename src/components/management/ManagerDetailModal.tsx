@@ -25,7 +25,8 @@ import {
 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
-import type { ManagerItem, SellerItem } from "@/lib/api/types";
+import type { ManagerItem, SellerItem, UpdateUserPayload } from "@/lib/api/types";
+import { validateAadharNumber, validateDrivingLicense, validateMobileNumber } from "@/lib/validation";
 import {
   MANAGER_PERMISSIONS,
   PERMISSION_METADATA,
@@ -71,6 +72,13 @@ export function ManagerDetailModal({
   const [district, setDistrict] = useState("");
   const [village, setVillage] = useState("");
   const [active, setActive] = useState(true);
+  const [isSeller, setIsSeller] = useState(false);
+  const [aadharNumber, setAadharNumber] = useState("");
+  const [drivingLicense, setDrivingLicense] = useState("");
+  const [education, setEducation] = useState("Graduate");
+  const [address, setAddress] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [alternatePhone, setAlternatePhone] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
   // Action status
@@ -105,6 +113,13 @@ export function ManagerDetailModal({
       setDistrict(mgr.district || "");
       setVillage(mgr.village || "");
       setActive(mgr.active ?? true);
+      setIsSeller(Boolean(mgr.isSeller));
+      setAadharNumber(mgr.aadharNumber || "");
+      setDrivingLicense(mgr.drivingLicense || "");
+      setEducation(mgr.education || "Graduate");
+      setAddress(mgr.address || "");
+      setPincode(mgr.pincode || "");
+      setAlternatePhone(mgr.alternatePhone || "");
 
       // Determine active manager permissions
       const activePerms = (Array.from(MANAGER_PERMISSIONS) as string[]).filter((p) =>
@@ -150,6 +165,13 @@ export function ManagerDetailModal({
       setDistrict(manager.district || "");
       setVillage(manager.village || "");
       setActive(manager.active ?? true);
+      setIsSeller(Boolean(manager.isSeller));
+      setAadharNumber(manager.aadharNumber || "");
+      setDrivingLicense(manager.drivingLicense || "");
+      setEducation(manager.education || "Graduate");
+      setAddress(manager.address || "");
+      setPincode(manager.pincode || "");
+      setAlternatePhone(manager.alternatePhone || "");
       const activePerms = (Array.from(MANAGER_PERMISSIONS) as string[]).filter((p) =>
         hasPermission(manager as any, p)
       );
@@ -183,23 +205,62 @@ export function ManagerDetailModal({
     setSaveSuccess(null);
 
     try {
+      // Validate Aadhaar if provided
+      let normalizedAadhar: string | undefined = undefined;
+      if (aadharNumber && aadharNumber.trim()) {
+        const aadharVal = validateAadharNumber(aadharNumber);
+        if (!aadharVal.isValid || !aadharVal.normalized) {
+          setSaveError(aadharVal.error || "Please enter a valid 12-digit Aadhaar number.");
+          setIsSaving(false);
+          return;
+        }
+        normalizedAadhar = aadharVal.normalized;
+      }
+
+      // Validate Driving License if provided
+      let normalizedDl: string | undefined = undefined;
+      if (drivingLicense && drivingLicense.trim()) {
+        const dlVal = validateDrivingLicense(drivingLicense);
+        if (!dlVal.isValid || !dlVal.normalized) {
+          setSaveError(dlVal.error || "Please enter a valid Indian Driving License number (e.g. MH14 20210001234).");
+          setIsSaving(false);
+          return;
+        }
+        normalizedDl = dlVal.normalized;
+      }
+
+      // Validate Alternate Phone if provided
+      let normalizedAltPhone: string | undefined = undefined;
+      if (alternatePhone && alternatePhone.trim()) {
+        const altVal = validateMobileNumber(alternatePhone);
+        if (!altVal.isValid) {
+          setSaveError("Alternate phone: " + (altVal.error || "Please enter a valid 10-digit mobile number."));
+          setIsSaving(false);
+          return;
+        }
+        if (trimmedPhone.slice(-10) === altVal.normalized.replace(/\D/g, "").slice(-10)) {
+          setSaveError("Alternate phone cannot be the same as primary phone number.");
+          setIsSaving(false);
+          return;
+        }
+        normalizedAltPhone = altVal.normalized;
+      }
+
       const payloadPermissions = syncPermissionAliases(selectedPermissions);
 
-      // 1. Update basic details and territory
-      const updatePayload: {
-        name: string;
-        phone: string;
-        email?: string;
-        employeeCode?: string;
-        active: boolean;
-        state?: string;
-        district?: string;
-        village?: string;
-      } = {
+      // 1. Update basic details, documents, and territory
+      const updatePayload: UpdateUserPayload = {
         name: trimmedName,
         phone: trimmedPhone,
         employeeCode: employeeCode.trim() || undefined,
         active,
+        isSeller,
+        aadharNumber: normalizedAadhar,
+        drivingLicense: normalizedDl,
+        education: education.trim() || undefined,
+        address: address.trim() || undefined,
+        pincode: pincode.trim() || undefined,
+        alternatePhone: normalizedAltPhone,
       };
 
       if (email.trim()) {
@@ -223,11 +284,18 @@ export function ManagerDetailModal({
         name: trimmedName,
         employeeCode: employeeCode.trim() || null,
         phone: trimmedPhone,
+        alternatePhone: normalizedAltPhone || null,
         email: email.trim() ? email.trim().toLowerCase() : null,
         state: state.trim() || null,
         district: district.trim() || null,
         village: village.trim() || null,
+        address: address.trim() || null,
+        pincode: pincode.trim() || null,
+        aadharNumber: normalizedAadhar || null,
+        drivingLicense: normalizedDl || null,
+        education: education.trim() || null,
         active,
+        isSeller,
         permissions: payloadPermissions,
       };
 
@@ -284,6 +352,11 @@ export function ManagerDetailModal({
               {manager?.employeeCode && (
                 <span className="font-mono text-[11px] font-semibold bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded border border-zinc-200">
                   {manager.employeeCode}
+                </span>
+              )}
+              {manager?.isSeller && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-200 px-2 py-0.5 text-[10px] font-bold text-[#E61C5D]">
+                  ★ Field Seller Enabled
                 </span>
               )}
               {manager && (
@@ -475,6 +548,144 @@ export function ManagerDetailModal({
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="e.g. manager@femmeflo.in"
                         className="w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dual Role / Same as Seller Toggle */}
+              <div className="rounded-xl border-2 border-rose-200/80 bg-gradient-to-r from-rose-50/70 via-pink-50/40 to-amber-50/50 p-4 shadow-xs">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center rounded-md bg-[#E61C5D] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        Seller Capability
+                      </span>
+                      <h4 className="text-xs font-bold text-zinc-900">
+                        Same as Seller (Manager also acts as Field Seller)
+                      </h4>
+                    </div>
+                    <p className="text-[11px] text-zinc-600 leading-relaxed">
+                      Enable this if this manager directly conducts field sales and customer onboarding. They can log in to the <strong>Seller Portal</strong> with the <strong>same ID &amp; password</strong> and will receive their own field stock balance.
+                    </p>
+                  </div>
+
+                  <label className="relative inline-flex cursor-pointer items-center shrink-0 mt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={isSeller}
+                      onChange={(e) => setIsSeller(e.target.checked)}
+                      className="peer sr-only"
+                    />
+                    <div className="peer h-6 w-11 rounded-full bg-zinc-300 peer-checked:bg-[#E61C5D] peer-checked:after:translate-x-full peer-checked:after:border-white after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-zinc-300 after:bg-white after:transition-all after:content-[''] peer-focus:outline-none"></div>
+                  </label>
+                </div>
+
+                {isSeller && (
+                  <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50/80 p-2.5 text-xs text-emerald-800 flex items-center gap-2">
+                    <span className="font-bold text-emerald-600">✓</span>
+                    <span>Dual Role Active: Field officer stock location will be maintained for this manager.</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Official Identification & Documents (Aadhaar & Driving License) */}
+              <div className="rounded-xl border border-zinc-200 bg-[#FCFAF6] p-4 space-y-4">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#156035] flex items-center gap-1.5 border-b border-zinc-200/70 pb-2">
+                  Official Identification &amp; Documents
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="block font-bold text-zinc-700 mb-1">
+                      Aadhaar Card Number
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={14}
+                      value={aadharNumber}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, "").slice(0, 12);
+                        const parts = [];
+                        for (let i = 0; i < raw.length; i += 4) {
+                          parts.push(raw.slice(i, i + 4));
+                        }
+                        setAadharNumber(parts.join(" "));
+                      }}
+                      placeholder="XXXX XXXX XXXX"
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-mono tracking-wider text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                    />
+                    <span className="mt-0.5 block text-[10px] text-zinc-400">12-digit Indian Aadhaar number</span>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-zinc-700 mb-1">
+                      Driving License Number
+                    </label>
+                    <input
+                      type="text"
+                      value={drivingLicense}
+                      onChange={(e) => setDrivingLicense(e.target.value.toUpperCase())}
+                      placeholder="e.g. MH14 20210001234"
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-mono uppercase tracking-wider text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                    />
+                    <span className="mt-0.5 block text-[10px] text-zinc-400">Valid Indian Driving License</span>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-zinc-700 mb-1">
+                      Educational Qualification
+                    </label>
+                    <select
+                      value={education}
+                      onChange={(e) => setEducation(e.target.value)}
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                    >
+                      <option value="Graduate">Graduate (B.A. / B.Com / B.Sc / BBA)</option>
+                      <option value="Post Graduate">Post Graduate / Master's (MBA / M.Com / etc.)</option>
+                      <option value="Graduate (Technical)">Graduate (Engineering / Technical)</option>
+                      <option value="Diploma">Diploma / Polytechnic</option>
+                      <option value="12th Standard / HSC">12th Standard / HSC</option>
+                      <option value="Other">Other Qualification</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-zinc-700 mb-1">
+                      Alternate Phone Number <span className="font-normal text-zinc-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={alternatePhone}
+                      onChange={(e) => setAlternatePhone(e.target.value)}
+                      placeholder="Second mobile number"
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        Residential / Office Address
+                      </label>
+                      <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="Plot / Street / Building address"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-zinc-700 mb-1">PIN Code</label>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        value={pincode}
+                        onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        placeholder="6-digit PIN"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
                       />
                     </div>
                   </div>
@@ -727,6 +938,60 @@ export function ManagerDetailModal({
                   </div>
                 </div>
               </div>
+
+                {/* Documents & Official Identification Card */}
+                <div className="rounded-xl border border-zinc-200 bg-[#FCFAF6] p-3.5 sm:col-span-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                      Official Identification &amp; Role Mode
+                    </span>
+                    {manager.isSeller ? (
+                      <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold text-[#E61C5D] border border-rose-200">
+                        Dual Role: Manager &amp; Field Seller
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[11px] font-bold text-zinc-600">
+                        Manager Only
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <span className="text-zinc-500 block text-[11px]">Aadhaar Card:</span>
+                      <strong className="text-zinc-900 font-mono">
+                        {manager.aadharNumber || "—"}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block text-[11px]">Driving License:</span>
+                      <strong className="text-zinc-900 font-mono">
+                        {manager.drivingLicense || "—"}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 block text-[11px]">Qualification:</span>
+                      <strong className="text-zinc-900">
+                        {manager.education || "—"}
+                      </strong>
+                    </div>
+                    {manager.address && (
+                      <div className="sm:col-span-2">
+                        <span className="text-zinc-500 block text-[11px]">Address:</span>
+                        <strong className="text-zinc-900">
+                          {[manager.address, manager.pincode].filter(Boolean).join(" - ")}
+                        </strong>
+                      </div>
+                    )}
+                    {manager.alternatePhone && (
+                      <div>
+                        <span className="text-zinc-500 block text-[11px]">Alternate Phone:</span>
+                        <strong className="text-zinc-900 font-mono">
+                          {manager.alternatePhone}
+                        </strong>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
               {/* Field Officers Supervision Card */}
               <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs">

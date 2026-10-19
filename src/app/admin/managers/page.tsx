@@ -66,6 +66,8 @@ export default function AdminManagersPage() {
         territory: [m.village, m.district, m.state].filter(Boolean).join(", ") || "General Scope",
         phone: m.phone || "—",
         email: m.email || "—",
+        roleType: m.isSeller ? "Manager & Seller (Dual)" : "Manager Only",
+        isSeller: Boolean(m.isSeller),
         sellers: String(totalOfficers),
         status: m.active ? "Active" : "Inactive",
       };
@@ -87,10 +89,10 @@ export default function AdminManagersPage() {
       searchPlaceholder="Search by manager name, phone or territory"
       columns={[
         { key: "name", label: "Manager" },
+        { key: "roleType", label: "Role Mode" },
         { key: "code", label: "Employee Code" },
         { key: "territory", label: "Territory" },
         { key: "phone", label: "Phone" },
-        { key: "email", label: "Email" },
         { key: "sellers", label: "Field Officers" },
         { key: "status", label: "Status" },
       ]}
