@@ -41,14 +41,16 @@ export function RoleGuard({ role, loginPath, children }: RoleGuardProps) {
       router.replace(loginPath);
       return;
     }
-    if (user.role !== role) {
+    const isAuthorized = user.role === role || (role === "SELLER" && Boolean(user.isSeller));
+    if (!isAuthorized) {
       router.replace(loginPath);
       return;
     }
   }, [isLoading, isPublicRoute, loginPath, pathname, role, router, user]);
 
   if (isPublicRoute) return <>{children}</>;
-  if (isLoading || !user || user.role !== role) {
+  const isAuthorized = Boolean(user && (user.role === role || (role === "SELLER" && Boolean(user.isSeller))));
+  if (isLoading || !isAuthorized) {
     return <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] text-sm text-zinc-800">Checking account access...</main>;
   }
   return <>{children}</>;

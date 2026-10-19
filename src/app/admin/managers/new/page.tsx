@@ -9,7 +9,7 @@ import { adminNavigation } from "@/components/management/navigation";
 import { adminApi } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
 import { syncPermissionAliases } from "@/lib/permissions";
-import { validateMobileNumber, validateEmail } from "@/lib/validation";
+import { validateMobileNumber, validateEmail, validateAadharNumber, validateDrivingLicense } from "@/lib/validation";
 
 export default function AdminAddManagerPage() {
   const router = useRouter();
@@ -21,6 +21,13 @@ export default function AdminAddManagerPage() {
   const [state, setState] = useState("Maharashtra");
   const [district, setDistrict] = useState("Thane");
   const [village, setVillage] = useState("");
+  const [isSeller, setIsSeller] = useState(false);
+  const [aadharNumber, setAadharNumber] = useState("");
+  const [drivingLicense, setDrivingLicense] = useState("");
+  const [education, setEducation] = useState("Graduate");
+  const [address, setAddress] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [alternatePhone, setAlternatePhone] = useState("");
   const [permissions, setPermissions] = useState<string[]>([
     "SELLER_READ",
     "SELLER_CREATE",
@@ -51,6 +58,43 @@ export default function AdminAddManagerPage() {
       }
     }
 
+    // Aadhaar validation (Mandatory)
+    if (!aadharNumber || !aadharNumber.trim()) {
+      setError("Aadhaar Card number is mandatory for manager onboarding. Please enter a valid 12-digit Aadhaar number.");
+      return;
+    }
+    const aadharVal = validateAadharNumber(aadharNumber);
+    if (!aadharVal.isValid || !aadharVal.normalized) {
+      setError(aadharVal.error || "Please enter a valid 12-digit Aadhaar number.");
+      return;
+    }
+
+    // Driving License validation (Mandatory)
+    if (!drivingLicense || !drivingLicense.trim()) {
+      setError("Driving License number is mandatory for manager onboarding. Please enter a valid Driving License.");
+      return;
+    }
+    const dlVal = validateDrivingLicense(drivingLicense);
+    if (!dlVal.isValid || !dlVal.normalized) {
+      setError(dlVal.error || "Please enter a valid Indian Driving License number (e.g. MH14 20210001234).");
+      return;
+    }
+
+    // Alternate phone check
+    let altPhoneNormalized: string | undefined = undefined;
+    if (alternatePhone && alternatePhone.trim()) {
+      const altVal = validateMobileNumber(alternatePhone);
+      if (!altVal.isValid) {
+        setError("Alternate phone: " + (altVal.error || "Please enter a valid 10-digit mobile number."));
+        return;
+      }
+      if (phoneVal.normalized.replace(/\D/g, "").slice(-10) === altVal.normalized.replace(/\D/g, "").slice(-10)) {
+        setError("Alternate phone cannot be the same as primary contact number.");
+        return;
+      }
+      altPhoneNormalized = altVal.normalized;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -58,12 +102,19 @@ export default function AdminAddManagerPage() {
         name,
         employeeCode: employeeCode.trim() || undefined,
         phone: phoneVal.normalized,
+        alternatePhone: altPhoneNormalized,
         email: email || undefined,
         password,
         state,
         district,
         village: village || undefined,
+        address: address.trim() || undefined,
+        pincode: pincode.trim() || undefined,
+        aadharNumber: aadharVal.normalized,
+        drivingLicense: dlVal.normalized,
+        education: education.trim() || undefined,
         permissions: syncPermissionAliases(permissions),
+        isSeller,
       });
       setSaved(true);
       setTimeout(() => {
@@ -203,6 +254,145 @@ export default function AdminAddManagerPage() {
                 placeholder="Thane City"
               />
             </label>
+          </div>
+
+          {/* Mandatory Identification Documents */}
+          <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm space-y-4">
+            <div>
+              <h4 className="text-sm font-bold text-zinc-900 flex items-center gap-1.5">
+                Official Verification &amp; Documents
+                <span className="text-xs font-semibold text-[#E61C5D]">(Mandatory)</span>
+              </h4>
+              <p className="text-xs text-zinc-500">Government identification required for manager supervisory credentials.</p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-xs font-bold text-zinc-700">
+                Aadhaar Card Number <span className="text-[#E61C5D] font-extrabold">*</span>
+                <input
+                  type="text"
+                  required
+                  maxLength={14}
+                  value={aadharNumber}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "").slice(0, 12);
+                    const parts = [];
+                    for (let i = 0; i < raw.length; i += 4) {
+                      parts.push(raw.slice(i, i + 4));
+                    }
+                    setAadharNumber(parts.join(" "));
+                  }}
+                  className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 font-mono text-sm tracking-wider outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                  placeholder="XXXX XXXX XXXX"
+                />
+                <span className="mt-1 block text-[10px] text-zinc-400">12-digit UIDAI number</span>
+              </label>
+
+              <label className="block text-xs font-bold text-zinc-700">
+                Driving License Number <span className="text-[#E61C5D] font-extrabold">*</span>
+                <input
+                  type="text"
+                  required
+                  value={drivingLicense}
+                  onChange={(e) => setDrivingLicense(e.target.value.toUpperCase())}
+                  className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 font-mono text-sm uppercase tracking-wider outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                  placeholder="e.g. MH14 20210001234"
+                />
+                <span className="mt-1 block text-[10px] text-zinc-400">Valid Indian Driving License</span>
+              </label>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-xs font-bold text-zinc-700">
+                Educational Qualification
+                <select
+                  value={education}
+                  onChange={(e) => setEducation(e.target.value)}
+                  className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300"
+                >
+                  <option value="Graduate">Graduate (B.A. / B.Com / B.Sc / BBA)</option>
+                  <option value="Post Graduate">Post Graduate / Master's (MBA / M.Com / etc.)</option>
+                  <option value="Graduate (Technical)">Graduate (Engineering / Technical)</option>
+                  <option value="Diploma">Diploma / Polytechnic</option>
+                  <option value="12th Standard / HSC">12th Standard / HSC</option>
+                  <option value="Other">Other Qualification</option>
+                </select>
+              </label>
+
+              <label className="block text-xs font-bold text-zinc-700">
+                Alternate contact number (Optional)
+                <input
+                  value={alternatePhone}
+                  onChange={(e) => setAlternatePhone(e.target.value)}
+                  className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                  placeholder="Second mobile number"
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-zinc-700">
+                  Residential / Office Address
+                  <input
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                    placeholder="Plot / Street / Building address"
+                  />
+                </label>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-zinc-700">
+                  PIN Code
+                  <input
+                    maxLength={6}
+                    value={pincode}
+                    onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                    placeholder="6-digit PIN"
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Dual Role / Seller Capability Toggle */}
+          <div className="rounded-2xl border-2 border-rose-200/80 bg-gradient-to-r from-rose-50/70 via-pink-50/40 to-amber-50/50 p-5 shadow-sm transition-all hover:border-[#E61C5D]/50">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center rounded-md bg-[#E61C5D] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                    Seller Capability
+                  </span>
+                  <h4 className="text-sm font-bold text-zinc-900">
+                    Same as Seller (Manager also acts as Field Seller)
+                  </h4>
+                </div>
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Enable this if this manager will also directly perform field sales and customer onboarding. They can log in to both the <strong>Manager Portal</strong> and <strong>Seller Portal</strong> with the <strong>same ID &amp; password</strong> and will receive their own field stock balance.
+                </p>
+              </div>
+
+              <label className="relative inline-flex cursor-pointer items-center shrink-0 mt-1">
+                <input
+                  type="checkbox"
+                  checked={isSeller}
+                  onChange={(e) => setIsSeller(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <div className="peer h-7 w-14 rounded-full bg-zinc-300 peer-checked:bg-[#E61C5D] peer-checked:after:translate-x-full peer-checked:after:border-white after:absolute after:top-[2px] after:left-[3px] after:h-6 after:w-6 after:rounded-full after:border after:border-zinc-300 after:bg-white after:transition-all after:content-[''] peer-focus:outline-none"></div>
+              </label>
+            </div>
+
+            {isSeller && (
+              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-800 flex items-center gap-2">
+                <span className="text-base font-bold text-emerald-600">✓</span>
+                <span>
+                  <strong>Dual Role Active:</strong> A field seller stock location will automatically be assigned to this manager upon creation.
+                </span>
+              </div>
+            )}
           </div>
 
           <div>

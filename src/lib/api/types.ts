@@ -87,6 +87,7 @@ export interface PublicUser {
   active: boolean;
   managerId?: string | null;
   permissions: string[];
+  isSeller?: boolean;
   state?: string | null;
   district?: string | null;
   village?: string | null;
@@ -167,6 +168,13 @@ export interface CreateManagerPayload {
   district?: string;
   village?: string;
   permissions?: string[];
+  isSeller?: boolean;
+  aadharNumber?: string;
+  drivingLicense?: string;
+  education?: string;
+  address?: string;
+  pincode?: string;
+  alternatePhone?: string;
 }
 
 export interface UpdateUserPayload {
@@ -182,6 +190,7 @@ export interface UpdateUserPayload {
   district?: string;
   village?: string;
   active?: boolean;
+  isSeller?: boolean;
   aadharNumber?: string;
   drivingLicense?: string;
   education?: string;
@@ -222,6 +231,7 @@ export interface CreateSellerPayload {
   state?: string;
   managerId?: string;
   active?: boolean;
+  isSeller?: boolean;
   aadharNumber?: string;
   drivingLicense?: string;
   education?: string;
