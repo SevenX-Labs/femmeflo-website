@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertCircle, ArrowLeft, Camera, CheckCircle2, ExternalLink, Image as ImageIcon, Loader2, MapPin, Mic, MicOff, Sparkles, Trash2, Upload, Volume2, X } from "lucide-react";
 import { DashboardShell, PageHeading, SectionCard } from "./DashboardShell";
 import type { NavigationItem } from "./DashboardShell";
@@ -74,6 +74,25 @@ export function OnboardingFormScreen({
   const [isListening, setIsListening] = useState(false);
   const [activeSpeechField, setActiveSpeechField] = useState<string | null>(null);
   const [speechErrorMessage, setSpeechErrorMessage] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const activeSpeechFieldRef = useRef<string | null>(null);
+  const manuallyStoppedRef = useRef(false);
+
+  useEffect(() => {
+    activeSpeechFieldRef.current = activeSpeechField;
+  }, [activeSpeechField]);
+
+  // Clean up recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          manuallyStoppedRef.current = true;
+          recognitionRef.current.abort();
+        } catch (e) {}
+      }
+    };
+  }, []);
   const [location, setLocation] = useState("");
   const [lat, setLat] = useState<number | undefined>(undefined);
   const [lng, setLng] = useState<number | undefined>(undefined);
@@ -254,8 +273,35 @@ export function OnboardingFormScreen({
     );
   };
 
-  // Direct Field-by-Field Voice Input (Web Speech API)
-  const handleStartVoiceAutofill = (targetField: string) => {
+  // Direct Field-by-Field Voice Input (Continuous listening until user clicks Stop)
+  const stopVoiceInput = () => {
+    manuallyStoppedRef.current = true;
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        try {
+          recognitionRef.current.abort();
+        } catch (err) {}
+      }
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+    setActiveSpeechField(null);
+  };
+
+  const handleToggleVoiceInput = (targetField: string) => {
+    // If already listening on this specific field, clicking it stops listening
+    if (isListening && activeSpeechField === targetField) {
+      stopVoiceInput();
+      return;
+    }
+
+    // If already listening on another field, stop that one first
+    if (isListening) {
+      stopVoiceInput();
+    }
+
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -265,11 +311,13 @@ export function OnboardingFormScreen({
     }
 
     try {
+      manuallyStoppedRef.current = false;
       const recognition = new SpeechRecognition();
       recognition.lang = "en-IN"; // English (India) with natural Hindi/local accent support
-      recognition.continuous = false;
+      recognition.continuous = true; // Stay active - do not auto turn off
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
+      recognitionRef.current = recognition;
 
       setIsListening(true);
       setActiveSpeechField(targetField);
@@ -280,54 +328,76 @@ export function OnboardingFormScreen({
       };
 
       recognition.onresult = (event: any) => {
-        const transcript = event.results?.[0]?.[0]?.transcript || "";
+        // Collect latest transcript from the latest speech result
+        const resultsLen = event.results?.length || 0;
+        if (resultsLen === 0) return;
+        const lastResult = event.results[resultsLen - 1];
+        const transcript = lastResult?.[0]?.transcript || "";
         const cleaned = transcript.trim();
         if (!cleaned) return;
 
-        if (targetField === "shopName") {
-          setName(cleaned);
-        } else if (targetField === "contactName") {
-          setContactName(cleaned);
-        } else if (targetField === "phone") {
+        const field = activeSpeechFieldRef.current || targetField;
+
+        if (field === "shopName") {
+          setName((prev) => (prev ? prev + " " + cleaned : cleaned));
+        } else if (field === "contactName") {
+          setContactName((prev) => (prev ? prev + " " + cleaned : cleaned));
+        } else if (field === "phone") {
           const num = cleaned.replace(/\D/g, "").slice(-10);
           if (num) setPhone(num);
-        } else if (targetField === "pincode") {
+        } else if (field === "pincode") {
           const pin = cleaned.replace(/\D/g, "").slice(0, 6);
           if (pin) handlePincodeChange(pin);
-        } else if (targetField === "shopNumber") {
-          setShopNumber(cleaned);
-        } else if (targetField === "streetName") {
-          setStreetName(cleaned);
-        } else if (targetField === "village") {
-          setVillage(cleaned);
-        } else if (targetField === "district") {
+        } else if (field === "shopNumber") {
+          setShopNumber((prev) => (prev ? prev + " " + cleaned : cleaned));
+        } else if (field === "streetName") {
+          setStreetName((prev) => (prev ? prev + " " + cleaned : cleaned));
+        } else if (field === "village") {
+          setVillage((prev) => (prev ? prev + " " + cleaned : cleaned));
+        } else if (field === "district") {
           setDistrict(cleaned);
-        } else if (targetField === "state") {
+        } else if (field === "state") {
           setState(cleaned);
         }
       };
 
       recognition.onerror = (event: any) => {
-        setIsListening(false);
-        setActiveSpeechField(null);
+        // 'no-speech' is normal when user pauses speaking in continuous mode; ignore so it does not auto turn off
+        if (event.error === "no-speech") {
+          return;
+        }
         if (event.error === "not-allowed") {
           setSpeechErrorMessage("Microphone access denied. Please allow mic permissions in browser.");
+          stopVoiceInput();
         } else if (event.error === "network") {
           setSpeechErrorMessage("Network issue during voice recognition. Please check your internet connection.");
-        } else if (event.error !== "no-speech") {
+          stopVoiceInput();
+        } else {
           setSpeechErrorMessage(`Voice recognition error: ${event.error}`);
+          stopVoiceInput();
         }
       };
 
       recognition.onend = () => {
-        setIsListening(false);
-        setActiveSpeechField(null);
+        // If user didn't explicitly press Stop, and we are still listening to this field, automatically restart recognition so it doesn't auto-turn off
+        if (!manuallyStoppedRef.current && activeSpeechFieldRef.current) {
+          try {
+            recognition.start();
+          } catch (e) {
+            setIsListening(false);
+            setActiveSpeechField(null);
+            recognitionRef.current = null;
+          }
+        } else {
+          setIsListening(false);
+          setActiveSpeechField(null);
+          recognitionRef.current = null;
+        }
       };
 
       recognition.start();
     } catch (err: any) {
-      setIsListening(false);
-      setActiveSpeechField(null);
+      stopVoiceInput();
       setSpeechErrorMessage(err.message || "Could not start voice recognition.");
     }
   };
@@ -1006,30 +1076,35 @@ export function OnboardingFormScreen({
                 <div
                   className={`rounded-xl border p-3 text-xs transition ${
                     isListening
-                      ? "border-rose-200 bg-rose-50 text-rose-900 flex items-center justify-between"
+                      ? "border-rose-300 bg-rose-50 text-rose-950 flex items-center justify-between shadow-sm"
                       : "border-rose-200 bg-rose-50 text-rose-800 flex items-center justify-between"
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     {isListening ? (
                       <>
-                        <MicOff className="h-4 w-4 text-[#E61C5D] animate-bounce shrink-0" />
+                        <span className="relative flex h-3 w-3 shrink-0">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[#E61C5D]"></span>
+                        </span>
                         <span className="font-semibold text-rose-950">
-                          Listening for &ldquo;
-                          {activeSpeechField === "shopName"
-                            ? "Store Name"
-                            : activeSpeechField === "contactName"
-                            ? "Shopkeeper Name"
-                            : activeSpeechField === "phone"
-                            ? "Phone Number"
-                            : activeSpeechField === "shopNumber"
-                            ? "Shop Number"
-                            : activeSpeechField === "streetName"
-                            ? "Street / Landmark"
-                            : activeSpeechField === "village"
-                            ? "Village / Locality"
-                            : activeSpeechField}
-                          &rdquo;... Speak now
+                          Listening to{" "}
+                          <span className="underline decoration-rose-400">
+                            {activeSpeechField === "shopName"
+                              ? "Store Name"
+                              : activeSpeechField === "contactName"
+                              ? "Shopkeeper Name"
+                              : activeSpeechField === "phone"
+                              ? "Phone Number"
+                              : activeSpeechField === "shopNumber"
+                              ? "Shop Number"
+                              : activeSpeechField === "streetName"
+                              ? "Street / Landmark"
+                              : activeSpeechField === "village"
+                              ? "Village / Locality"
+                              : activeSpeechField}
+                          </span>
+                          ... Speak now (won&apos;t auto turn off)
                         </span>
                       </>
                     ) : (
@@ -1039,15 +1114,27 @@ export function OnboardingFormScreen({
                       </>
                     )}
                   </div>
-                  {speechErrorMessage && (
-                    <button
-                      type="button"
-                      onClick={() => setSpeechErrorMessage(null)}
-                      className="text-zinc-500 hover:text-zinc-800 text-[11px] font-bold underline ml-2"
-                    >
-                      Dismiss
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {isListening && (
+                      <button
+                        type="button"
+                        onClick={stopVoiceInput}
+                        className="inline-flex items-center gap-1 rounded-md bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 text-[11px] font-bold transition shadow-sm cursor-pointer"
+                      >
+                        <MicOff className="h-3.5 w-3.5" />
+                        <span>Stop Listening</span>
+                      </button>
+                    )}
+                    {speechErrorMessage && (
+                      <button
+                        type="button"
+                        onClick={() => setSpeechErrorMessage(null)}
+                        className="text-zinc-500 hover:text-zinc-800 text-[11px] font-bold underline ml-2"
+                      >
+                        Dismiss
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -1068,16 +1155,25 @@ export function OnboardingFormScreen({
                       <span>Store name *</span>
                       <button
                         type="button"
-                        onClick={() => handleStartVoiceAutofill("shopName")}
-                        title="Speak store name"
-                        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition ${
+                        onClick={() => handleToggleVoiceInput("shopName")}
+                        title={isListening && activeSpeechField === "shopName" ? "Click to stop listening" : "Click to speak store name"}
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold cursor-pointer transition ${
                           isListening && activeSpeechField === "shopName"
-                            ? "bg-rose-600 text-white animate-pulse"
+                            ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300 animate-pulse"
                             : "bg-rose-50 text-[#E61C5D] hover:bg-rose-100"
                         }`}
                       >
-                        <Mic className="h-3 w-3" />
-                        <span>Voice</span>
+                        {isListening && activeSpeechField === "shopName" ? (
+                          <>
+                            <MicOff className="h-3 w-3" />
+                            <span>Stop Listening</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="h-3 w-3" />
+                            <span>Voice</span>
+                          </>
+                        )}
                       </button>
                     </span>
                     <input
@@ -1094,16 +1190,25 @@ export function OnboardingFormScreen({
                       <span>Shopkeeper name *</span>
                       <button
                         type="button"
-                        onClick={() => handleStartVoiceAutofill("contactName")}
-                        title="Speak shopkeeper name"
-                        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition ${
+                        onClick={() => handleToggleVoiceInput("contactName")}
+                        title={isListening && activeSpeechField === "contactName" ? "Click to stop listening" : "Click to speak shopkeeper name"}
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold cursor-pointer transition ${
                           isListening && activeSpeechField === "contactName"
-                            ? "bg-rose-600 text-white animate-pulse"
+                            ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300 animate-pulse"
                             : "bg-rose-50 text-[#E61C5D] hover:bg-rose-100"
                         }`}
                       >
-                        <Mic className="h-3 w-3" />
-                        <span>Voice</span>
+                        {isListening && activeSpeechField === "contactName" ? (
+                          <>
+                            <MicOff className="h-3 w-3" />
+                            <span>Stop Listening</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="h-3 w-3" />
+                            <span>Voice</span>
+                          </>
+                        )}
                       </button>
                     </span>
                     <input
@@ -1122,16 +1227,25 @@ export function OnboardingFormScreen({
                       <span>Contact phone *</span>
                       <button
                         type="button"
-                        onClick={() => handleStartVoiceAutofill("phone")}
-                        title="Speak 10-digit mobile number"
-                        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition ${
+                        onClick={() => handleToggleVoiceInput("phone")}
+                        title={isListening && activeSpeechField === "phone" ? "Click to stop listening" : "Click to speak 10-digit phone number"}
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold cursor-pointer transition ${
                           isListening && activeSpeechField === "phone"
-                            ? "bg-rose-600 text-white animate-pulse"
+                            ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300 animate-pulse"
                             : "bg-rose-50 text-[#E61C5D] hover:bg-rose-100"
                         }`}
                       >
-                        <Mic className="h-3 w-3" />
-                        <span>Voice</span>
+                        {isListening && activeSpeechField === "phone" ? (
+                          <>
+                            <MicOff className="h-3 w-3" />
+                            <span>Stop Listening</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="h-3 w-3" />
+                            <span>Voice</span>
+                          </>
+                        )}
                       </button>
                     </span>
                     <input
@@ -1269,16 +1383,25 @@ export function OnboardingFormScreen({
                       <span>Shop / Unit number (optional)</span>
                       <button
                         type="button"
-                        onClick={() => handleStartVoiceAutofill("shopNumber")}
-                        title="Speak shop / unit number"
-                        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition ${
+                        onClick={() => handleToggleVoiceInput("shopNumber")}
+                        title={isListening && activeSpeechField === "shopNumber" ? "Click to stop listening" : "Click to speak shop number"}
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold cursor-pointer transition ${
                           isListening && activeSpeechField === "shopNumber"
-                            ? "bg-rose-600 text-white animate-pulse"
+                            ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300 animate-pulse"
                             : "bg-rose-50 text-[#E61C5D] hover:bg-rose-100"
                         }`}
                       >
-                        <Mic className="h-3 w-3" />
-                        <span>Voice</span>
+                        {isListening && activeSpeechField === "shopNumber" ? (
+                          <>
+                            <MicOff className="h-3 w-3" />
+                            <span>Stop Listening</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="h-3 w-3" />
+                            <span>Voice</span>
+                          </>
+                        )}
                       </button>
                     </span>
                     <input
@@ -1294,16 +1417,25 @@ export function OnboardingFormScreen({
                       <span>Street name / landmark (optional)</span>
                       <button
                         type="button"
-                        onClick={() => handleStartVoiceAutofill("streetName")}
-                        title="Speak street / landmark"
-                        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition ${
+                        onClick={() => handleToggleVoiceInput("streetName")}
+                        title={isListening && activeSpeechField === "streetName" ? "Click to stop listening" : "Click to speak street or landmark"}
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold cursor-pointer transition ${
                           isListening && activeSpeechField === "streetName"
-                            ? "bg-rose-600 text-white animate-pulse"
+                            ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300 animate-pulse"
                             : "bg-rose-50 text-[#E61C5D] hover:bg-rose-100"
                         }`}
                       >
-                        <Mic className="h-3 w-3" />
-                        <span>Voice</span>
+                        {isListening && activeSpeechField === "streetName" ? (
+                          <>
+                            <MicOff className="h-3 w-3" />
+                            <span>Stop Listening</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="h-3 w-3" />
+                            <span>Voice</span>
+                          </>
+                        )}
                       </button>
                     </span>
                     <input
@@ -1343,16 +1475,25 @@ export function OnboardingFormScreen({
                       <span>Village / locality *</span>
                       <button
                         type="button"
-                        onClick={() => handleStartVoiceAutofill("village")}
-                        title="Speak village / locality"
-                        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition ${
+                        onClick={() => handleToggleVoiceInput("village")}
+                        title={isListening && activeSpeechField === "village" ? "Click to stop listening" : "Click to speak village / locality"}
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold cursor-pointer transition ${
                           isListening && activeSpeechField === "village"
-                            ? "bg-rose-600 text-white animate-pulse"
+                            ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300 animate-pulse"
                             : "bg-rose-50 text-[#E61C5D] hover:bg-rose-100"
                         }`}
                       >
-                        <Mic className="h-3 w-3" />
-                        <span>Voice</span>
+                        {isListening && activeSpeechField === "village" ? (
+                          <>
+                            <MicOff className="h-3 w-3" />
+                            <span>Stop Listening</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="h-3 w-3" />
+                            <span>Voice</span>
+                          </>
+                        )}
                       </button>
                     </span>
                     <input
