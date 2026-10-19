@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Camera, CheckCircle2, ExternalLink, Image as ImageIcon, Loader2, MapPin, Sparkles, Trash2, Upload } from "lucide-react";
+import { AlertCircle, ArrowLeft, Camera, CheckCircle2, ExternalLink, Image as ImageIcon, Loader2, MapPin, Sparkles, Trash2, Upload, X } from "lucide-react";
 import { DashboardShell, PageHeading, SectionCard } from "./DashboardShell";
 import type { NavigationItem } from "./DashboardShell";
 import { adminApi } from "@/lib/api/admin";
@@ -87,6 +87,12 @@ export function OnboardingFormScreen({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [errorDialog, setErrorDialog] = useState<{ title: string; message: string; details?: string } | null>(null);
+
+  const showErrorModal = (message: string, title = "Onboarding Issue", details?: string) => {
+    setErrorMessage(message);
+    setErrorDialog({ title, message, details });
+  };
 
   // Load dynamic data (categories, managers, sellers)
   useEffect(() => {
@@ -136,6 +142,9 @@ export function OnboardingFormScreen({
             if (active && mgrRes.managers.length > 0) {
               setManagers(mgrRes.managers);
               setSelectedManagerId(mgrRes.managers[0].id);
+              const firstMgr = mgrRes.managers[0];
+              if (firstMgr.state) setState((prev) => prev || firstMgr.state || "");
+              if (firstMgr.district) setDistrict((prev) => prev || firstMgr.district || "");
             }
           }
         }
@@ -195,7 +204,7 @@ export function OnboardingFormScreen({
   // Capturing Live GPS Location in Frontend
   const handleGetCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser/device.");
+      showErrorModal("Geolocation is not supported by your browser/device.", "Location Access Error");
       setLocationError("Geolocation is not supported by your browser/device.");
       return;
     }
@@ -233,7 +242,7 @@ export function OnboardingFormScreen({
             break;
         }
         setLocationError(errorMsg);
-        alert(errorMsg);
+        showErrorModal(errorMsg, "Location Error");
       },
       {
         enableHighAccuracy: true,
@@ -291,7 +300,7 @@ export function OnboardingFormScreen({
     // Validate 10-digit mobile phone
     const phoneVal = validateMobileNumber(phone);
     if (!phoneVal.isValid) {
-      setErrorMessage(phoneVal.error || "Please enter a valid 10-digit mobile number.");
+      showErrorModal(phoneVal.error || "Please enter a valid 10-digit mobile number.", "Invalid Phone Number");
       return;
     }
 
@@ -299,7 +308,7 @@ export function OnboardingFormScreen({
     if (email) {
       const emailVal = validateEmail(email);
       if (!emailVal.isValid) {
-        setErrorMessage(emailVal.error || "Please enter a valid email address.");
+        showErrorModal(emailVal.error || "Please enter a valid email address.", "Invalid Email Address");
         return;
       }
     }
@@ -312,7 +321,7 @@ export function OnboardingFormScreen({
         // Primary phone validation
         const phoneVal = validateMobileNumber(phone);
         if (!phoneVal.isValid) {
-          setErrorMessage(phoneVal.error || "Please enter a valid 10-digit primary mobile number.");
+          showErrorModal(phoneVal.error || "Please enter a valid 10-digit primary mobile number.", "Invalid Phone Number");
           setIsSubmitting(false);
           return;
         }
@@ -322,14 +331,14 @@ export function OnboardingFormScreen({
         if (alternatePhone && alternatePhone.trim()) {
           const altVal = validateMobileNumber(alternatePhone);
           if (!altVal.isValid) {
-            setErrorMessage("Alternate phone: " + (altVal.error || "Please enter a valid 10-digit mobile number."));
+            showErrorModal("Alternate phone: " + (altVal.error || "Please enter a valid 10-digit mobile number."), "Invalid Alternate Phone");
             setIsSubmitting(false);
             return;
           }
           const p1 = phoneVal.normalized.replace(/\D/g, "").slice(-10);
           const p2 = altVal.normalized.replace(/\D/g, "").slice(-10);
           if (p1 === p2) {
-            setErrorMessage("Phone number 2 / alternate phone cannot be the same as Phone number 1 (no duplication allowed).");
+            showErrorModal("Phone number 2 / alternate phone cannot be the same as Phone number 1 (no duplication allowed).", "Duplicate Phone Number");
             setIsSubmitting(false);
             return;
           }
@@ -340,7 +349,7 @@ export function OnboardingFormScreen({
         if (email && email.trim()) {
           const emailVal = validateEmail(email);
           if (!emailVal.isValid) {
-            setErrorMessage(emailVal.error || "Please enter a valid email address.");
+            showErrorModal(emailVal.error || "Please enter a valid email address.", "Invalid Email Address");
             setIsSubmitting(false);
             return;
           }
@@ -351,7 +360,7 @@ export function OnboardingFormScreen({
         if (aadharNumber && aadharNumber.trim()) {
           const aadharVal = validateAadharNumber(aadharNumber);
           if (!aadharVal.isValid) {
-            setErrorMessage(aadharVal.error || "Please enter a valid 12-digit Aadhaar number.");
+            showErrorModal(aadharVal.error || "Please enter a valid 12-digit Aadhaar number.", "Invalid Aadhaar Number");
             setIsSubmitting(false);
             return;
           }
@@ -360,7 +369,7 @@ export function OnboardingFormScreen({
 
         // Super Admin must select reporting manager if managers exist
         if (role === "Super Admin" && !selectedManagerId && managers.length > 0) {
-          setErrorMessage("Please select a reporting Manager for this field officer.");
+          showErrorModal("Please select a reporting Manager for this field officer.", "Missing Reporting Manager");
           setIsSubmitting(false);
           return;
         }
@@ -375,9 +384,9 @@ export function OnboardingFormScreen({
           password,
           address: (address.trim() || [streetName, shopNumber].filter(Boolean).join(", ").trim()) || undefined,
           pincode: pincode.trim() || undefined,
-          state: state.trim(),
-          district: district.trim(),
-          village: village.trim(),
+          state: state.trim() || undefined,
+          district: district.trim() || undefined,
+          village: village.trim() || undefined,
           active: officerStatus === "Active",
           aadharNumber: aadharNormalized,
           drivingLicense: drivingLicense.trim() || undefined,
@@ -395,9 +404,9 @@ export function OnboardingFormScreen({
         if (role === "Super Admin" || role === "Manager") {
           if (!selectedSellerId) {
             if (sellers.length === 0) {
-              setErrorMessage("No field sellers exist in the system yet. Please onboard at least one Seller before adding customer shops.");
+              showErrorModal("No field sellers exist in the system yet. Please onboard at least one Seller before adding customer shops.", "No Field Officers Found");
             } else {
-              setErrorMessage("Please select an assigned field seller for this customer.");
+              showErrorModal("Please select an assigned field seller for this customer.", "Missing Assigned Seller");
             }
             setIsSubmitting(false);
             return;
@@ -457,10 +466,16 @@ export function OnboardingFormScreen({
         router.push(backHref);
       }, 700);
     } catch (err: unknown) {
-      setErrorMessage(
+      const msg =
         err instanceof ApiError
           ? err.message
-          : "Failed to create record. Please review your fields and try again."
+          : (err as any)?.message || "Failed to create record. Please review your fields and try again.";
+      const status = err instanceof ApiError ? ` (HTTP ${err.statusCode})` : "";
+      const extra = (err as any)?.data ? JSON.stringify((err as any).data, null, 2) : undefined;
+      showErrorModal(
+        msg,
+        seller ? "Field Officer Onboarding Failed" : "Customer Onboarding Failed",
+        extra ? `Server Response${status}:\n${extra}` : (status ? `Status Code: ${status}` : undefined)
       );
     } finally {
       setIsSubmitting(false);
@@ -612,19 +627,40 @@ export function OnboardingFormScreen({
                       Assigned Reporting Manager *
                       {role === "Super Admin" ? (
                         managers.length > 0 ? (
+                          <>
                           <select
                             required
                             value={selectedManagerId}
-                            onChange={(e) => setSelectedManagerId(e.target.value)}
+                            onChange={(e) => {
+                              const newMgrId = e.target.value;
+                              setSelectedManagerId(newMgrId);
+                              const selectedMgr = managers.find((m) => m.id === newMgrId);
+                              if (selectedMgr) {
+                                if (selectedMgr.state) setState(selectedMgr.state);
+                                if (selectedMgr.district) setDistrict(selectedMgr.district);
+                              }
+                            }}
                             className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300"
                           >
                             <option value="">Select Reporting Manager</option>
                             {managers.map((m) => (
                               <option key={m.id} value={m.id}>
-                                {m.name} ({[m.village, m.district, m.state].filter(Boolean).join(", ") || "Territory"})
+                                {m.name} ({[m.district, m.state].filter(Boolean).join(", ") || "Territory"})
                               </option>
                             ))}
                           </select>
+                          {selectedManagerId && (() => {
+                            const selectedMgr = managers.find((m) => m.id === selectedManagerId);
+                            if (selectedMgr && (selectedMgr.district || selectedMgr.state)) {
+                              return (
+                                <p className="mt-1.5 text-[11px] font-medium text-emerald-800 flex items-center gap-1">
+                                  ✓ Manager jurisdiction: {[selectedMgr.district, selectedMgr.state].filter(Boolean).join(", ")}
+                                </p>
+                              );
+                            }
+                            return null;
+                          })()}
+                          </>
                         ) : (
                           <p className="mt-1.5 rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
                             No regional managers registered. Onboard a manager first.
@@ -1341,6 +1377,53 @@ export function OnboardingFormScreen({
           )}
         </form>
       </SectionCard>
+      {/* On-Screen Error Dialog Box */}
+      {errorDialog && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setErrorDialog(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-black/10 transform transition-all animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-[#E61C5D]">
+                <AlertCircle className="h-6 w-6 stroke-[2.5]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold text-zinc-900">{errorDialog.title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-zinc-600 break-words">{errorDialog.message}</p>
+                {errorDialog.details && (
+                  <pre className="mt-3 max-h-40 overflow-auto rounded-lg bg-zinc-950 p-2.5 text-[11px] font-mono text-zinc-200 border border-zinc-800">
+                    {errorDialog.details}
+                  </pre>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorDialog(null)}
+                className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition"
+                aria-label="Close error dialog"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setErrorDialog(null)}
+                className="w-full sm:w-auto rounded-xl bg-[#E61C5D] px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#c91550] transition focus:outline-none focus:ring-2 focus:ring-[#E61C5D] focus:ring-offset-2"
+              >
+                Understood / Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardShell>
   );
 }

@@ -14,6 +14,7 @@ import { validateMobileNumber, validateEmail } from "@/lib/validation";
 export default function AdminAddManagerPage() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [employeeCode, setEmployeeCode] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -55,6 +56,7 @@ export default function AdminAddManagerPage() {
     try {
       await adminApi.createManager({
         name,
+        employeeCode: employeeCode.trim() || undefined,
         phone: phoneVal.normalized,
         email: email || undefined,
         password,
@@ -115,7 +117,7 @@ export default function AdminAddManagerPage() {
             </div>
           )}
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-3">
             <label className="block text-xs font-bold text-zinc-700">
               Manager name *
               <input
@@ -124,6 +126,15 @@ export default function AdminAddManagerPage() {
                 onChange={(e) => setName(e.target.value)}
                 className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
                 placeholder="Enter full name"
+              />
+            </label>
+            <label className="block text-xs font-bold text-zinc-700">
+              Employee code
+              <input
+                value={employeeCode}
+                onChange={(e) => setEmployeeCode(e.target.value)}
+                className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                placeholder="e.g. MGR-001"
               />
             </label>
             <label className="block text-xs font-bold text-zinc-700">

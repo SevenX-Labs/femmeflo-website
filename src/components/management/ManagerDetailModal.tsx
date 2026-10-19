@@ -64,6 +64,7 @@ export function ManagerDetailModal({
 
   // Edit form state
   const [name, setName] = useState("");
+  const [employeeCode, setEmployeeCode] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [state, setState] = useState("");
@@ -97,6 +98,7 @@ export function ManagerDetailModal({
 
       // Populate form state
       setName(mgr.name || "");
+      setEmployeeCode(mgr.employeeCode || "");
       setPhone(mgr.phone || "");
       setEmail(mgr.email || "");
       setState(mgr.state || "");
@@ -141,6 +143,7 @@ export function ManagerDetailModal({
   const handleCancelEdit = () => {
     if (manager) {
       setName(manager.name || "");
+      setEmployeeCode(manager.employeeCode || "");
       setPhone(manager.phone || "");
       setEmail(manager.email || "");
       setState(manager.state || "");
@@ -187,6 +190,7 @@ export function ManagerDetailModal({
         name: string;
         phone: string;
         email?: string;
+        employeeCode?: string;
         active: boolean;
         state?: string;
         district?: string;
@@ -194,6 +198,7 @@ export function ManagerDetailModal({
       } = {
         name: trimmedName,
         phone: trimmedPhone,
+        employeeCode: employeeCode.trim() || undefined,
         active,
       };
 
@@ -216,6 +221,7 @@ export function ManagerDetailModal({
       const fullUpdated: ManagerItem = {
         ...updatedProfile,
         name: trimmedName,
+        employeeCode: employeeCode.trim() || null,
         phone: trimmedPhone,
         email: email.trim() ? email.trim().toLowerCase() : null,
         state: state.trim() || null,
@@ -275,6 +281,11 @@ export function ManagerDetailModal({
               <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#E61C5D]">
                 Regional Manager
               </span>
+              {manager?.employeeCode && (
+                <span className="font-mono text-[11px] font-semibold bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded border border-zinc-200">
+                  {manager.employeeCode}
+                </span>
+              )}
               {manager && (
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
@@ -416,6 +427,21 @@ export function ManagerDetailModal({
                         placeholder="e.g. Sahil Hode"
                         required
                         className="w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-zinc-700 mb-1">
+                      Employee Code <span className="font-normal text-zinc-500">(Optional)</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={employeeCode}
+                        onChange={(e) => setEmployeeCode(e.target.value)}
+                        placeholder="e.g. MGR-001"
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden"
                       />
                     </div>
                   </div>
@@ -644,6 +670,12 @@ export function ManagerDetailModal({
                     Contact Information
                   </span>
                   <div className="space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-zinc-500">Employee Code:</span>
+                      <strong className="text-zinc-900 font-mono">
+                        {manager.employeeCode || "—"}
+                      </strong>
+                    </div>
                     <div className="flex items-center justify-between">
                       <span className="text-zinc-500 flex items-center gap-1.5">
                         <Phone className="h-3.5 w-3.5 text-zinc-400" />

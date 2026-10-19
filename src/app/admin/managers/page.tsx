@@ -61,6 +61,8 @@ export default function AdminManagersPage() {
       return {
         id: m.id,
         name: m.name,
+        code: m.employeeCode || "—",
+        employeeCode: m.employeeCode || "—",
         territory: [m.village, m.district, m.state].filter(Boolean).join(", ") || "General Scope",
         phone: m.phone || "—",
         email: m.email || "—",
@@ -85,6 +87,7 @@ export default function AdminManagersPage() {
       searchPlaceholder="Search by manager name, phone or territory"
       columns={[
         { key: "name", label: "Manager" },
+        { key: "code", label: "Employee Code" },
         { key: "territory", label: "Territory" },
         { key: "phone", label: "Phone" },
         { key: "email", label: "Email" },

@@ -161,6 +161,7 @@ export interface CreateManagerPayload {
   name: string;
   phone: string;
   email?: string;
+  employeeCode?: string;
   password: string;
   state?: string;
   district?: string;

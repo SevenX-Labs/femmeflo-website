@@ -824,6 +824,8 @@ export function ResourceListScreen({
                     ? {
                         ...r,
                         name: updated.name,
+                        code: updated.employeeCode || "—",
+                        employeeCode: updated.employeeCode || "—",
                         phone: updated.phone || "—",
                         email: updated.email || "—",
                         territory:
