@@ -33,6 +33,8 @@ import type {
   UpdateSalePayload,
   UpdateUserPayload,
   WarehouseItem,
+  Shift,
+  ListShiftsQuery,
 } from "./types";
 
 export interface ListResponse<T> {
@@ -717,6 +719,31 @@ export const adminApi = {
     return apiRequest<InventoryReportData>("admin/reports/inventory", {
       method: "GET",
       params: query,
+    });
+  },
+
+  // ----------------------------------------------------
+  // Duty Shifts & KM Tracking
+  // ----------------------------------------------------
+  async listShifts(params?: ListShiftsQuery): Promise<{ items: Shift[]; shifts: Shift[]; pagination: PaginationMeta }> {
+    const raw = await apiRequest<{ items?: Shift[]; shifts?: Shift[]; pagination: PaginationMeta }>(
+      "admin/shifts",
+      {
+        method: "GET",
+        params: params as Record<string, string | number | boolean | undefined>,
+      }
+    );
+    const list = raw?.items ?? raw?.shifts ?? [];
+    return {
+      items: list,
+      shifts: list,
+      pagination: raw.pagination,
+    };
+  },
+
+  async getShift(id: string): Promise<{ shift: Shift }> {
+    return apiRequest<{ shift: Shift }>(`admin/shifts/${id}`, {
+      method: "GET",
     });
   },
 };

@@ -21,6 +21,7 @@ export type NavigationIcon =
   | "notifications"
   | "categories"
   | "products"
+  | "shifts"
   | "settings";
 
 export type NavigationItem = {
@@ -41,6 +42,7 @@ export const adminNavigation: NavigationItem[] = [
   { label: "Approvals", href: "/admin/approvals", icon: "approvals" },
   { label: "Reports", href: "/admin/reports", icon: "reports" },
   { label: "Invoices", href: "/admin/invoices", icon: "invoices" },
+  { label: "Duty Shifts", href: "/admin/shifts", icon: "shifts" },
   { label: "Incentives", href: "/admin/incentives", icon: "incentives" },
   { label: "Permissions", href: "/admin/permissions", icon: "permissions" },
   { label: "Notifications", href: "/admin/notifications", icon: "notifications" },
@@ -53,6 +55,7 @@ export const managerNavigation: NavigationItem[] = [
   { label: "Customers", href: "/manager/customers", icon: "store" },
   { label: "Sales", href: "/manager/sales", icon: "sales" },
   { label: "Inventory", href: "/manager/inventory", icon: "inventory" },
+  { label: "Duty Shifts", href: "/manager/shifts", icon: "shifts" },
   { label: "Incentives", href: "/manager/incentives", icon: "incentives" },
   { label: "Notifications", href: "/manager/notifications", icon: "notifications" },
 ];
@@ -62,6 +65,7 @@ export const sellerNavigation: NavigationItem[] = [
   { label: "Customers", href: "/seller/customers", icon: "store" },
   { label: "Sales", href: "/seller/sales", icon: "sales" },
   { label: "Inventory", href: "/seller/inventory", icon: "inventory" },
+  { label: "Duty Shifts", href: "/seller/shifts", icon: "shifts" },
   { label: "Incentive", href: "/seller/incentive", icon: "invoices" },
   { label: "Profile", href: "/seller/profile", icon: "users" },
   { label: "Notifications", href: "/seller/notifications", icon: "notifications" },
@@ -96,6 +100,7 @@ export function getManagerNavigation(user?: PublicUser | null): NavigationItem[]
     );
   }
 
+  items.push({ label: "Duty Shifts", href: "/manager/shifts", icon: "shifts" });
   items.push({ label: "Incentives", href: "/manager/incentives", icon: "incentives" });
   items.push({ label: "Notifications", href: "/manager/notifications", icon: "notifications" });
   return items;

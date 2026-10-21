@@ -22,7 +22,8 @@ import { DashboardShell, PageHeading, SectionCard } from "@/components/managemen
 import { sellerNavigation } from "@/components/management/navigation";
 import { sellerApi } from "@/lib/api/seller";
 import type { SaleItem } from "@/lib/api/types";
-import { SaleDetailModal } from "@/components/management/SaleDetailModal";
+import dynamic from "next/dynamic";
+const SaleDetailModal = dynamic(() => import("@/components/management/SaleDetailModal").then(m => ({ default: m.SaleDetailModal })));
 import { useAuth } from "@/context/AuthContext";
 
 type StatusTab = "ALL" | "CONFIRMED" | "PENDING_APPROVAL" | "REJECTED";

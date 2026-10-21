@@ -13,6 +13,8 @@ import type {
   UpdateCustomerPayload,
   UpdateSalePayload,
   UpdateUserPayload,
+  Shift,
+  ListShiftsQuery,
 } from "./types";
 
 export const managerApi = {
@@ -303,6 +305,31 @@ export const managerApi = {
 
   async downloadInvoicePdf(id: string, download = false): Promise<Blob> {
     return apiRequest<Blob>(`invoices/${id}/pdf?download=${download ? "true" : "false"}`, {
+      method: "GET",
+    });
+  },
+
+  // ----------------------------------------------------
+  // Duty Shifts & Team KM Tracking
+  // ----------------------------------------------------
+  async listShifts(params?: ListShiftsQuery): Promise<{ items: Shift[]; shifts: Shift[]; pagination: PaginationMeta }> {
+    const raw = await apiRequest<{ items?: Shift[]; shifts?: Shift[]; pagination: PaginationMeta }>(
+      "manager/shifts",
+      {
+        method: "GET",
+        params: params as Record<string, string | number | boolean | undefined>,
+      }
+    );
+    const list = raw?.items ?? raw?.shifts ?? [];
+    return {
+      items: list,
+      shifts: list,
+      pagination: raw.pagination,
+    };
+  },
+
+  async getShift(id: string): Promise<{ shift: Shift }> {
+    return apiRequest<{ shift: Shift }>(`manager/shifts/${id}`, {
       method: "GET",
     });
   },

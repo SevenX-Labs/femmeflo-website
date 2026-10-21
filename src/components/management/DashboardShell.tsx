@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { BarChart3, Bell, ChevronDown, CircleUserRound, ClipboardCheck, FileText, IndianRupee, LayoutDashboard, Menu, Package, PackageCheck, ReceiptIndianRupee, ScrollText, Settings, ShoppingBag, Store, Tags, TrendingUp, Truck, Users, X } from "lucide-react";
+import { BarChart3, Bell, Route, ChevronDown, CircleUserRound, ClipboardCheck, FileText, IndianRupee, LayoutDashboard, Menu, Package, PackageCheck, ReceiptIndianRupee, ScrollText, Settings, ShoppingBag, Store, Tags, TrendingUp, Truck, Users, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -31,6 +31,7 @@ const navigationIconMap: Record<NavigationIcon, LucideIcon> = {
   notifications: Bell,
   categories: Tags,
   products: Package,
+  shifts: Route,
   settings: Settings,
 };
 
@@ -97,12 +98,7 @@ export function DashboardShell({ role, workspace, userName, userDetail, navigati
               return <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} aria-current={active ? "page" : undefined} className={`group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-rose-300 ${active ? "bg-rose-50 text-[#E61C5D]" : "text-zinc-800 hover:bg-rose-50/60 hover:text-[#156035]"}`}><Icon className="h-4.5 w-4.5 transition-transform group-hover:scale-105" />{item.label}{active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E61C5D]" />}</Link>;
             })}
           </nav>
-          <div className="mt-auto pt-6 space-y-3">
-            <div className="rounded-2xl bg-[#156035] p-4 text-white">
-              <p className="text-xs font-semibold text-emerald-100">{role === "Seller" ? "Your daily rhythm" : "Workspace pulse"}</p>
-              <p className="mt-1 text-sm font-bold leading-snug">{role === "Seller" ? "Check stock & record your sales." : "Everything is moving today."}</p>
-              <Link href={navigation[1]?.href ?? navigation[0].href} className="mt-3 inline-block text-xs font-bold text-[#FDE047]">Open next &rarr;</Link>
-            </div>
+          <div className="mt-auto pt-6">
             <div className="flex items-center justify-between rounded-xl border border-rose-100 bg-[#FFF8FA] p-3">
               <div className="min-w-0 pr-2">
                 <p className="truncate text-xs font-bold text-zinc-800">{displayName}</p>

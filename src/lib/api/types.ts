@@ -1009,3 +1009,73 @@ export interface InventoryReportData {
   }>;
   movements: StockTransactionItem[];
 }
+
+// ==========================================
+// Duty Shifts & KM Tracking
+// ==========================================
+
+export type ShiftStatus = "ACTIVE" | "COMPLETED" | "CANCELLED";
+
+export interface ShiftVisit {
+  id: string;
+  shiftId: string;
+  customerId?: string | null;
+  customer?: { id: string; shopName: string; phone?: string | null } | null;
+  shopName: string;
+  latitude: number;
+  longitude: number;
+  checkInTime: string;
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface Shift {
+  id: string;
+  sellerId: string;
+  seller?: { id: string; name: string; phone?: string | null; employeeCode?: string | null };
+  startTime: string;
+  startLatitude: number;
+  startLongitude: number;
+  startAddress?: string | null;
+  endTime?: string | null;
+  endLatitude?: number | null;
+  endLongitude?: number | null;
+  endAddress?: string | null;
+  totalDistanceKm: number;
+  status: ShiftStatus;
+  notes?: string | null;
+  visits: ShiftVisit[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StartShiftPayload {
+  latitude: number;
+  longitude: number;
+  address?: string;
+}
+
+export interface CheckInPayload {
+  latitude: number;
+  longitude: number;
+  shopName: string;
+  customerId?: string;
+  notes?: string;
+}
+
+export interface EndShiftPayload {
+  latitude: number;
+  longitude: number;
+  address?: string;
+  notes?: string;
+}
+
+export interface ListShiftsQuery {
+  page?: number;
+  pageSize?: number;
+  from?: string;
+  to?: string;
+  sellerId?: string;
+  managerId?: string;
+  status?: ShiftStatus;
+}

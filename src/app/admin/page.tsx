@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Calendar,
@@ -187,8 +187,13 @@ export default function AdminOverviewDashboard() {
     return "custom";
   }, [fromDate, toDate, todayStr, sevenDaysAgoStr, thirtyDaysAgoStr, monthStartStr]);
 
+  const fetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
-    fetchDashboard();
+    clearTimeout(fetchTimeoutRef.current);
+    fetchTimeoutRef.current = setTimeout(() => {
+      fetchDashboard();
+    }, 300);
+    return () => clearTimeout(fetchTimeoutRef.current);
   }, [fetchDashboard]);
 
   // 1. Available States

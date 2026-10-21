@@ -16,6 +16,12 @@ import type {
   UpdateCustomerPayload,
   UpdateSalePayload,
   UpdateUserPayload,
+  Shift,
+  ShiftVisit,
+  StartShiftPayload,
+  CheckInPayload,
+  EndShiftPayload,
+  ListShiftsQuery,
 } from "./types";
 
 export const sellerApi = {
@@ -306,5 +312,51 @@ export const sellerApi = {
     return apiRequest<Blob>(`invoices/${id}/pdf?download=${download ? "true" : "false"}`, {
       method: "GET",
     });
+  },
+
+  // ----------------------------------------------------
+  // Duty Shifts & KM Tracking
+  // ----------------------------------------------------
+  async getCurrentShift(): Promise<{ shift: Shift | null }> {
+    return apiRequest<{ shift: Shift | null }>("seller/shifts/current", {
+      method: "GET",
+    });
+  },
+
+  async startShift(payload: StartShiftPayload): Promise<{ shift: Shift }> {
+    return apiRequest<{ shift: Shift }>("seller/shifts/start", {
+      method: "POST",
+      body: payload,
+    });
+  },
+
+  async checkIn(payload: CheckInPayload): Promise<{ visit: ShiftVisit }> {
+    return apiRequest<{ visit: ShiftVisit }>("seller/shifts/check-in", {
+      method: "POST",
+      body: payload,
+    });
+  },
+
+  async endShift(payload: EndShiftPayload): Promise<{ shift: Shift }> {
+    return apiRequest<{ shift: Shift }>("seller/shifts/end", {
+      method: "POST",
+      body: payload,
+    });
+  },
+
+  async getShiftHistory(params?: ListShiftsQuery): Promise<{ items: Shift[]; shifts: Shift[]; pagination: PaginationMeta }> {
+    const raw = await apiRequest<{ items?: Shift[]; shifts?: Shift[]; pagination: PaginationMeta }>(
+      "seller/shifts/history",
+      {
+        method: "GET",
+        params: params as Record<string, string | number | boolean | undefined>,
+      }
+    );
+    const list = raw?.items ?? raw?.shifts ?? [];
+    return {
+      items: list,
+      shifts: list,
+      pagination: raw.pagination,
+    };
   },
 };

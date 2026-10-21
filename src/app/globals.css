@@ -5,7 +5,6 @@
   --font-jakarta: var(--font-jakarta), "Plus Jakarta Sans", sans-serif;
   --font-playfair: var(--font-playfair), "Playfair Display", Georgia, serif;
   --font-outfit: var(--font-outfit), "Outfit", sans-serif;
-  --font-montserrat: var(--font-montserrat), "Montserrat", sans-serif;
   --font-manrope: var(--font-manrope), "Manrope", sans-serif;
 }
 
@@ -42,10 +41,6 @@
 
 .font-outfit {
   font-family: var(--font-outfit), "Outfit", sans-serif !important;
-}
-
-.font-montserrat {
-  font-family: var(--font-montserrat), "Montserrat", sans-serif !important;
 }
 
 .font-manrope {

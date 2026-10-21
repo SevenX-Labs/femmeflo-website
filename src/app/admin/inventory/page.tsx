@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   AlertCircle,
   ArrowRight,
@@ -73,10 +73,12 @@ export default function AdminInventoryPage() {
   // Filter tabs for locations & warehouses
   const [activeTab, setActiveTab] = useState<"all" | "hq" | "warehouses" | "sellers" | "zero">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
   // History filtering
   const [historyFilterType, setHistoryFilterType] = useState<string>("ALL");
   const [historySearch, setHistorySearch] = useState("");
+  const [debouncedHistorySearch, setDebouncedHistorySearch] = useState("");
 
   // Adjust / Edit Available Stock modal state
   const [editingLocation, setEditingLocation] = useState<WarehouseItem | null>(null);
@@ -189,7 +191,18 @@ export default function AdminInventoryPage() {
 
   useEffect(() => {
     fetchAllData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearchQuery(searchQuery), 250);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedHistorySearch(historySearch), 250);
+    return () => clearTimeout(id);
+  }, [historySearch]);
 
   const handleUpdateStockBalance = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -405,19 +418,18 @@ export default function AdminInventoryPage() {
     else if (activeTab === "sellers") list = sellerWarehouses;
     else if (activeTab === "zero") list = zeroStockLocations;
 
-    if (!searchQuery.trim()) return list;
-    const q = searchQuery.toLowerCase();
+    if (!debouncedSearchQuery.trim()) return list;
+    const q = debouncedSearchQuery.toLowerCase();
     return list.filter((item) =>
       item.name.toLowerCase().includes(q) ||
       item.id.toLowerCase().includes(q) ||
       (item.seller?.name && item.seller.name.toLowerCase().includes(q))
     );
-  }, [activeTab, allLocations, hqWarehouses, regionalWarehouses, sellerWarehouses, zeroStockLocations, searchQuery]);
+  }, [activeTab, allLocations, hqWarehouses, regionalWarehouses, sellerWarehouses, zeroStockLocations, debouncedSearchQuery]);
 
-  // Filtered transactions (client search over current page)
   const displayedTransactions = useMemo(() => {
-    if (!historySearch.trim()) return transactions;
-    const q = historySearch.toLowerCase();
+    if (!debouncedHistorySearch.trim()) return transactions;
+    const q = debouncedHistorySearch.toLowerCase();
     return transactions.filter((tx) => {
       const sName = tx.source?.name?.toLowerCase() || "";
       const dName = tx.destination?.name?.toLowerCase() || "";
@@ -426,7 +438,7 @@ export default function AdminInventoryPage() {
       const id = tx.id.toLowerCase();
       return sName.includes(q) || dName.includes(q) || actor.includes(q) || cust.includes(q) || id.includes(q);
     });
-  }, [transactions, historySearch]);
+  }, [transactions, debouncedHistorySearch]);
 
   // Authoritative Stock Quantities
   const totalReceived = data?.totalReceived ?? 0;

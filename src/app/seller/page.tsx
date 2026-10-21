@@ -26,6 +26,7 @@ import { sellerNavigation } from "@/components/management/navigation";
 import { sellerApi } from "@/lib/api/seller";
 import type { SellerDashboardData } from "@/lib/api/types";
 import { useAuth } from "@/context/AuthContext";
+import { SellerShiftWidget } from "@/components/shifts/SellerShiftWidget";
 
 export default function SellerOverviewDashboard() {
   const [data, setData] = useState<SellerDashboardData | null>(null);
@@ -139,6 +140,11 @@ export default function SellerOverviewDashboard() {
           </button>
         </div>
       )}
+
+      {/* Daily Work Shift & Check-In Widget */}
+      <div className="mt-6">
+        <SellerShiftWidget />
+      </div>
 
       {/* Primary KPI Grid according to PRD Section 4 */}
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

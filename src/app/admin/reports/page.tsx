@@ -6,7 +6,10 @@ import { DashboardShell, MetricCard, PageHeading, SectionCard } from "@/componen
 import { adminNavigation } from "@/components/management/navigation";
 import { adminApi } from "@/lib/api/admin";
 import type { SalesReportData, AdminDashboardData } from "@/lib/api/types";
-import { SalesTrendLineGraph, SalesDonutPieChart, type LineGraphPoint, type PieSlice } from "@/components/analytics/AnalyticsCharts";
+import dynamic from "next/dynamic";
+import type { LineGraphPoint, PieSlice } from "@/components/analytics/AnalyticsCharts";
+const SalesTrendLineGraph = dynamic(() => import("@/components/analytics/AnalyticsCharts").then(m => ({ default: m.SalesTrendLineGraph })));
+const SalesDonutPieChart = dynamic(() => import("@/components/analytics/AnalyticsCharts").then(m => ({ default: m.SalesDonutPieChart })));
 
 export default function AdminReportsPage() {
   const [report, setReport] = useState<SalesReportData | null>(null);

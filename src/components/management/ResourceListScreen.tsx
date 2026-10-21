@@ -1,13 +1,15 @@
 "use client";
 
-import { CustomerDetailModal } from "./CustomerDetailModal";
-import { ManagerDetailModal } from "./ManagerDetailModal";
-import { SellerDetailModal } from "./SellerDetailModal";
-import { SaleDetailModal } from "./SaleDetailModal";
+import dynamic from "next/dynamic";
+
+const CustomerDetailModal = dynamic(() => import("./CustomerDetailModal").then(m => ({ default: m.CustomerDetailModal })));
+const ManagerDetailModal = dynamic(() => import("./ManagerDetailModal").then(m => ({ default: m.ManagerDetailModal })));
+const SellerDetailModal = dynamic(() => import("./SellerDetailModal").then(m => ({ default: m.SellerDetailModal })));
+const SaleDetailModal = dynamic(() => import("./SaleDetailModal").then(m => ({ default: m.SaleDetailModal })));
 
 import { Camera, CheckCircle2, Download, Eye, ExternalLink, FileText, Image as ImageIcon, Loader2, Mail, MapPin, MessageCircle, Package, Phone, RefreshCw, Search, SlidersHorizontal, Upload, User, Users, X } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardShell, NavigationItem, PageHeading, SectionCard } from "./DashboardShell";
 import { adminApi } from "@/lib/api/admin";
 import { managerApi } from "@/lib/api/manager";
@@ -59,11 +61,14 @@ export function ResourceListScreen({
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [status, setStatus] = useState("All status");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<ResourceRow | null>(null);
   const [locationQuery, setLocationQuery] = useState("");
+  const [debouncedLocationQuery, setDebouncedLocationQuery] = useState("");
   const [categoryQuery, setCategoryQuery] = useState("");
+  const [debouncedCategoryQuery, setDebouncedCategoryQuery] = useState("");
   const [dateRange, setDateRange] = useState("All time");
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [photoUploadMessage, setPhotoUploadMessage] = useState<string | null>(null);
@@ -225,6 +230,22 @@ export function ResourceListScreen({
     }
   };
 
+  // Debounce search inputs (250ms)
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(query), 250);
+    return () => clearTimeout(id);
+  }, [query]);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedLocationQuery(locationQuery), 250);
+    return () => clearTimeout(id);
+  }, [locationQuery]);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedCategoryQuery(categoryQuery), 250);
+    return () => clearTimeout(id);
+  }, [categoryQuery]);
+
   const loadData = useCallback(async () => {
     if (!fetchData) return;
     setIsLoading(true);
@@ -241,11 +262,21 @@ export function ResourceListScreen({
     }
   }, [fetchData]);
 
+  const mountedRef = useRef(true);
   useEffect(() => {
-    if (fetchData) {
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  const fetchDataRef = useRef(fetchData);
+  fetchDataRef.current = fetchData;
+
+  useEffect(() => {
+    if (fetchDataRef.current) {
       loadData();
     }
-  }, [fetchData, loadData]);
+  // Only run on mount — fetchData is expected to be a stable useCallback
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!fetchData) {
@@ -254,22 +285,27 @@ export function ResourceListScreen({
   }, [fetchData, initialRows]);
 
   const filteredRows = useMemo(() => {
+    const q = debouncedQuery.toLowerCase();
+    const locQ = debouncedLocationQuery.toLowerCase();
+    const catQ = debouncedCategoryQuery.toLowerCase();
     return dataRows.filter((row) => {
-      const searchable = Object.values(row).join(" ").toLowerCase();
-      const date = String(row.date ?? "");
-      const matchesRange =
-        dateRange === "All time" ||
-        (dateRange === "This month" ? !date.toLowerCase().includes("sep") : date.toLowerCase().includes("sep"));
-
-      return (
-        searchable.includes(query.toLowerCase()) &&
-        (status === "All status" || String(row.status) === status) &&
-        (!locationQuery || Object.values(row).join(" ").toLowerCase().includes(locationQuery.toLowerCase())) &&
-        (!categoryQuery || String(row.category ?? "").toLowerCase().includes(categoryQuery.toLowerCase())) &&
-        matchesRange
-      );
+      if (status !== "All status" && String(row.status) !== status) return false;
+      if (dateRange !== "All time") {
+        const date = String(row.date ?? "").toLowerCase();
+        if (dateRange === "This month" ? date.includes("sep") : !date.includes("sep")) return false;
+      }
+      if (q) {
+        const searchable = Object.values(row).join(" ").toLowerCase();
+        if (!searchable.includes(q)) return false;
+      }
+      if (locQ) {
+        const searchable = Object.values(row).join(" ").toLowerCase();
+        if (!searchable.includes(locQ)) return false;
+      }
+      if (catQ && !String(row.category ?? "").toLowerCase().includes(catQ)) return false;
+      return true;
     });
-  }, [dataRows, query, status, locationQuery, categoryQuery, dateRange]);
+  }, [dataRows, debouncedQuery, status, debouncedLocationQuery, debouncedCategoryQuery, dateRange]);
 
   const exportRows = () => {
     const csv = [
