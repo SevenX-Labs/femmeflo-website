@@ -191,7 +191,12 @@ export default function AdminInventoryPage() {
         setEditStockReason("");
       }, 1000);
     } catch (err: any) {
-      setEditStockError(err.message || "Failed to update stock balance.");
+      console.error("updateLocationBalance error detail:", err?.data || err?.message || err);
+      const serverMsg =
+        (err?.data && typeof err.data === "object" && (err.data.message || err.data.error)) ||
+        err?.message ||
+        "Failed to update stock balance.";
+      setEditStockError(serverMsg);
     } finally {
       setIsEditStockSubmitting(false);
     }
