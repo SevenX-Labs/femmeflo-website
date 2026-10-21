@@ -916,6 +916,8 @@ export interface AdminDashboardData {
     managerId?: string;
     sellerId?: string;
     categoryId?: string;
+    from?: string;
+    to?: string;
   };
 }
 

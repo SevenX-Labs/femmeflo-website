@@ -1889,10 +1889,24 @@ export default function AdminInventoryPage() {
               )}
 
               <div className="rounded-xl bg-zinc-50 p-3 border border-zinc-200/80 text-xs flex items-center justify-between">
-                <span className="font-bold text-zinc-600">Current Balance:</span>
-                <span className="font-extrabold text-zinc-900 text-sm">
-                  {editingLocation.balance.toLocaleString("en-IN")} packets
-                </span>
+                <div>
+                  <span className="font-bold text-zinc-600 block">Current Balance:</span>
+                  <span className="font-extrabold text-zinc-900 text-sm">
+                    {editingLocation.balance.toLocaleString("en-IN")} packets
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditStockValue(0);
+                    setEditStockReason("Reset stock balance to 0 (HQ/Warehouse clearance)");
+                  }}
+                  className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-bold text-[#E61C5D] hover:bg-rose-100 transition cursor-pointer"
+                  title="Quick reset stock balance to 0"
+                >
+                  <PackageMinus className="h-3.5 w-3.5" />
+                  <span>Reset to 0 pkts</span>
+                </button>
               </div>
 
               <div>

@@ -222,21 +222,29 @@ export default function AdminProductsPage() {
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {filteredProducts.map((p) => (
-                <tr key={p.id} className="hover:bg-zinc-50/50">
+                <tr key={p.id} className={`transition-colors ${p.active ? "hover:bg-zinc-50/50" : "bg-zinc-50/60 opacity-80 hover:bg-zinc-100/50"}`}>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-[#156035]">
+                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                        p.active ? "bg-emerald-50 text-[#156035]" : "bg-zinc-200 text-zinc-500"
+                      }`}>
                         <Package className="h-4 w-4" />
                       </div>
-                      <span className="font-bold text-zinc-900">{p.name}</span>
+                      <div>
+                        <span className={`font-bold block ${p.active ? "text-zinc-900" : "text-zinc-600 line-through"}`}>{p.name}</span>
+                        {!p.active && <span className="text-[10px] font-semibold text-rose-500">Deactivated</span>}
+                      </div>
                     </div>
                   </td>
                   <td className="px-5 py-4 text-xs text-zinc-500 font-mono">{p.sku || "—"}</td>
                   <td className="px-5 py-4 font-semibold">₹{(p.basePricePaise / 100).toFixed(0)}</td>
                   <td className="px-5 py-4">
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                      p.active ? "bg-emerald-50 text-[#157347]" : "bg-zinc-100 text-zinc-500"
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold border ${
+                      p.active
+                        ? "bg-emerald-50 text-[#157347] border-emerald-200"
+                        : "bg-rose-50 text-rose-700 border-rose-200"
                     }`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${p.active ? "bg-emerald-500" : "bg-rose-500"}`} />
                       {p.active ? "Active" : "Inactive"}
                     </span>
                   </td>

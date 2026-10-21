@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  Calendar,
   CheckCircle2,
   ChevronDown,
   Clock3,
@@ -42,6 +43,8 @@ export default function AdminOverviewDashboard() {
   const [selectedManagerId, setSelectedManagerId] = useState("");
   const [selectedSellerId, setSelectedSellerId] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const [filtersExpanded, setFiltersExpanded] = useState(false);
 
@@ -75,6 +78,8 @@ export default function AdminOverviewDashboard() {
         managerId: selectedManagerId || undefined,
         sellerId: selectedSellerId || undefined,
         categoryId: selectedCategoryId || undefined,
+        from: fromDate || undefined,
+        to: toDate || undefined,
       };
 
       const res = await adminApi.getDashboard(activeFilters);
@@ -85,7 +90,7 @@ export default function AdminOverviewDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [selectedState, selectedDistrict, selectedVillage, selectedManagerId, selectedSellerId, selectedCategoryId]);
+  }, [selectedState, selectedDistrict, selectedVillage, selectedManagerId, selectedSellerId, selectedCategoryId, fromDate, toDate]);
 
   useEffect(() => {
     fetchDashboard();
@@ -173,6 +178,8 @@ export default function AdminOverviewDashboard() {
     setSelectedManagerId("");
     setSelectedSellerId("");
     setSelectedCategoryId("");
+    setFromDate("");
+    setToDate("");
   };
 
   const activeFilterCount = [
@@ -182,6 +189,8 @@ export default function AdminOverviewDashboard() {
     selectedManagerId,
     selectedSellerId,
     selectedCategoryId,
+    fromDate,
+    toDate,
   ].filter(Boolean).length;
 
   const metrics = data?.metrics ?? {
@@ -292,6 +301,96 @@ export default function AdminOverviewDashboard() {
                 Reset all
               </button>
             )}
+          </div>
+
+          {/* Quick Date Presets & Date Range Bar */}
+          <div className="mt-3.5 rounded-xl bg-[#FFF8FA] p-3 border border-rose-100 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-700 flex items-center gap-1 mr-1">
+                <Calendar className="h-3.5 w-3.5 text-[#E61C5D]" /> Date Range:
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const today = new Date().toISOString().slice(0, 10);
+                  setFromDate(today);
+                  setToDate(today);
+                }}
+                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                  fromDate && toDate && fromDate === toDate && fromDate === new Date().toISOString().slice(0, 10)
+                    ? "bg-[#E61C5D] text-white shadow-xs"
+                    : "bg-white text-zinc-700 border border-zinc-200 hover:border-rose-200 hover:text-[#E61C5D]"
+                }`}
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const d = new Date();
+                  d.setDate(d.getDate() - 7);
+                  setFromDate(d.toISOString().slice(0, 10));
+                  setToDate(new Date().toISOString().slice(0, 10));
+                }}
+                className="rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-zinc-700 border border-zinc-200 hover:border-rose-200 hover:text-[#E61C5D] transition cursor-pointer"
+              >
+                Last 7 Days
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const d = new Date();
+                  d.setDate(d.getDate() - 30);
+                  setFromDate(d.toISOString().slice(0, 10));
+                  setToDate(new Date().toISOString().slice(0, 10));
+                }}
+                className="rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-zinc-700 border border-zinc-200 hover:border-rose-200 hover:text-[#E61C5D] transition cursor-pointer"
+              >
+                Last 30 Days
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const d = new Date();
+                  const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+                  setFromDate(firstDay);
+                  setToDate(new Date().toISOString().slice(0, 10));
+                }}
+                className="rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-zinc-700 border border-zinc-200 hover:border-rose-200 hover:text-[#E61C5D] transition cursor-pointer"
+              >
+                This Month
+              </button>
+              {(fromDate || toDate) && (
+                <button
+                  type="button"
+                  onClick={() => { setFromDate(""); setToDate(""); }}
+                  className="rounded-lg px-2 py-1 text-xs font-semibold text-zinc-500 hover:text-rose-600 underline cursor-pointer"
+                >
+                  Clear dates
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-zinc-600">From:</span>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-xs font-semibold text-zinc-800 outline-none focus:border-rose-300"
+                />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-zinc-600">To:</span>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-xs font-semibold text-zinc-800 outline-none focus:border-rose-300"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="mt-3.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
@@ -490,6 +589,14 @@ export default function AdminOverviewDashboard() {
             <span className="inline-flex items-center gap-1 rounded-full bg-white border border-rose-200 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D] shadow-xs">
               Category: {availableCategories.find((c) => c.id === selectedCategoryId)?.name || "Selected"}
               <button type="button" onClick={() => setSelectedCategoryId("")} aria-label="Remove category filter" className="cursor-pointer">
+                <X className="h-3 w-3 hover:text-black" />
+              </button>
+            </span>
+          )}
+          {(fromDate || toDate) && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-white border border-rose-200 px-2.5 py-0.5 text-xs font-bold text-[#E61C5D] shadow-xs">
+              Date: {fromDate || "Earliest"} to {toDate || "Latest"}
+              <button type="button" onClick={() => { setFromDate(""); setToDate(""); }} aria-label="Remove date filter" className="cursor-pointer">
                 <X className="h-3 w-3 hover:text-black" />
               </button>
             </span>
