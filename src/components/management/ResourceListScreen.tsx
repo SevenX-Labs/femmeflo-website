@@ -11,6 +11,7 @@ import { Camera, CheckCircle2, Download, Eye, ExternalLink, FileText, Image as I
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardShell, NavigationItem, PageHeading, SectionCard } from "./DashboardShell";
+import { clearApiCache } from "@/lib/api/client";
 import { adminApi } from "@/lib/api/admin";
 import { managerApi } from "@/lib/api/manager";
 import { sellerApi } from "@/lib/api/seller";
@@ -40,6 +41,21 @@ type ResourceListScreenProps = {
 
 const EMPTY_ROWS: ResourceRow[] = [];
 
+// Persistent in-memory cache for resource lists to prevent blank flashes when switching sections
+const resourceCache = new Map<string, ResourceRow[]>();
+
+export function clearResourceListCache(keySubstr?: string) {
+  if (!keySubstr) {
+    resourceCache.clear();
+    return;
+  }
+  for (const k of Array.from(resourceCache.keys())) {
+    if (k.includes(keySubstr)) {
+      resourceCache.delete(k);
+    }
+  }
+}
+
 export function ResourceListScreen({
   role,
   workspace,
@@ -56,8 +72,18 @@ export function ResourceListScreen({
   rows: initialRows = EMPTY_ROWS,
   fetchData,
 }: ResourceListScreenProps) {
-  const [dataRows, setDataRows] = useState<ResourceRow[]>(fetchData ? [] : initialRows);
-  const [isLoading, setIsLoading] = useState<boolean>(Boolean(fetchData));
+  const cacheKey = useMemo(() => `${role}:${title}:${eyebrow}`, [role, title, eyebrow]);
+  const cachedRows = resourceCache.get(cacheKey);
+
+  const [dataRows, setDataRows] = useState<ResourceRow[]>(() => {
+    if (cachedRows && cachedRows.length > 0) return cachedRows;
+    return fetchData ? [] : initialRows;
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    if (cachedRows && cachedRows.length > 0) return false;
+    return Boolean(fetchData);
+  });
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
@@ -246,21 +272,38 @@ export function ResourceListScreen({
     return () => clearTimeout(id);
   }, [categoryQuery]);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (isManual = false) => {
     if (!fetchData) return;
-    setIsLoading(true);
+    const hasCache = resourceCache.has(cacheKey);
+    if (isManual || !hasCache) {
+      if (hasCache) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+    }
     setFetchError(null);
     try {
       const result = await fetchData();
+      resourceCache.set(cacheKey, result);
       setDataRows(result);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load data";
       setFetchError(msg);
-      setDataRows([]);
+      if (!resourceCache.has(cacheKey)) {
+        setDataRows([]);
+      }
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
-  }, [fetchData]);
+  }, [fetchData, cacheKey]);
+
+  const handleManualRefresh = useCallback(() => {
+    clearApiCache();
+    resourceCache.delete(cacheKey);
+    loadData(true);
+  }, [cacheKey, loadData]);
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -340,12 +383,12 @@ export function ResourceListScreen({
           <div className="flex items-center gap-2">
             {fetchData && (
               <button
-                onClick={loadData}
-                disabled={isLoading}
+                onClick={handleManualRefresh}
+                disabled={isLoading || isRefreshing}
                 title="Refresh live data"
                 className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50 shadow-xs active:scale-95 shrink-0"
               >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin text-[#E61C5D]" : ""}`} />
+                <RefreshCw className={`h-4 w-4 ${(isLoading || isRefreshing) ? "animate-spin text-[#E61C5D]" : ""}`} />
               </button>
             )}
             {primaryAction ? (
@@ -379,7 +422,7 @@ export function ResourceListScreen({
       {fetchError && (
         <div className="mt-6 flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800">
           <span>Unable to load live records. ({fetchError})</span>
-          <button onClick={loadData} className="underline hover:text-amber-950 font-bold">Retry</button>
+          <button onClick={() => loadData(true)} className="underline hover:text-amber-950 font-bold">Retry</button>
         </div>
       )}
 

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { DashboardShell, MetricCard, PageHeading, SectionCard } from "@/components/management/DashboardShell";
 import { getManagerNavigation } from "@/components/management/navigation";
+import { clearApiCache } from "@/lib/api/client";
 import { managerApi } from "@/lib/api/manager";
 import type { ManagerDashboardData, SaleItem, SellerItem } from "@/lib/api/types";
 import { useAuth } from "@/context/AuthContext";
@@ -30,11 +31,17 @@ import {
   canViewInventory,
 } from "@/lib/permissions";
 
+// Persistent cache for manager dashboard
+let cachedManagerDashboard: ManagerDashboardData | null = null;
+let cachedManagerSales: SaleItem[] = [];
+let cachedManagerSellers: SellerItem[] = [];
+
 export default function ManagerOverviewDashboard() {
-  const [data, setData] = useState<ManagerDashboardData | null>(null);
-  const [recentSales, setRecentSales] = useState<SaleItem[]>([]);
-  const [sellersList, setSellersList] = useState<SellerItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<ManagerDashboardData | null>(cachedManagerDashboard);
+  const [recentSales, setRecentSales] = useState<SaleItem[]>(cachedManagerSales);
+  const [sellersList, setSellersList] = useState<SellerItem[]>(cachedManagerSellers);
+  const [loading, setLoading] = useState(!cachedManagerDashboard);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user, refreshUser } = useAuth();
 
@@ -44,8 +51,14 @@ export default function ManagerOverviewDashboard() {
   const canInventory = canViewInventory(user);
   const canOnboard = canOnboardCustomers(user);
 
-  const fetchDashboard = async () => {
-    setLoading(true);
+  const fetchDashboard = async (isManual = false) => {
+    if (isManual || !cachedManagerDashboard) {
+      if (cachedManagerDashboard) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+    }
     setError(null);
     try {
       // Refresh current user session permissions from backend
@@ -68,14 +81,20 @@ export default function ManagerOverviewDashboard() {
 
       if (dashRes) {
         setData(dashRes);
+        cachedManagerDashboard = dashRes;
       }
-      setRecentSales(salesRes?.sales ?? []);
-      setSellersList(sellersRes?.sellers ?? []);
+      const sales = salesRes?.sales ?? [];
+      const sellers = sellersRes?.sellers ?? [];
+      setRecentSales(sales);
+      setSellersList(sellers);
+      cachedManagerSales = sales;
+      cachedManagerSellers = sellers;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Backend unavailable";
       setError(msg);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -110,12 +129,16 @@ export default function ManagerOverviewDashboard() {
         action={
           <div className="flex flex-wrap items-center gap-3">
             <button
-              onClick={fetchDashboard}
-              disabled={loading}
+              onClick={() => {
+                clearApiCache();
+                cachedManagerDashboard = null;
+                fetchDashboard(true);
+              }}
+              disabled={loading || isRefreshing}
               title="Refresh territory metrics"
               className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50 cursor-pointer"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${(loading || isRefreshing) ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
             {canOnboard && (
               <Link
@@ -140,7 +163,7 @@ export default function ManagerOverviewDashboard() {
       {error && (
         <div className="mt-6 flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800">
           <span>Unable to load live territory data. ({error})</span>
-          <button onClick={fetchDashboard} className="underline hover:text-amber-950 font-bold cursor-pointer">
+          <button onClick={() => fetchDashboard(true)} className="underline hover:text-amber-950 font-bold cursor-pointer">
             Retry
           </button>
         </div>

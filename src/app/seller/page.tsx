@@ -23,14 +23,19 @@ import {
 } from "lucide-react";
 import { DashboardShell, MetricCard, PageHeading, SectionCard } from "@/components/management/DashboardShell";
 import { sellerNavigation } from "@/components/management/navigation";
+import { clearApiCache } from "@/lib/api/client";
 import { sellerApi } from "@/lib/api/seller";
 import type { SellerDashboardData } from "@/lib/api/types";
 import { useAuth } from "@/context/AuthContext";
 import { SellerShiftWidget } from "@/components/shifts/SellerShiftWidget";
 
+// Persistent cache for seller dashboard
+let cachedSellerDashboard: SellerDashboardData | null = null;
+
 export default function SellerOverviewDashboard() {
-  const [data, setData] = useState<SellerDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<SellerDashboardData | null>(cachedSellerDashboard);
+  const [loading, setLoading] = useState(!cachedSellerDashboard);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
   const { user } = useAuth();
@@ -59,17 +64,25 @@ export default function SellerOverviewDashboard() {
     }
   };
 
-  const fetchDashboard = async () => {
-    setLoading(true);
+  const fetchDashboard = async (isManual = false) => {
+    if (isManual || !cachedSellerDashboard) {
+      if (cachedSellerDashboard) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+    }
     setError(null);
     try {
       const res = await sellerApi.getDashboard();
       setData(res);
+      cachedSellerDashboard = res;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Backend unavailable";
       setError(msg);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -109,12 +122,16 @@ export default function SellerOverviewDashboard() {
         action={
           <div className="flex flex-wrap items-center gap-3">
             <button
-              onClick={fetchDashboard}
-              disabled={loading}
+              onClick={() => {
+                clearApiCache();
+                cachedSellerDashboard = null;
+                fetchDashboard(true);
+              }}
+              disabled={loading || isRefreshing}
               title="Refresh live metrics"
               className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${(loading || isRefreshing) ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
             <Link
               href="/seller/customers/new"
@@ -135,7 +152,7 @@ export default function SellerOverviewDashboard() {
       {error && (
         <div className="mt-6 flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800">
           <span>Unable to load live seller data. ({error})</span>
-          <button onClick={fetchDashboard} className="underline hover:text-amber-950 font-bold">
+          <button onClick={() => fetchDashboard(true)} className="underline hover:text-amber-950 font-bold">
             Retry
           </button>
         </div>

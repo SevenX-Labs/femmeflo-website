@@ -25,16 +25,22 @@ import {
 } from "lucide-react";
 import { DashboardShell, MetricCard, PageHeading, SectionCard } from "@/components/management/DashboardShell";
 import { adminNavigation } from "@/components/management/navigation";
+import { clearApiCache } from "@/lib/api/client";
 import { adminApi } from "@/lib/api/admin";
 import type { AdminDashboardData, DashboardFilterOptions } from "@/lib/api/types";
 import { useAuth } from "@/context/AuthContext";
 
+// In-memory cache for admin overview to prevent reloading flashes on section changes
+let cachedAdminDashboard: AdminDashboardData | null = null;
+let cachedFilterOptions: DashboardFilterOptions | null = null;
+
 export default function AdminOverviewDashboard() {
-  const [data, setData] = useState<AdminDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<AdminDashboardData | null>(cachedAdminDashboard);
+  const [loading, setLoading] = useState(!cachedAdminDashboard);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Filter options loaded from backend
-  const [filterOptions, setFilterOptions] = useState<DashboardFilterOptions | null>(null);
+  const [filterOptions, setFilterOptions] = useState<DashboardFilterOptions | null>(cachedFilterOptions);
 
   // Selected filters
   const [selectedState, setSelectedState] = useState("");
@@ -52,9 +58,13 @@ export default function AdminOverviewDashboard() {
   useEffect(() => {
     let active = true;
     async function loadFilters() {
+      if (cachedFilterOptions) {
+        setFilterOptions(cachedFilterOptions);
+      }
       try {
         const res = await adminApi.getDashboardFilters();
         if (active && res) {
+          cachedFilterOptions = res;
           setFilterOptions(res);
         }
       } catch (err) {
@@ -67,8 +77,14 @@ export default function AdminOverviewDashboard() {
     };
   }, []);
 
-  const fetchDashboard = useCallback(async () => {
-    setLoading(true);
+  const fetchDashboard = useCallback(async (isManual = false) => {
+    if (isManual || !cachedAdminDashboard) {
+      if (cachedAdminDashboard) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+    }
     try {
       // Pass only geographic/hierarchy parameters to getDashboard (never from/to)
       const scopeFilters = {
@@ -147,17 +163,21 @@ export default function AdminOverviewDashboard() {
       } else {
         if (dashRes) {
           setData(dashRes);
+          cachedAdminDashboard = dashRes;
         } else {
-          setData({
+          const fb = {
             metrics: baseMetrics,
             appliedFilters: {},
-          });
+          };
+          setData(fb);
+          cachedAdminDashboard = fb;
         }
       }
     } catch (err: unknown) {
       console.warn("Dashboard fetch error:", err);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, [selectedState, selectedDistrict, selectedVillage, selectedManagerId, selectedSellerId, selectedCategoryId, fromDate, toDate]);
 
@@ -325,12 +345,16 @@ export default function AdminOverviewDashboard() {
         action={
           <div className="flex items-center gap-2">
             <button
-              onClick={fetchDashboard}
-              disabled={loading}
+              onClick={() => {
+                clearApiCache();
+                cachedAdminDashboard = null;
+                fetchDashboard(true);
+              }}
+              disabled={loading || isRefreshing}
               title="Refresh dashboard metrics"
               className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50 shadow-xs active:scale-95 shrink-0"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${(loading || isRefreshing) ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
             <button
               type="button"

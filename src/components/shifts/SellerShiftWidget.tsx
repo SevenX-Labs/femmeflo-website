@@ -60,9 +60,13 @@ interface SellerShiftWidgetProps {
   compact?: boolean;
 }
 
+// Persistent cache for active shift state
+let cachedActiveShift: Shift | null = null;
+let hasLoadedShiftOnce = false;
+
 export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShiftWidgetProps) {
-  const [shift, setShift] = useState<Shift | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [shift, setShift] = useState<Shift | null>(cachedActiveShift);
+  const [loading, setLoading] = useState(!hasLoadedShiftOnce);
   const [error, setError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
@@ -87,6 +91,8 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
       const res = await sellerApi.getCurrentShift();
       const current = res.shift ?? null;
       setShift(current);
+      cachedActiveShift = current;
+      hasLoadedShiftOnce = true;
       if (onShiftChange) onShiftChange(current);
     } catch (err: unknown) {
       console.warn("Failed to fetch current shift:", err);

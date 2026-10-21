@@ -45,6 +45,7 @@ export const tokenStorage = {
     try {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      clearApiCache();
     } catch {
       // Ignored
     }
@@ -135,6 +136,64 @@ export interface RequestOptions extends Omit<RequestInit, "body"> {
   skipAuth?: boolean;
   timeoutMs?: number;
   skipClientThrottle?: boolean;
+  skipCache?: boolean;
+  cacheTtlMs?: number;
+}
+
+// In-memory GET response cache to provide instant navigation without constant re-fetching
+interface ApiCacheEntry {
+  data: unknown;
+  timestamp: number;
+  ttl: number;
+}
+
+const apiGetCache = new Map<string, ApiCacheEntry>();
+const inFlightGetRequests = new Map<string, Promise<unknown>>();
+
+/**
+ * Clear client-side API response cache.
+ * When endpointSubstr is provided, only matching keys are cleared.
+ */
+export function clearApiCache(endpointSubstr?: string): void {
+  if (!endpointSubstr) {
+    apiGetCache.clear();
+    return;
+  }
+  for (const key of Array.from(apiGetCache.keys())) {
+    if (key.includes(endpointSubstr)) {
+      apiGetCache.delete(key);
+    }
+  }
+}
+
+/**
+ * Synchronously peek cached API response data without triggering network request
+ */
+export function getCachedApiResponse<T = unknown>(
+  endpoint: string,
+  params?: Record<string, string | number | boolean | undefined | null>
+): T | null {
+  if (typeof window === "undefined") return null;
+  const token = tokenStorage.getToken() || "anon";
+  let url = endpoint.startsWith("http")
+    ? endpoint
+    : `${API_BASE_URL.replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`;
+  if (params) {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== "") searchParams.append(k, String(v));
+    });
+    const qs = searchParams.toString();
+    if (qs) url += (url.includes("?") ? "&" : "?") + qs;
+  }
+  const cacheKey = `GET:${url}:${token}`;
+  const entry = apiGetCache.get(cacheKey);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > entry.ttl) {
+    apiGetCache.delete(cacheKey);
+    return null;
+  }
+  return entry.data as T;
 }
 
 // Client-side mutation deduplication tracker to prevent rapid duplicate clicks
@@ -154,6 +213,8 @@ export async function apiRequest<T = unknown>(
     skipAuth = false,
     timeoutMs = 15000,
     skipClientThrottle = false,
+    skipCache = false,
+    cacheTtlMs = 120000,
     headers: customHeaders = {},
     ...fetchOptions
   } = options;
@@ -226,6 +287,19 @@ export async function apiRequest<T = unknown>(
     const token = tokenStorage.getToken();
     if (token && !headers.has("Authorization")) {
       headers.set("Authorization", `Bearer ${token}`);
+    }
+  }
+
+  const cacheKey = method === "GET" ? `GET:${url}:${skipAuth ? "noauth" : (tokenStorage.getToken() || "anon")}` : "";
+
+  if (method === "GET" && !skipCache && cacheKey) {
+    const cached = apiGetCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < cached.ttl) {
+      return cached.data as T;
+    }
+    const inFlight = inFlightGetRequests.get(cacheKey);
+    if (inFlight) {
+      return (await inFlight) as T;
     }
   }
 
@@ -305,11 +379,21 @@ export async function apiRequest<T = unknown>(
 
     // Server returns { success: true, message: ..., data: ... }
     const typed = responseData as ApiResponse<T>;
-    if (typed && typeof typed === "object" && "data" in typed) {
-      return typed.data;
+    const finalData = (typed && typeof typed === "object" && "data" in typed ? typed.data : responseData) as T;
+
+    if (method === "GET" && cacheKey) {
+      apiGetCache.set(cacheKey, {
+        data: finalData,
+        timestamp: Date.now(),
+        ttl: cacheTtlMs,
+      });
     }
 
-    return responseData as T;
+    if (isMutation) {
+      clearApiCache();
+    }
+
+    return finalData;
   } catch (error: unknown) {
     if (error instanceof ApiError) {
       throw error;
@@ -329,6 +413,9 @@ export async function apiRequest<T = unknown>(
     clearTimeout(timeoutId);
     if (mutationKey) {
       activeMutations.delete(mutationKey);
+    }
+    if (cacheKey) {
+      inFlightGetRequests.delete(cacheKey);
     }
   }
 }

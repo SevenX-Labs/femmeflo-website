@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { DashboardShell, MetricCard, PageHeading, SectionCard } from "@/components/management/DashboardShell";
 import { adminNavigation } from "@/components/management/navigation";
+import { clearApiCache } from "@/lib/api/client";
 import { adminApi } from "@/lib/api/admin";
 import type { Shift, PaginationMeta, ShiftStatus } from "@/lib/api/types";
 import { useAuth } from "@/context/AuthContext";
@@ -35,16 +36,21 @@ function formatDuration(startTime: string, endTime?: string | null): string {
   return `${h}h ${m}m`;
 }
 
+// Module-level persistent cache for admin shifts
+let cachedAdminShifts: Shift[] = [];
+let cachedShiftsPagination: PaginationMeta = {
+  page: 1,
+  pageSize: 20,
+  total: 0,
+  totalPages: 1,
+};
+
 export default function AdminShiftsPage() {
   const { user } = useAuth();
-  const [shifts, setShifts] = useState<Shift[]>([]);
-  const [pagination, setPagination] = useState<PaginationMeta>({
-    page: 1,
-    pageSize: 20,
-    total: 0,
-    totalPages: 1,
-  });
-  const [loading, setLoading] = useState(true);
+  const [shifts, setShifts] = useState<Shift[]>(cachedAdminShifts);
+  const [pagination, setPagination] = useState<PaginationMeta>(cachedShiftsPagination);
+  const [loading, setLoading] = useState(cachedAdminShifts.length === 0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<ShiftStatus | "ALL">("ALL");
@@ -75,8 +81,14 @@ export default function AdminShiftsPage() {
     return "custom";
   }, [fromDate, toDate, todayStr, sevenDaysAgoStr, thirtyDaysAgoStr]);
 
-  const fetchShifts = async (page = 1) => {
-    setLoading(true);
+  const fetchShifts = async (page = 1, isManual = false) => {
+    if (isManual || cachedAdminShifts.length === 0) {
+      if (cachedAdminShifts.length > 0) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+    }
     try {
       const res = await adminApi.listShifts({
         page,
@@ -85,12 +97,18 @@ export default function AdminShiftsPage() {
         from: fromDate ? `${fromDate}T00:00:00.000Z` : undefined,
         to: toDate ? `${toDate}T23:59:59.999Z` : undefined,
       });
-      setShifts(res.items ?? res.shifts ?? []);
+      const items = res.items ?? res.shifts ?? [];
+      setShifts(items);
       setPagination(res.pagination);
+      if (page === 1 && statusFilter === "ALL" && !fromDate && !toDate) {
+        cachedAdminShifts = items;
+        cachedShiftsPagination = res.pagination;
+      }
     } catch (err) {
       console.warn("Failed to load admin shifts:", err);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -129,12 +147,16 @@ export default function AdminShiftsPage() {
         description="Monitor field staff login/logout attendance, verified customer check-ins, and accurate road travel kilometres."
         action={
           <button
-            onClick={() => fetchShifts(pagination.page)}
-            disabled={loading}
+            onClick={() => {
+              clearApiCache();
+              cachedAdminShifts = [];
+              fetchShifts(pagination.page, true);
+            }}
+            disabled={loading || isRefreshing}
             title="Refresh shifts"
             className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50 shadow-xs cursor-pointer"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
+            <RefreshCw className={`h-4 w-4 ${(loading || isRefreshing) ? "animate-spin text-[#E61C5D]" : ""}`} />
           </button>
         }
       />

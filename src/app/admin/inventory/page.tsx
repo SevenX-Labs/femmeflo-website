@@ -40,6 +40,7 @@ import { DashboardShell, PageHeading } from "@/components/management/DashboardSh
 import { adminNavigation } from "@/components/management/navigation";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { clearApiCache } from "@/lib/api/client";
 import { adminApi } from "@/lib/api/admin";
 import type {
   InventorySummaryData,
@@ -49,26 +50,35 @@ import type {
   AdminIncentivesResponse,
 } from "@/lib/api/types";
 
+// Module-level persistent cache for admin inventory to prevent reload flashes
+let cachedInventorySummary: InventorySummaryData | null = null;
+let cachedTransactions: StockTransactionItem[] = [];
+let cachedTxPagination = { total: 0, totalPages: 1 };
+let cachedDashData: AdminDashboardData | null = null;
+let cachedIncentiveData: AdminIncentivesResponse | null = null;
+let cachedInwardProducts: Array<{ id: string; name: string; sku: string | null }> = [];
+
 export default function AdminInventoryPage() {
   const ledgerRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
 
-  const [data, setData] = useState<InventorySummaryData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<InventorySummaryData | null>(cachedInventorySummary);
+  const [loading, setLoading] = useState(!cachedInventorySummary);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Secondary metrics
-  const [dashData, setDashData] = useState<AdminDashboardData | null>(null);
-  const [incentiveData, setIncentiveData] = useState<AdminIncentivesResponse | null>(null);
+  const [dashData, setDashData] = useState<AdminDashboardData | null>(cachedDashData);
+  const [incentiveData, setIncentiveData] = useState<AdminIncentivesResponse | null>(cachedIncentiveData);
 
   // Transactions State
-  const [transactions, setTransactions] = useState<StockTransactionItem[]>([]);
-  const [txLoading, setTxLoading] = useState(true);
+  const [transactions, setTransactions] = useState<StockTransactionItem[]>(cachedTransactions);
+  const [txLoading, setTxLoading] = useState(cachedTransactions.length === 0);
   const [txError, setTxError] = useState<string | null>(null);
   const [txPage, setTxPage] = useState(1);
   const [txPageSize] = useState(15);
-  const [txTotalCount, setTxTotalCount] = useState(0);
-  const [txTotalPages, setTxTotalPages] = useState(1);
+  const [txTotalCount, setTxTotalCount] = useState(cachedTxPagination.total);
+  const [txTotalPages, setTxTotalPages] = useState(cachedTxPagination.totalPages);
 
   // Filter tabs for locations & warehouses
   const [activeTab, setActiveTab] = useState<"all" | "hq" | "warehouses" | "sellers" | "zero">("all");
@@ -123,6 +133,7 @@ export default function AdminInventoryPage() {
       setError(null);
       const invRes = await adminApi.getInventorySummary();
       setData(invRes);
+      cachedInventorySummary = invRes;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unable to reach server";
       setError(msg);
@@ -141,8 +152,14 @@ export default function AdminInventoryPage() {
       });
       const list = txRes?.transactions ?? txRes?.items ?? [];
       setTransactions(list);
-      setTxTotalCount(txRes?.pagination?.total ?? list.length);
-      setTxTotalPages(txRes?.pagination?.totalPages ?? 1);
+      const total = txRes?.pagination?.total ?? list.length;
+      const totalPages = txRes?.pagination?.totalPages ?? 1;
+      setTxTotalCount(total);
+      setTxTotalPages(totalPages);
+      if (pageToFetch === 1 && typeFilter === "ALL") {
+        cachedTransactions = list;
+        cachedTxPagination = { total, totalPages };
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load stock movements";
       setTxError(msg);
@@ -177,8 +194,14 @@ export default function AdminInventoryPage() {
     }
   };
 
-  const fetchAllData = async () => {
-    setLoading(true);
+  const fetchAllData = async (isManual = false) => {
+    if (isManual || !cachedInventorySummary) {
+      if (cachedInventorySummary) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+    }
     await Promise.all([
       fetchSummary(),
       fetchTransactions(1, historyFilterType),
@@ -187,6 +210,7 @@ export default function AdminInventoryPage() {
     ]);
     setTxPage(1);
     setLoading(false);
+    setIsRefreshing(false);
   };
 
   useEffect(() => {
@@ -513,12 +537,17 @@ export default function AdminInventoryPage() {
         action={
           <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
             <button
-              onClick={fetchAllData}
-              disabled={loading || txLoading}
+              onClick={() => {
+                clearApiCache();
+                cachedInventorySummary = null;
+                cachedTransactions = [];
+                fetchAllData(true);
+              }}
+              disabled={loading || txLoading || isRefreshing}
               title="Refresh live inventory data"
               className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 shadow-xs transition hover:border-rose-200 hover:text-[#E61C5D] active:scale-95 disabled:opacity-50"
             >
-              <RefreshCw className={`h-4 w-4 ${loading || txLoading ? "animate-spin text-[#E61C5D]" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${(loading || txLoading || isRefreshing) ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
             <button
               onClick={() => {
@@ -560,7 +589,7 @@ export default function AdminInventoryPage() {
             <span>Unable to sync live inventory counts: {error}</span>
           </div>
           <button
-            onClick={fetchAllData}
+            onClick={() => fetchAllData(true)}
             className="underline hover:text-amber-950 font-bold ml-4 shrink-0"
           >
             Retry

@@ -59,7 +59,6 @@ export function DashboardShell({ role, workspace, userName, userDetail, navigati
   const pathname = usePathname();
   const { user, isBackendOnline, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
   const displayName = user?.name || userName;
   const displayDetail =
@@ -70,13 +69,6 @@ export function DashboardShell({ role, workspace, userName, userDetail, navigati
       : user?.role === "SELLER"
       ? `Seller · ${user.village || user.district || "Field"}`
       : userDetail;
-
-  useEffect(() => {
-    const updateTime = () => setCurrentTime(new Date());
-    updateTime();
-    const timer = window.setInterval(updateTime, 30_000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   return (
     <main className="h-screen w-full overflow-hidden bg-[#FAF8F5] font-jakarta text-zinc-800">
