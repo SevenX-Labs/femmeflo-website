@@ -1850,19 +1850,19 @@ export default function AdminInventoryPage() {
 
       {/* Edit Available Stock Modal */}
       {editingLocation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-3xl border border-zinc-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
-              <div className="flex items-center gap-2.5">
-                <span className="rounded-xl bg-amber-50 p-2 text-amber-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4 backdrop-blur-xs overflow-y-auto">
+          <div className="w-full max-w-md rounded-2xl sm:rounded-3xl border border-zinc-100 bg-white p-4 sm:p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150 my-auto">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3 sm:pb-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-800">
                   <Edit3 className="h-5 w-5" />
                 </span>
                 <div>
-                  <h3 className="font-playfair text-lg font-bold text-zinc-950">
+                  <h3 className="font-playfair text-base sm:text-lg font-bold text-zinc-950">
                     Edit Available Stock
                   </h3>
                   <p className="text-xs text-zinc-600">
-                    Update current physical packet count for <span className="font-bold text-zinc-900">{editingLocation.name}</span>
+                    Update physical packet count for <span className="font-bold text-zinc-900">{editingLocation.name}</span>
                   </p>
                 </div>
               </div>
@@ -1870,12 +1870,13 @@ export default function AdminInventoryPage() {
                 type="button"
                 onClick={() => setEditingLocation(null)}
                 className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition cursor-pointer"
+                aria-label="Close modal"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleUpdateStockBalance} className="mt-5 space-y-4">
+            <form onSubmit={handleUpdateStockBalance} className="mt-4 sm:mt-5 space-y-4">
               {editStockError && (
                 <p className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-[#B4234D]">
                   {editStockError}
@@ -1896,19 +1897,24 @@ export default function AdminInventoryPage() {
 
               <div>
                 <label className="block text-xs font-bold text-zinc-800">
-                  New Available Stock Balance (packets) *
+                  New Available Stock Balance <span className="text-[#E61C5D]">*</span>
                 </label>
-                <input
-                  type="number"
-                  min="0"
-                  required
-                  value={editStockValue}
-                  onChange={(e) =>
-                    setEditStockValue(e.target.value === "" ? "" : Number(e.target.value))
-                  }
-                  placeholder="e.g. 50"
-                  className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                />
+                <div className="relative mt-1.5">
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={editStockValue}
+                    onChange={(e) =>
+                      setEditStockValue(e.target.value === "" ? "" : Number(e.target.value))
+                    }
+                    placeholder="e.g. 50"
+                    className="h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] pl-3 pr-14 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">
+                    packets
+                  </span>
+                </div>
                 <p className="mt-1 text-[11px] text-zinc-500">
                   Directly adjust available stock if physical count differs or stock is low.
                 </p>
@@ -1922,12 +1928,12 @@ export default function AdminInventoryPage() {
                   type="text"
                   value={editStockReason}
                   onChange={(e) => setEditStockReason(e.target.value)}
-                  placeholder="e.g. Physical inventory count discrepancy / low stock top-up"
-                  className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-xs font-medium outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                  placeholder="e.g. Physical count discrepancy / warehouse transfer buffer"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-xs font-medium outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 pt-3 border-t border-zinc-100">
                 <button
                   type="button"
                   onClick={() => setEditingLocation(null)}
@@ -1956,15 +1962,15 @@ export default function AdminInventoryPage() {
 
       {/* Inward Stock Modal */}
       {showInwardModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-3xl border border-zinc-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
-              <div className="flex items-center gap-2.5">
-                <span className="rounded-xl bg-emerald-50 p-2 text-[#156035]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4 backdrop-blur-xs overflow-y-auto">
+          <div className="w-full max-w-lg rounded-2xl sm:rounded-3xl border border-zinc-100 bg-white p-4 sm:p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150 my-auto">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3 sm:pb-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-[#156035]">
                   <PackagePlus className="h-5 w-5" />
                 </span>
                 <div>
-                  <h3 className="font-playfair text-lg font-bold text-zinc-950">
+                  <h3 className="font-playfair text-base sm:text-lg font-bold text-zinc-950">
                     Inward Stock to HQ
                   </h3>
                   <p className="text-xs text-zinc-600">
@@ -1975,13 +1981,14 @@ export default function AdminInventoryPage() {
               <button
                 type="button"
                 onClick={() => setShowInwardModal(false)}
-                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition"
+                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition cursor-pointer"
+                aria-label="Close modal"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleInwardStock} className="mt-5 space-y-4">
+            <form onSubmit={handleInwardStock} className="mt-4 sm:mt-5 space-y-4">
               {inwardError && (
                 <p className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-[#B4234D]">
                   {inwardError}
@@ -1996,7 +2003,9 @@ export default function AdminInventoryPage() {
               {inwardProducts.length > 0 ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-zinc-800">Products & Quantities *</label>
+                    <label className="block text-xs font-bold text-zinc-800">
+                      Products & Quantities <span className="text-[#E61C5D]">*</span>
+                    </label>
                     {inwardItems.length < inwardProducts.length && (
                       <button
                         type="button"
@@ -2004,89 +2013,130 @@ export default function AdminInventoryPage() {
                           const unused = inwardProducts.find((p) => !inwardItems.some((it) => it.productId === p.id));
                           if (unused) setInwardItems((prev) => [...prev, { productId: unused.id, quantity: 100 }]);
                         }}
-                        className="text-xs font-bold text-[#E61C5D] hover:text-[#c91550]"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-[#E61C5D] hover:text-[#c91550] transition cursor-pointer"
                       >
-                        + Add product
+                        <span>+ Add product</span>
                       </button>
                     )}
                   </div>
-                  {inwardItems.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <select
-                        value={item.productId}
-                        onChange={(e) => {
-                          const newItems = [...inwardItems];
-                          newItems[idx] = { ...newItems[idx], productId: e.target.value };
-                          setInwardItems(newItems);
-                        }}
-                        className="h-10 flex-1 rounded-lg border border-zinc-200 bg-[#FAF8F5] px-2 text-xs font-semibold outline-none focus:border-rose-300"
+
+                  {/* Scrollable list for products if list gets long */}
+                  <div className="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
+                    {inwardItems.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 sm:p-2 rounded-xl border border-zinc-200/80 bg-zinc-50/50 hover:bg-zinc-50 transition"
                       >
-                        {inwardProducts.map((p) => (
-                          <option key={p.id} value={p.id}>{p.name} {p.sku ? `(${p.sku})` : ""}</option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        min="1"
-                        required
-                        value={item.quantity}
-                        onChange={(e) => {
-                          const newItems = [...inwardItems];
-                          newItems[idx] = { ...newItems[idx], quantity: e.target.value === "" ? "" : Number(e.target.value) };
-                          setInwardItems(newItems);
-                        }}
-                        placeholder="Qty"
-                        className="h-10 w-24 rounded-lg border border-zinc-200 bg-[#FAF8F5] px-2 text-sm font-semibold outline-none focus:border-rose-300"
-                      />
-                      {inwardItems.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setInwardItems((prev) => prev.filter((_, i) => i !== idx))}
-                          className="rounded-lg p-1.5 text-zinc-400 hover:bg-rose-50 hover:text-[#E61C5D]"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <p className="text-[11px] text-zinc-500">
-                    Packets are incremented into the central Headquarters (HQ) reserve per product.
-                  </p>
+                        <div className="flex-1 min-w-0">
+                          <label className="block sm:hidden text-[11px] font-semibold text-zinc-500 mb-1">
+                            Product
+                          </label>
+                          <select
+                            value={item.productId}
+                            onChange={(e) => {
+                              const newItems = [...inwardItems];
+                              newItems[idx] = { ...newItems[idx], productId: e.target.value };
+                              setInwardItems(newItems);
+                            }}
+                            className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-semibold text-zinc-800 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition truncate"
+                          >
+                            {inwardProducts.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name} {p.sku ? `(${p.sku})` : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 sm:w-28">
+                            <label className="block sm:hidden text-[11px] font-semibold text-zinc-500 mb-1">
+                              Quantity
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                min="1"
+                                required
+                                value={item.quantity}
+                                onChange={(e) => {
+                                  const newItems = [...inwardItems];
+                                  newItems[idx] = { ...newItems[idx], quantity: e.target.value === "" ? "" : Number(e.target.value) };
+                                  setInwardItems(newItems);
+                                }}
+                                placeholder="Qty"
+                                className="h-10 w-full rounded-lg border border-zinc-200 bg-white pl-3 pr-10 text-xs sm:text-sm font-semibold text-zinc-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition"
+                              />
+                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-400 pointer-events-none">
+                                pkts
+                              </span>
+                            </div>
+                          </div>
+
+                          {inwardItems.length > 1 && (
+                            <div className="pt-5 sm:pt-0">
+                              <button
+                                type="button"
+                                onClick={() => setInwardItems((prev) => prev.filter((_, i) => i !== idx))}
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-400 hover:border-rose-200 hover:bg-rose-50 hover:text-[#E61C5D] transition cursor-pointer"
+                                title="Remove item"
+                                aria-label="Remove item"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="rounded-lg bg-zinc-50 p-2.5 border border-zinc-100 text-[11px] text-zinc-500 flex items-center justify-between">
+                    <span>Total Packets to Inward:</span>
+                    <span className="font-bold text-zinc-900">
+                      {inwardItems.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0).toLocaleString("en-IN")} pkts
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <div>
                   <label className="block text-xs font-bold text-zinc-800">
-                    Packet Quantity to Inward *
+                    Packet Quantity to Inward <span className="text-[#E61C5D]">*</span>
                   </label>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    value={inwardQty}
-                    onChange={(e) =>
-                      setInwardQty(e.target.value === "" ? "" : Number(e.target.value))
-                    }
-                    placeholder="e.g. 500"
-                    className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                  />
+                  <div className="relative mt-1.5">
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      value={inwardQty}
+                      onChange={(e) =>
+                        setInwardQty(e.target.value === "" ? "" : Number(e.target.value))
+                      }
+                      placeholder="e.g. 500"
+                      className="h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] pl-3 pr-12 text-sm font-semibold outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">
+                      pkts
+                    </span>
+                  </div>
                   <p className="mt-1 text-[11px] text-zinc-500">
                     Packets are incremented into the central Headquarters (HQ) reserve.
                   </p>
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 pt-3 border-t border-zinc-100">
                 <button
                   type="button"
                   onClick={() => setShowInwardModal(false)}
-                  className="h-10 rounded-xl px-4 text-xs font-bold text-zinc-600 hover:bg-zinc-100 transition"
+                  className="h-10 rounded-xl px-4 text-xs font-bold text-zinc-600 hover:bg-zinc-100 transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isInwardSubmitting}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#156035] px-5 text-xs font-bold text-white shadow-sm hover:bg-[#0f4e2b] disabled:opacity-50 transition"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#156035] px-5 text-xs font-bold text-white shadow-sm hover:bg-[#0f4e2b] disabled:opacity-50 transition cursor-pointer"
                 >
                   {isInwardSubmitting ? (
                     <>
@@ -2104,15 +2154,15 @@ export default function AdminInventoryPage() {
 
       {/* Add Regional Warehouse Modal */}
       {showWarehouseModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-3xl border border-zinc-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
-              <div className="flex items-center gap-2.5">
-                <span className="rounded-xl bg-rose-50 p-2 text-[#E61C5D]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4 backdrop-blur-xs overflow-y-auto">
+          <div className="w-full max-w-md rounded-2xl sm:rounded-3xl border border-zinc-100 bg-white p-4 sm:p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150 my-auto">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3 sm:pb-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-[#E61C5D]">
                   <Building2 className="h-5 w-5" />
                 </span>
                 <div>
-                  <h3 className="font-playfair text-lg font-bold text-zinc-950">
+                  <h3 className="font-playfair text-base sm:text-lg font-bold text-zinc-950">
                     Add Regional Warehouse
                   </h3>
                   <p className="text-xs text-zinc-600">Create a regional depot for buffer packet storage</p>
@@ -2121,13 +2171,14 @@ export default function AdminInventoryPage() {
               <button
                 type="button"
                 onClick={() => setShowWarehouseModal(false)}
-                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition"
+                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition cursor-pointer"
+                aria-label="Close modal"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateWarehouse} className="mt-5 space-y-4">
+            <form onSubmit={handleCreateWarehouse} className="mt-4 sm:mt-5 space-y-4">
               {warehouseError && (
                 <p className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-[#B4234D]">
                   {warehouseError}
@@ -2141,7 +2192,7 @@ export default function AdminInventoryPage() {
 
               <div>
                 <label className="block text-xs font-bold text-zinc-800">
-                  Warehouse / Depot Name *
+                  Warehouse / Depot Name <span className="text-[#E61C5D]">*</span>
                 </label>
                 <input
                   type="text"
@@ -2149,22 +2200,22 @@ export default function AdminInventoryPage() {
                   value={warehouseName}
                   onChange={(e) => setWarehouseName(e.target.value)}
                   placeholder="e.g. Thane Regional Depot"
-                  className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100 transition"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 pt-3 border-t border-zinc-100">
                 <button
                   type="button"
                   onClick={() => setShowWarehouseModal(false)}
-                  className="rounded-xl border border-zinc-200 px-4 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition"
+                  className="h-10 rounded-xl px-4 text-xs font-bold text-zinc-600 hover:bg-zinc-100 transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isWarehouseSubmitting}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#E61C5D] px-5 py-2.5 text-xs font-bold text-white shadow-[0_8px_20px_rgba(230,28,93,0.18)] hover:bg-[#c91550] disabled:opacity-50 transition"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#E61C5D] px-5 text-xs font-bold text-white shadow-[0_8px_20px_rgba(230,28,93,0.18)] hover:bg-[#c91550] disabled:opacity-50 transition cursor-pointer"
                 >
                   {isWarehouseSubmitting ? (
                     <>
