@@ -413,6 +413,12 @@ export const adminApi = {
     });
   },
 
+  async deleteWarehouse(locationId: string): Promise<{ success: boolean; message: string }> {
+    return apiRequest<{ success: boolean; message: string }>(`admin/inventory/warehouses/${locationId}`, {
+      method: "DELETE",
+    });
+  },
+
   async addReceipt(payload: StockReceiptPayload | StockReceiptMultiPayload): Promise<{ receipt: StockTransactionItem }> {
     return apiRequest<{ receipt: StockTransactionItem }>("admin/inventory/receipts", {
       method: "POST",
