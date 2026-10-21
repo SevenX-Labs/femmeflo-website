@@ -239,7 +239,7 @@ export async function apiRequest<T = unknown>(
       headers,
       body:
         body !== undefined
-          ? body instanceof FormData
+          ? body instanceof FormData || typeof body === "string"
             ? body
             : JSON.stringify(body)
           : undefined,

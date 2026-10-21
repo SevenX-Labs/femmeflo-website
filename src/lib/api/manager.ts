@@ -277,7 +277,7 @@ export const managerApi = {
   ): Promise<{ sale: SaleItem }> {
     return apiRequest<{ sale: SaleItem }>(`manager/sales/${id}`, {
       method: "PATCH",
-      body: JSON.stringify(payload),
+      body: payload,
     });
   },
 

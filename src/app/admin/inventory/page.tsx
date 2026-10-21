@@ -159,9 +159,14 @@ export default function AdminInventoryPage() {
     e.preventDefault();
     if (!editingLocation) return;
 
-    const num = Number(editStockValue);
-    if (isNaN(num) || num < 0) {
+    if (editStockValue === "" || editStockValue === null || editStockValue === undefined) {
       setEditStockError("Please enter a valid stock balance (0 or greater).");
+      return;
+    }
+
+    const num = Number(editStockValue);
+    if (isNaN(num) || num < 0 || !Number.isInteger(num)) {
+      setEditStockError("Please enter a valid integer stock balance (0 or greater).");
       return;
     }
 

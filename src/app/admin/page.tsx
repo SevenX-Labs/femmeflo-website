@@ -82,8 +82,45 @@ export default function AdminOverviewDashboard() {
         to: toDate || undefined,
       };
 
-      const res = await adminApi.getDashboard(activeFilters);
-      setData(res);
+      // Fetch base dashboard data and sales report with the selected date/hierarchy filters in parallel
+      const [dashRes, salesRes] = await Promise.all([
+        adminApi.getDashboard(activeFilters),
+        adminApi.getSalesReport({
+          state: selectedState || undefined,
+          district: selectedDistrict || undefined,
+          village: selectedVillage || undefined,
+          managerId: selectedManagerId || undefined,
+          sellerId: selectedSellerId || undefined,
+          from: fromDate ? `${fromDate}T00:00:00.000Z` : undefined,
+          to: toDate ? `${toDate}T23:59:59.999Z` : undefined,
+          status: "CONFIRMED",
+        }).catch(() => null),
+      ]);
+
+      if (salesRes?.summary && (fromDate || toDate || selectedState || selectedDistrict || selectedVillage || selectedManagerId || selectedSellerId)) {
+        // If date range or hierarchy filters are active, use exact filtered confirmed sales metrics
+        const netPaise = salesRes.summary.netSalesPaise || salesRes.summary.grossSalesPaise || 0;
+        const netRupees = salesRes.summary.netSalesRupees || salesRes.summary.grossSalesRupees || netPaise / 100;
+        const packetsSold = salesRes.summary.totalQuantitySold || 0;
+
+        // Calculate incentive on filtered sales
+        const filteredIncentivePaise = salesRes.items ? salesRes.items.reduce((acc, it) => acc + (it.incentiveAmountPaise || 0), 0) : 0;
+        const filteredIncentiveRupees = filteredIncentivePaise > 0 ? filteredIncentivePaise / 100 : (packetsSold * 5);
+
+        setData({
+          ...dashRes,
+          metrics: {
+            ...dashRes.metrics,
+            totalEarningsPaise: netPaise,
+            totalEarningsRupees: netRupees,
+            totalPacketsSold: packetsSold,
+            totalIncentivePaise: filteredIncentivePaise,
+            totalIncentiveRupees: filteredIncentiveRupees,
+          },
+        });
+      } else {
+        setData(dashRes);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Backend unavailable";
       setError(message);

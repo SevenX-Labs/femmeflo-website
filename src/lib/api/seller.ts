@@ -249,7 +249,7 @@ export const sellerApi = {
   ): Promise<{ sale: SaleItem }> {
     return apiRequest<{ sale: SaleItem }>(`seller/sales/${id}`, {
       method: "PATCH",
-      body: JSON.stringify(payload),
+      body: payload,
     });
   },
 

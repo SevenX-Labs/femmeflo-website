@@ -430,7 +430,7 @@ export const adminApi = {
       `admin/inventory/locations/${locationId}/balance`,
       {
         method: "PATCH",
-        body: JSON.stringify(payload),
+        body: payload,
       }
     );
   },
@@ -508,7 +508,7 @@ export const adminApi = {
   ): Promise<{ sale: SaleItem }> {
     return apiRequest<{ sale: SaleItem }>(`admin/sales/${id}`, {
       method: "PATCH",
-      body: JSON.stringify(payload),
+      body: payload,
     });
   },
 
