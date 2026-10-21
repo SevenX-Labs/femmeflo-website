@@ -178,22 +178,24 @@ export default function NewSellerSalePage() {
     setError("");
     setIsSubmitting(true);
 
+    const resolvedLines = validLines.map((li) => ({
+      productId: li.productId || (products[0] ? products[0].id : ""),
+      quantity: li.quantity,
+      unitPricePaise: Math.round(li.unitPrice * 100),
+    }));
+
     try {
-      if (validLines.length === 1 && products.length <= 1) {
+      if (resolvedLines.every((l) => Boolean(l.productId))) {
         await sellerApi.createSale({
           customerId: selectedCustomerId,
-          quantity: validLines[0].quantity,
-          unitPricePaise: validLines[0].unitPrice * 100,
+          items: resolvedLines,
           paymentMode: payment,
         });
       } else {
         await sellerApi.createSale({
           customerId: selectedCustomerId,
-          items: validLines.map((li) => ({
-            productId: li.productId,
-            quantity: li.quantity,
-            unitPricePaise: li.unitPrice * 100,
-          })),
+          quantity: resolvedLines[0].quantity,
+          unitPricePaise: resolvedLines[0].unitPricePaise,
           paymentMode: payment,
         });
       }
