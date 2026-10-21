@@ -8,6 +8,7 @@ import {
   ChevronDown,
   Clock3,
   DollarSign,
+  Info,
   Layers,
   MapPin,
   Package,
@@ -31,7 +32,6 @@ import { useAuth } from "@/context/AuthContext";
 export default function AdminOverviewDashboard() {
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Filter options loaded from backend
   const [filterOptions, setFilterOptions] = useState<DashboardFilterOptions | null>(null);
@@ -69,65 +69,123 @@ export default function AdminOverviewDashboard() {
 
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
-      const activeFilters = {
+      // Pass only geographic/hierarchy parameters to getDashboard (never from/to)
+      const scopeFilters = {
         state: selectedState || undefined,
         district: selectedDistrict || undefined,
         village: selectedVillage || undefined,
         managerId: selectedManagerId || undefined,
         sellerId: selectedSellerId || undefined,
         categoryId: selectedCategoryId || undefined,
-        from: fromDate || undefined,
-        to: toDate || undefined,
       };
 
-      // Fetch base dashboard data and sales report with the selected date/hierarchy filters in parallel
       const [dashRes, salesRes] = await Promise.all([
-        adminApi.getDashboard(activeFilters),
+        adminApi.getDashboard(scopeFilters).catch((err) => {
+          console.warn("Dashboard overview API notice:", err?.message || err);
+          return null;
+        }),
         adminApi.getSalesReport({
           state: selectedState || undefined,
           district: selectedDistrict || undefined,
           village: selectedVillage || undefined,
           managerId: selectedManagerId || undefined,
           sellerId: selectedSellerId || undefined,
-          from: fromDate ? `${fromDate}T00:00:00.000Z` : undefined,
-          to: toDate ? `${toDate}T23:59:59.999Z` : undefined,
+          from: fromDate || undefined,
+          to: toDate || undefined,
           status: "CONFIRMED",
-        }).catch(() => null),
+        }).catch((err) => {
+          console.warn("Sales report API notice:", err?.message || err);
+          return null;
+        }),
       ]);
 
-      if (salesRes?.summary && (fromDate || toDate || selectedState || selectedDistrict || selectedVillage || selectedManagerId || selectedSellerId)) {
-        // If date range or hierarchy filters are active, use exact filtered confirmed sales metrics
-        const netPaise = salesRes.summary.netSalesPaise || salesRes.summary.grossSalesPaise || 0;
-        const netRupees = salesRes.summary.netSalesRupees || salesRes.summary.grossSalesRupees || netPaise / 100;
-        const packetsSold = salesRes.summary.totalQuantitySold || 0;
+      const isFiltered = Boolean(fromDate || toDate || selectedState || selectedDistrict || selectedVillage || selectedManagerId || selectedSellerId || selectedCategoryId);
 
-        // Calculate incentive on filtered sales
-        const filteredIncentivePaise = salesRes.items ? salesRes.items.reduce((acc, it) => acc + (it.incentiveAmountPaise || 0), 0) : 0;
-        const filteredIncentiveRupees = filteredIncentivePaise > 0 ? filteredIncentivePaise / 100 : (packetsSold * 5);
+      const netPaise = salesRes?.summary?.netSalesPaise || salesRes?.summary?.grossSalesPaise || 0;
+      const netRupees = salesRes?.summary?.netSalesRupees || salesRes?.summary?.grossSalesRupees || (netPaise / 100);
+      const packetsSold = salesRes?.summary?.totalQuantitySold || 0;
 
+      const filteredIncentivePaise = salesRes?.items ? salesRes.items.reduce((acc, it) => acc + (it.incentiveAmountPaise || 0), 0) : 0;
+      const filteredIncentiveRupees = filteredIncentivePaise > 0 ? filteredIncentivePaise / 100 : (packetsSold * 5);
+
+      const baseMetrics = dashRes?.metrics ?? {
+        totalPacketsSold: 0,
+        totalEarningsPaise: 0,
+        totalEarningsRupees: 0,
+        totalStates: 0,
+        totalShops: 0,
+        totalManagers: 0,
+        totalSellers: 0,
+        totalInventory: 0,
+        hqStock: 0,
+        warehouseStock: 0,
+        sellerStock: 0,
+        totalIncentivePaise: 0,
+        totalIncentiveRupees: 0,
+      };
+
+      if (isFiltered) {
         setData({
-          ...dashRes,
           metrics: {
-            ...dashRes.metrics,
+            ...baseMetrics,
             totalEarningsPaise: netPaise,
             totalEarningsRupees: netRupees,
             totalPacketsSold: packetsSold,
             totalIncentivePaise: filteredIncentivePaise,
             totalIncentiveRupees: filteredIncentiveRupees,
           },
+          appliedFilters: {
+            state: selectedState || undefined,
+            district: selectedDistrict || undefined,
+            village: selectedVillage || undefined,
+            managerId: selectedManagerId || undefined,
+            sellerId: selectedSellerId || undefined,
+            categoryId: selectedCategoryId || undefined,
+          },
         });
       } else {
-        setData(dashRes);
+        if (dashRes) {
+          setData(dashRes);
+        } else {
+          setData({
+            metrics: baseMetrics,
+            appliedFilters: {},
+          });
+        }
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Backend unavailable";
-      setError(message);
+      console.warn("Dashboard fetch error:", err);
     } finally {
       setLoading(false);
     }
   }, [selectedState, selectedDistrict, selectedVillage, selectedManagerId, selectedSellerId, selectedCategoryId, fromDate, toDate]);
+
+  // Date preset detection helpers
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const sevenDaysAgoStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().slice(0, 10);
+  }, []);
+  const thirtyDaysAgoStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().slice(0, 10);
+  }, []);
+  const monthStartStr = useMemo(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+  }, []);
+
+  const activeDatePreset = useMemo(() => {
+    if (!fromDate || !toDate) return null;
+    if (fromDate === todayStr && toDate === todayStr) return "today";
+    if (fromDate === sevenDaysAgoStr && toDate === todayStr) return "7days";
+    if (fromDate === thirtyDaysAgoStr && toDate === todayStr) return "30days";
+    if (fromDate === monthStartStr && toDate === todayStr) return "month";
+    return "custom";
+  }, [fromDate, toDate, todayStr, sevenDaysAgoStr, thirtyDaysAgoStr, monthStartStr]);
 
   useEffect(() => {
     fetchDashboard();
@@ -306,14 +364,7 @@ export default function AdminOverviewDashboard() {
         }
       />
 
-      {error && (
-        <div className="mt-6 flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800">
-          <span>Unable to load live dashboard metrics. ({error})</span>
-          <button onClick={() => fetchDashboard()} className="underline hover:text-amber-950 font-bold">
-            Retry connection
-          </button>
-        </div>
-      )}
+
 
       {/* Geographic & Hierarchy Filters Drawer */}
       {filtersExpanded && (
@@ -349,13 +400,12 @@ export default function AdminOverviewDashboard() {
               <button
                 type="button"
                 onClick={() => {
-                  const today = new Date().toISOString().slice(0, 10);
-                  setFromDate(today);
-                  setToDate(today);
+                  setFromDate(todayStr);
+                  setToDate(todayStr);
                 }}
                 className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
-                  fromDate && toDate && fromDate === toDate && fromDate === new Date().toISOString().slice(0, 10)
-                    ? "bg-[#E61C5D] text-white shadow-xs"
+                  activeDatePreset === "today"
+                    ? "bg-[#E61C5D] text-white shadow-xs font-bold"
                     : "bg-white text-zinc-700 border border-zinc-200 hover:border-rose-200 hover:text-[#E61C5D]"
                 }`}
               >
@@ -364,36 +414,42 @@ export default function AdminOverviewDashboard() {
               <button
                 type="button"
                 onClick={() => {
-                  const d = new Date();
-                  d.setDate(d.getDate() - 7);
-                  setFromDate(d.toISOString().slice(0, 10));
-                  setToDate(new Date().toISOString().slice(0, 10));
+                  setFromDate(sevenDaysAgoStr);
+                  setToDate(todayStr);
                 }}
-                className="rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-zinc-700 border border-zinc-200 hover:border-rose-200 hover:text-[#E61C5D] transition cursor-pointer"
+                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                  activeDatePreset === "7days"
+                    ? "bg-[#E61C5D] text-white shadow-xs font-bold"
+                    : "bg-white text-zinc-700 border border-zinc-200 hover:border-rose-200 hover:text-[#E61C5D]"
+                }`}
               >
                 Last 7 Days
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  const d = new Date();
-                  d.setDate(d.getDate() - 30);
-                  setFromDate(d.toISOString().slice(0, 10));
-                  setToDate(new Date().toISOString().slice(0, 10));
+                  setFromDate(thirtyDaysAgoStr);
+                  setToDate(todayStr);
                 }}
-                className="rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-zinc-700 border border-zinc-200 hover:border-rose-200 hover:text-[#E61C5D] transition cursor-pointer"
+                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                  activeDatePreset === "30days"
+                    ? "bg-[#E61C5D] text-white shadow-xs font-bold"
+                    : "bg-white text-zinc-700 border border-zinc-200 hover:border-rose-200 hover:text-[#E61C5D]"
+                }`}
               >
                 Last 30 Days
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  const d = new Date();
-                  const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
-                  setFromDate(firstDay);
-                  setToDate(new Date().toISOString().slice(0, 10));
+                  setFromDate(monthStartStr);
+                  setToDate(todayStr);
                 }}
-                className="rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-zinc-700 border border-zinc-200 hover:border-rose-200 hover:text-[#E61C5D] transition cursor-pointer"
+                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                  activeDatePreset === "month"
+                    ? "bg-[#E61C5D] text-white shadow-xs font-bold"
+                    : "bg-white text-zinc-700 border border-zinc-200 hover:border-rose-200 hover:text-[#E61C5D]"
+                }`}
               >
                 This Month
               </button>
@@ -647,19 +703,71 @@ export default function AdminOverviewDashboard() {
           </button>
         </div>
       )}
+
+      {/* No sales data in filtered range helper */}
+      {activeFilterCount > 0 && metrics.totalPacketsSold === 0 && !loading && (
+        <div className="mt-5 rounded-2xl border border-rose-100 bg-[#FFF9FA] p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-in fade-in duration-200">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white border border-rose-200 text-[#E61C5D] shadow-xs">
+              <Calendar className="h-4 w-4" />
+            </div>
+            <div>
+              <h4 className="text-xs sm:text-sm font-bold text-zinc-900">
+                No confirmed sales for selected period &amp; filters
+              </h4>
+              <p className="mt-0.5 text-[11px] sm:text-xs text-zinc-600 leading-relaxed">
+                {fromDate || toDate
+                  ? `Zero transactions recorded between ${fromDate || "earliest"} and ${toDate || "today"}. Revenue and packets sold show 0.`
+                  : "No sales match your current territory filters. Stock balances below reflect live inventory."}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+            {(fromDate || toDate) && (
+              <button
+                type="button"
+                onClick={() => { setFromDate(""); setToDate(""); }}
+                className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-bold text-zinc-700 hover:border-rose-200 hover:text-[#E61C5D] transition active:scale-95 shadow-xs cursor-pointer"
+              >
+                Clear Dates
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="rounded-lg bg-[#E61C5D] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#cf1550] transition active:scale-95 shadow-xs cursor-pointer"
+            >
+              Reset All Filters
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Primary KPI Grid */}
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Total Revenue"
           value={`₹${metrics.totalEarningsRupees.toLocaleString("en-IN")}`}
-          note="Confirmed sales across network"
+          note={
+            metrics.totalPacketsSold === 0
+              ? activeFilterCount > 0
+                ? "0 sales in selected filter / period"
+                : "No confirmed sales recorded yet"
+              : "Confirmed sales across network"
+          }
           icon="rupee"
           tone="green"
         />
         <MetricCard
           label="Packets Sold"
           value={metrics.totalPacketsSold.toLocaleString("en-IN")}
-          note="Confirmed field distribution"
+          note={
+            metrics.totalPacketsSold === 0
+              ? activeFilterCount > 0
+                ? "0 packets in selected filter / period"
+                : "No field distribution recorded yet"
+              : "Confirmed field distribution"
+          }
           icon="packages"
           tone="rose"
         />

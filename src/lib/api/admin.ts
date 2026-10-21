@@ -51,8 +51,6 @@ export const adminApi = {
     managerId?: string;
     sellerId?: string;
     categoryId?: string;
-    from?: string;
-    to?: string;
   }): Promise<AdminDashboardData> {
     return apiRequest<AdminDashboardData>("admin/dashboard", {
       method: "GET",
