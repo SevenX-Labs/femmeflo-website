@@ -52,6 +52,7 @@ export default function NewSellerSalePage() {
   const [payment, setPayment] = useState<"CASH" | "BANK" | "PENDING">("CASH");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [requestKey] = useState(() => "sale_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9));
   const [error, setError] = useState("");
 
   const grandTotal = useMemo(
@@ -167,6 +168,7 @@ export default function NewSellerSalePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting || submitted) return;
     if (hasStockError) return;
 
     const validLines = lineItems.filter((li) => li.productId && li.quantity > 0);
@@ -190,6 +192,7 @@ export default function NewSellerSalePage() {
           customerId: selectedCustomerId,
           items: resolvedLines,
           paymentMode: payment,
+          requestKey,
         });
       } else {
         await sellerApi.createSale({
@@ -197,6 +200,7 @@ export default function NewSellerSalePage() {
           quantity: resolvedLines[0].quantity,
           unitPricePaise: resolvedLines[0].unitPricePaise,
           paymentMode: payment,
+          requestKey,
         });
       }
 
@@ -210,7 +214,6 @@ export default function NewSellerSalePage() {
       } else {
         setError("Failed to record sale.");
       }
-    } finally {
       setIsSubmitting(false);
     }
   };
