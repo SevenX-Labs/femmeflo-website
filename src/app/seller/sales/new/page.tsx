@@ -68,7 +68,7 @@ export default function NewSellerSalePage() {
     return lineItems.some((li) => {
       const product = products.find((p) => p.id === li.productId);
       if (!product) return false;
-      return li.unitPrice * 100 < product.minimumPricePaise;
+      return li.unitPrice * 100 < product.basePricePaise;
     });
   }, [lineItems, products]);
 
@@ -283,7 +283,7 @@ export default function NewSellerSalePage() {
             {lineItems.map((li, idx) => {
               const product = products.find((p) => p.id === li.productId);
               const available = getAvailableStock(li.productId);
-              const belowMin = product ? li.unitPrice * 100 < product.minimumPricePaise : false;
+              const belowBase = product ? li.unitPrice * 100 < product.basePricePaise : false;
 
               return (
                 <div key={li.key} className="rounded-xl border border-zinc-200 bg-[#FAFAFA] p-4 space-y-3">
@@ -350,9 +350,9 @@ export default function NewSellerSalePage() {
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-zinc-500">
                       Available: <strong className="text-[#156035]">{available}</strong> pkts
-                      {belowMin && product && (
+                      {belowBase && product && (
                         <span className="ml-2 text-amber-600">
-                          (min ₹{product.minimumPricePaise / 100}/pkt)
+                          (base ₹{product.basePricePaise / 100}/pkt)
                         </span>
                       )}
                     </span>
@@ -404,7 +404,7 @@ export default function NewSellerSalePage() {
             <div className="flex gap-3 rounded-xl bg-amber-50 p-4 text-xs leading-relaxed text-amber-700">
               <ShieldAlert className="h-4 w-4 shrink-0" />
               <span>
-                One or more products are priced below their minimum price. This sale will be submitted for Super Admin approval before stock is deducted and incentives are awarded.
+                One or more products are priced below their base price. This sale will be submitted for Super Admin approval before stock is deducted and incentives are awarded.
               </span>
             </div>
           )}

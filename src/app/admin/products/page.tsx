@@ -19,7 +19,6 @@ export default function AdminProductsPage() {
   const [formName, setFormName] = useState("");
   const [formSku, setFormSku] = useState("");
   const [formBasePrice, setFormBasePrice] = useState<number | string>("");
-  const [formMinPrice, setFormMinPrice] = useState<number | string>("");
   const [formError, setFormError] = useState("");
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [notice, setNotice] = useState("");
@@ -78,7 +77,6 @@ export default function AdminProductsPage() {
     setFormName("");
     setFormSku("");
     setFormBasePrice("");
-    setFormMinPrice("");
     setFormError("");
     setShowModal(true);
   };
@@ -88,7 +86,6 @@ export default function AdminProductsPage() {
     setFormName(product.name);
     setFormSku(product.sku || "");
     setFormBasePrice(product.basePricePaise / 100);
-    setFormMinPrice(product.minimumPricePaise / 100);
     setFormError("");
     setShowModal(true);
   };
@@ -100,29 +97,28 @@ export default function AdminProductsPage() {
     if (!name) { setFormError("Product name is required."); return; }
 
     const basePrice = Number(formBasePrice);
-    const minPrice = Number(formMinPrice);
     if (!basePrice || basePrice <= 0) { setFormError("Base price must be positive."); return; }
-    if (!minPrice || minPrice <= 0) { setFormError("Minimum price must be positive."); return; }
-    if (minPrice > basePrice) { setFormError("Minimum price cannot exceed base price."); return; }
 
     setFormSubmitting(true);
     setFormError("");
+
+    const pricePaise = Math.round(basePrice * 100);
 
     try {
       if (editingProduct) {
         await adminApi.updateProduct(editingProduct.id, {
           name,
           sku: formSku.trim() || null,
-          basePricePaise: Math.round(basePrice * 100),
-          minimumPricePaise: Math.round(minPrice * 100),
+          basePricePaise: pricePaise,
+          minimumPricePaise: pricePaise,
         });
         setNotice(`Product "${name}" updated.`);
       } else {
         await adminApi.createProduct({
           name,
           sku: formSku.trim() || undefined,
-          basePricePaise: Math.round(basePrice * 100),
-          minimumPricePaise: Math.round(minPrice * 100),
+          basePricePaise: pricePaise,
+          minimumPricePaise: pricePaise,
         });
         setNotice(`Product "${name}" created.`);
       }
@@ -166,7 +162,7 @@ export default function AdminProductsPage() {
         <PageHeading
           eyebrow="Product Catalog"
           title="Products"
-          description="Manage the product catalog with pricing and minimum price thresholds for approval workflows."
+          description="Manage the product catalog and base pricing. Sales entered below base price require Super Admin approval."
           action={
             <div className="flex items-center gap-3">
               <button
@@ -220,7 +216,6 @@ export default function AdminProductsPage() {
                 <th className="px-5 py-3">Product</th>
                 <th className="px-5 py-3">SKU</th>
                 <th className="px-5 py-3">Base Price</th>
-                <th className="px-5 py-3">Min Price</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Actions</th>
               </tr>
@@ -238,7 +233,6 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="px-5 py-4 text-xs text-zinc-500 font-mono">{p.sku || "—"}</td>
                   <td className="px-5 py-4 font-semibold">₹{(p.basePricePaise / 100).toFixed(0)}</td>
-                  <td className="px-5 py-4 font-semibold text-amber-700">₹{(p.minimumPricePaise / 100).toFixed(0)}</td>
                   <td className="px-5 py-4">
                     <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
                       p.active ? "bg-emerald-50 text-[#157347]" : "bg-zinc-100 text-zinc-500"
@@ -348,7 +342,7 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div>
                 <label className="block text-xs font-bold text-zinc-700">
                   Base Price (₹) *
                   <input
@@ -362,22 +356,9 @@ export default function AdminProductsPage() {
                     className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300"
                   />
                 </label>
-                <label className="block text-xs font-bold text-zinc-700">
-                  Minimum Price (₹) *
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    required
-                    value={formMinPrice}
-                    onChange={(e) => setFormMinPrice(e.target.value === "" ? "" : Number(e.target.value))}
-                    placeholder="20"
-                    className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300"
-                  />
-                </label>
               </div>
               <p className="text-[11px] text-zinc-500">
-                Sales below the minimum price require Super Admin approval before stock is deducted.
+                Sales recorded below this base price require Super Admin approval before stock is deducted.
               </p>
 
               <div className="flex items-center justify-end gap-3 pt-2">
