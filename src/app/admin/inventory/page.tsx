@@ -1229,7 +1229,7 @@ export default function AdminInventoryPage() {
                         >
                           Transfer <ArrowRight className="h-3 w-3" />
                         </Link>
-                        {isWarehouse && (
+                        {!isHQ && (
                           <button
                             type="button"
                             onClick={() => {
@@ -1341,7 +1341,7 @@ export default function AdminInventoryPage() {
                             >
                               Transfer <ArrowRight className="h-3 w-3" />
                             </Link>
-                            {isWarehouse && (
+                            {!isHQ && (
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1966,7 +1966,7 @@ export default function AdminInventoryPage() {
           </div>
         </div>
       )}
-      {/* Delete Warehouse Modal */}
+      {/* Delete Location Modal (Warehouses & Field Officer Stock) */}
       {deletingLocation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4 backdrop-blur-xs overflow-y-auto">
           <div className="w-full max-w-md rounded-2xl sm:rounded-3xl border border-zinc-100 bg-white p-5 sm:p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150 my-auto">
@@ -1976,8 +1976,12 @@ export default function AdminInventoryPage() {
                   <Trash2 className="h-5 w-5" />
                 </span>
                 <div>
-                  <h3 className="text-base font-bold text-zinc-950">Delete Warehouse</h3>
-                  <p className="text-xs text-zinc-500">Remove regional depot from active network</p>
+                  <h3 className="text-base font-bold text-zinc-950">
+                    {deletingLocation.type === "SELLER" ? "Delete Field Officer Stock" : "Delete Regional Warehouse"}
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    {deletingLocation.type === "SELLER" ? "Remove officer inventory location from active ledger" : "Remove regional depot from active network"}
+                  </p>
                 </div>
               </div>
               <button
@@ -2010,8 +2014,18 @@ export default function AdminInventoryPage() {
             <div className="mt-4 space-y-4">
               <div className="rounded-xl bg-zinc-50 p-3.5 border border-zinc-200/80 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-zinc-600">Warehouse Name:</span>
+                  <span className="font-bold text-zinc-600">
+                    {deletingLocation.type === "SELLER" ? "Officer / Stock Name:" : "Warehouse Name:"}
+                  </span>
                   <span className="font-extrabold text-zinc-900 text-sm">{deletingLocation.name}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="font-bold text-zinc-600">Role / Type:</span>
+                  <span className={`inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-full text-[10px] ${
+                    deletingLocation.type === "SELLER" ? "bg-rose-50 text-[#E61C5D]" : "bg-amber-50 text-amber-800"
+                  }`}>
+                    {deletingLocation.type === "SELLER" ? "Field Officer" : "Regional Depot"}
+                  </span>
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <span className="font-bold text-zinc-600">Location ID:</span>
@@ -2030,7 +2044,7 @@ export default function AdminInventoryPage() {
                   <div className="flex items-start gap-2">
                     <Info className="h-4 w-4 shrink-0 text-amber-700 mt-0.5" />
                     <p className="leading-relaxed">
-                      This warehouse currently holds <strong>{deletingLocation.balance.toLocaleString("en-IN")} packets</strong>.
+                      This location currently holds <strong>{deletingLocation.balance.toLocaleString("en-IN")} packets</strong>.
                       To protect physical inventory records, please reset stock to 0 or transfer packets before deleting.
                     </p>
                   </div>
@@ -2042,7 +2056,7 @@ export default function AdminInventoryPage() {
                         setDeletingLocation(null);
                         setEditingLocation(loc);
                         setEditStockValue(0);
-                        setEditStockReason(`Reset stock to 0 before deleting warehouse "${loc.name}"`);
+                        setEditStockReason(`Reset stock to 0 before deleting "${loc.name}"`);
                         setEditStockError(null);
                         setEditStockNotice(null);
                       }}
@@ -2061,7 +2075,7 @@ export default function AdminInventoryPage() {
                 </div>
               ) : (
                 <p className="text-xs text-zinc-600 leading-relaxed">
-                  Are you sure you want to permanently delete this warehouse? If this warehouse was created by mistake, deleting it will remove it from all warehouse lists and drop-down selectors immediately.
+                  Are you sure you want to permanently delete this {deletingLocation.type === "SELLER" ? "field officer stock location" : "warehouse"}? If created by mistake, deleting it will remove it from the inventory ledger and drop-downs immediately.
                 </p>
               )}
 
@@ -2091,7 +2105,9 @@ export default function AdminInventoryPage() {
                   ) : (
                     <>
                       <Trash2 className="h-3.5 w-3.5" />
-                      <span>Delete Warehouse</span>
+                      <span>
+                        {deletingLocation.type === "SELLER" ? "Delete Officer Stock" : "Delete Warehouse"}
+                      </span>
                     </>
                   )}
                 </button>
