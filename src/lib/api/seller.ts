@@ -217,6 +217,7 @@ export const sellerApi = {
     return apiRequest<{ sale: SaleItem }>("seller/sales", {
       method: "POST",
       body: payload,
+      timeoutMs: 45000,
     });
   },
 
