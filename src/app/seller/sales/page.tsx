@@ -21,6 +21,7 @@ import {
 import { DashboardShell, PageHeading, SectionCard } from "@/components/management/DashboardShell";
 import { sellerNavigation } from "@/components/management/navigation";
 import { sellerApi } from "@/lib/api/seller";
+import { clearApiCache } from "@/lib/api/client";
 import type { SaleItem } from "@/lib/api/types";
 import dynamic from "next/dynamic";
 const SaleDetailModal = dynamic(() => import("@/components/management/SaleDetailModal").then(m => ({ default: m.SaleDetailModal })));
@@ -36,15 +37,23 @@ export default function SellerSalesPage() {
   const [activeTab, setActiveTab] = useState<StatusTab>("ALL");
   const [sales, setSales] = useState<SaleItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0, totalPages: 1 });
   const [isPending, startTransition] = useTransition();
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
 
-  const loadSales = async (tab = activeTab, pageNum = page, searchQuery = search) => {
-    setLoading(true);
+  const loadSales = async (tab = activeTab, pageNum = page, searchQuery = search, isManual = false) => {
+    if (isManual) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     try {
+      if (isManual) {
+        clearApiCache("seller/sales");
+      }
       const res = await sellerApi.listSales({
         page: pageNum,
         pageSize: 20,
@@ -59,9 +68,10 @@ export default function SellerSalesPage() {
       }
     } catch (err) {
       console.error("Failed to load seller sales:", err);
-      setSales([]);
+      if (!isManual) setSales([]);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -95,12 +105,12 @@ export default function SellerSalesPage() {
         action={
           <div className="flex items-center gap-3">
             <button
-              onClick={() => loadSales(activeTab, page, search)}
-              disabled={loading}
+              onClick={() => loadSales(activeTab, page, search, true)}
+              disabled={loading || isRefreshing}
               title="Refresh sales list"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D]"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-900 transition hover:border-rose-200 hover:text-[#E61C5D] disabled:opacity-50 shadow-xs cursor-pointer"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-[#E61C5D]" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${(loading || isRefreshing) ? "animate-spin text-[#E61C5D]" : ""}`} />
             </button>
             <Link
               href="/seller/sales/new"
