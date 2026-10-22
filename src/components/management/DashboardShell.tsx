@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { BarChart3, Bell, Route, ChevronDown, CircleUserRound, ClipboardCheck, FileText, IndianRupee, LayoutDashboard, Menu, Package, PackageCheck, ReceiptIndianRupee, ScrollText, Settings, ShoppingBag, Store, Tags, TrendingUp, Truck, Users, X } from "lucide-react";
+import { ArrowUpRight, BarChart3, Bell, Route, ChevronDown, CircleUserRound, ClipboardCheck, FileText, IndianRupee, LayoutDashboard, Menu, Package, PackageCheck, ReceiptIndianRupee, ScrollText, Settings, ShoppingBag, Store, Tags, TrendingUp, Truck, Users, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -55,10 +55,23 @@ type DashboardShellProps = {
   children: React.ReactNode;
 };
 
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { NotificationToasts } from "@/components/notifications/NotificationToasts";
+import { webNotificationService } from "@/lib/notifications/webNotifications";
+
 export function DashboardShell({ role, workspace, userName, userDetail, navigation, children }: DashboardShellProps) {
   const pathname = usePathname();
   const { user, isBackendOnline, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    setUnreadCount(webNotificationService.getUnreadCount(role));
+    const unsubscribe = webNotificationService.subscribe(() => {
+      setUnreadCount(webNotificationService.getUnreadCount(role));
+    });
+    return unsubscribe;
+  }, [role]);
 
   const displayName = user?.name || userName;
   const displayDetail =
@@ -87,7 +100,28 @@ export function DashboardShell({ role, workspace, userName, userDetail, navigati
             {navigation.map((item) => {
               const Icon = navigationIconMap[item.icon];
               const active = pathname === item.href || (item.href !== "/admin" && item.href !== "/manager" && item.href !== "/seller" && pathname.startsWith(`${item.href}/`));
-              return <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} aria-current={active ? "page" : undefined} className={`group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-rose-300 ${active ? "bg-rose-50 text-[#E61C5D]" : "text-zinc-800 hover:bg-rose-50/60 hover:text-[#156035]"}`}><Icon className="h-4.5 w-4.5 transition-transform group-hover:scale-105" />{item.label}{active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E61C5D]" />}</Link>;
+              const isNotificationsItem = item.icon === "notifications";
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMenuOpen(false)}
+                  aria-current={active ? "page" : undefined}
+                  className={`group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-rose-300 ${
+                    active ? "bg-rose-50 text-[#E61C5D]" : "text-zinc-800 hover:bg-rose-50/60 hover:text-[#156035]"
+                  }`}
+                >
+                  <Icon className="h-4.5 w-4.5 transition-transform group-hover:scale-105" />
+                  <span className="truncate">{item.label}</span>
+                  {isNotificationsItem && unreadCount > 0 ? (
+                    <span className="ml-auto rounded-full bg-[#E61C5D] px-1.5 py-0.5 text-[10px] font-bold text-white shadow-xs">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  ) : (
+                    active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E61C5D]" />
+                  )}
+                </Link>
+              );
             })}
           </nav>
           <div className="mt-auto pt-6">
@@ -108,24 +142,118 @@ export function DashboardShell({ role, workspace, userName, userDetail, navigati
         </aside>
         {menuOpen && <button onClick={() => setMenuOpen(false)} className="fixed inset-0 z-30 bg-zinc-900/20 lg:hidden" aria-label="Close navigation overlay" />}
         <section className="relative min-w-0 flex-1 h-full overflow-y-auto">
+          {/* Mobile Top Bar */}
           <div className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-rose-100/80 bg-white/90 px-4 backdrop-blur-md lg:hidden">
             <div className="flex items-center gap-2.5">
               <button onClick={() => setMenuOpen(true)} className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-100 bg-white text-[#E61C5D] shadow-xs transition hover:bg-rose-50" aria-label="Open workspace navigation"><Menu className="h-5 w-5" /></button>
               <span className="text-xs font-bold text-zinc-800">{workspace}</span>
             </div>
-            
+            <NotificationBell role={role} />
           </div>
+
+          {/* Desktop Top Header */}
+          <div className="hidden lg:flex sticky top-0 z-20 h-14 items-center justify-between border-b border-rose-100/60 bg-[#FAF8F5]/90 px-8 backdrop-blur-md">
+            <div className="flex items-center gap-2 text-xs font-semibold text-zinc-500">
+              <span className="font-bold text-zinc-800">{workspace}</span>
+              <span>/</span>
+              <span className="text-[#E61C5D] font-bold">
+                {navigation.find((n) => n.href === pathname || (n.href !== "/admin" && n.href !== "/manager" && n.href !== "/seller" && pathname.startsWith(`${n.href}/`)))?.label || "Workspace"}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <NotificationBell role={role} />
+            </div>
+          </div>
+
           <div className="mx-auto max-w-360 px-3.5 py-5 sm:px-6 lg:px-10 lg:py-10">{children}</div>
+          <NotificationToasts role={role} />
         </section>
       </div>
     </main>
   );
 }
 
-export function MetricCard({ label, value, note, icon, tone = "rose" }: { label: string; value: string | number; note: string; icon: MetricIcon; tone?: "rose" | "green" | "amber" }) {
+export function MetricCard({
+  label,
+  value,
+  note,
+  icon,
+  tone = "rose",
+  href,
+  onClick,
+}: {
+  label: string;
+  value: string | number;
+  note: string;
+  icon: MetricIcon;
+  tone?: "rose" | "green" | "amber";
+  href?: string;
+  onClick?: () => void;
+}) {
   const Icon = metricIconMap[icon];
-  const toneClass = tone === "green" ? "bg-emerald-50 text-[#156035]" : tone === "amber" ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-[#E61C5D]";
-  return <div className="rounded-2xl border border-rose-100 bg-white p-5 shadow-[0_8px_30px_rgba(104,48,66,0.04)]"><div className="flex items-start justify-between"><p className="text-xs font-semibold text-zinc-800">{label}</p><span className={`rounded-xl p-2 ${toneClass}`}><Icon className="h-4 w-4" /></span></div><p className="mt-4 text-3xl font-bold font-sans tracking-tight text-zinc-900">{value}</p><p className="mt-1 text-xs text-zinc-700">{note}</p></div>;
+  const toneClass =
+    tone === "green"
+      ? "bg-emerald-50 text-[#156035]"
+      : tone === "amber"
+      ? "bg-amber-50 text-amber-600"
+      : "bg-rose-50 text-[#E61C5D]";
+
+  const content = (
+    <>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <p className="text-xs font-semibold text-zinc-800 truncate">{label}</p>
+          {(href || onClick) && (
+            <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-zinc-400 opacity-60 group-hover:opacity-100 group-hover:text-[#E61C5D] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200" />
+          )}
+        </div>
+        <span
+          className={`rounded-xl p-2 shrink-0 ${toneClass} group-hover:scale-105 transition-transform duration-200`}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <p className="mt-4 text-3xl font-bold font-sans tracking-tight text-zinc-900 group-hover:text-[#156035] transition-colors duration-200">
+        {value}
+      </p>
+      <div className="mt-1 flex items-center justify-between gap-2">
+        <p className="text-xs text-zinc-700 truncate">{note}</p>
+        {(href || onClick) && (
+          <span className="text-[11px] font-bold text-[#E61C5D] opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
+            View &rarr;
+          </span>
+        )}
+      </div>
+    </>
+  );
+
+  const baseClasses =
+    "rounded-2xl border border-rose-100 bg-white p-5 shadow-[0_8px_30px_rgba(104,48,66,0.04)]";
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={`${baseClasses} group block transition-all duration-200 hover:-translate-y-1 hover:border-rose-300 hover:shadow-[0_12px_32px_rgba(104,48,66,0.09)] cursor-pointer active:translate-y-0`}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${baseClasses} group text-left w-full transition-all duration-200 hover:-translate-y-1 hover:border-rose-300 hover:shadow-[0_12px_32px_rgba(104,48,66,0.09)] cursor-pointer active:translate-y-0`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return <div className={baseClasses}>{content}</div>;
 }
 
 export function PageHeading({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: React.ReactNode }) {

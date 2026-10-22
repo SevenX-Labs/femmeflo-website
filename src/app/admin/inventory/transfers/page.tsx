@@ -7,6 +7,7 @@ import { DashboardShell, PageHeading, SectionCard } from "@/components/managemen
 import { adminNavigation } from "@/components/management/navigation";
 import { adminApi } from "@/lib/api/admin";
 import type { StockTransactionItem, WarehouseItem } from "@/lib/api/types";
+import { webNotificationService } from "@/lib/notifications/webNotifications";
 
 interface ProductOption {
   id: string;
@@ -128,6 +129,20 @@ export default function TransfersPage() {
 
         const totalQty = validItems.reduce((s, it) => s + Number(it.quantity), 0);
         setNotice(`Successfully transferred ${totalQty} packets from ${selectedSource?.name || "source"} to ${selectedDestination?.name || "destination"}.`);
+        webNotificationService.addNotification({
+          recipientRole: "SUPER_ADMIN",
+          title: "Stock Transfer Completed",
+          message: `Transferred ${totalQty} packets from ${selectedSource?.name || "Source"} to ${selectedDestination?.name || "Destination"}.`,
+          category: "INVENTORY",
+          kind: "STOCK_TRANSFERRED",
+          link: "/admin/inventory/transfers",
+          metadata: {
+            source: selectedSource?.name,
+            destination: selectedDestination?.name,
+            totalQty,
+            itemCount: validItems.length,
+          },
+        });
       } else {
         const numQty = Number(quantity);
         if (!numQty || numQty <= 0 || !Number.isInteger(numQty)) {
@@ -148,6 +163,19 @@ export default function TransfersPage() {
         });
 
         setNotice(`Successfully recorded transfer of ${numQty} packets from ${selectedSource?.name || "source"} to ${selectedDestination?.name || "destination"}.`);
+        webNotificationService.addNotification({
+          recipientRole: "SUPER_ADMIN",
+          title: "Stock Transfer Completed",
+          message: `Transferred ${numQty} packets from ${selectedSource?.name || "Source"} to ${selectedDestination?.name || "Destination"}.`,
+          category: "INVENTORY",
+          kind: "STOCK_TRANSFERRED",
+          link: "/admin/inventory/transfers",
+          metadata: {
+            source: selectedSource?.name,
+            destination: selectedDestination?.name,
+            totalQty: numQty,
+          },
+        });
       }
 
       await loadData();

@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import { sellerApi } from "@/lib/api/seller";
 import type { CustomerItem, Shift, ShiftVisit } from "@/lib/api/types";
+import { webNotificationService } from "@/lib/notifications/webNotifications";
 
 function getCurrentCoordinates(): Promise<{ latitude: number; longitude: number }> {
   return new Promise((resolve, reject) => {
@@ -181,6 +182,14 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
       });
       setShift(res.shift);
       setActionSuccess("Shift started! Location and time captured.");
+      webNotificationService.addNotification({
+        recipientRole: "SELLER",
+        title: "Field Shift Started",
+        message: "Duty shift active. Location logged and timer running.",
+        category: "SHIFTS",
+        kind: "SHIFT_STARTED",
+        link: "/seller/shifts",
+      });
       if (onShiftChange) onShiftChange(res.shift);
       setTimeout(() => setActionSuccess(null), 3000);
     } catch (err: unknown) {
@@ -224,6 +233,15 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
       });
       setShowCheckInModal(false);
       setActionSuccess(`Check-in recorded at ${shop}! Timer started.`);
+      webNotificationService.addNotification({
+        recipientRole: "SELLER",
+        title: "Shop Check-in Recorded",
+        message: `Checked in at "${shop}". Store visit timer running.`,
+        category: "SHIFTS",
+        kind: "VISIT_CHECKIN",
+        link: "/seller/shifts",
+        metadata: { shopName: shop },
+      });
       await fetchCurrentShift();
       setTimeout(() => setActionSuccess(null), 3500);
     } catch (err: unknown) {
@@ -258,6 +276,15 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
         ? `${visitData.durationMins.toFixed(1)} mins`
         : formatDuration(activeShopElapsedSeconds);
       setActionSuccess(res.message || `Checked out from ${activeVisit.shopName}! Time spent: ${durationDisplay}`);
+      webNotificationService.addNotification({
+        recipientRole: "SELLER",
+        title: "Shop Check-out Recorded",
+        message: `Checked out from "${activeVisit.shopName}". Time spent: ${durationDisplay}.`,
+        category: "SHIFTS",
+        kind: "VISIT_CHECKOUT",
+        link: "/seller/shifts",
+        metadata: { shopName: activeVisit.shopName, duration: durationDisplay },
+      });
       await fetchCurrentShift();
       setTimeout(() => setActionSuccess(null), 4000);
     } catch (err: unknown) {
@@ -281,6 +308,15 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
       setShift(null);
       if (onShiftChange) onShiftChange(null);
       setActionSuccess(`Shift ended! Total route distance: ${res.shift.totalDistanceKm} km.`);
+      webNotificationService.addNotification({
+        recipientRole: "SELLER",
+        title: "Field Shift Ended",
+        message: `Duty shift completed. Total route distance covered: ${res.shift.totalDistanceKm || 0} km.`,
+        category: "SHIFTS",
+        kind: "SHIFT_ENDED",
+        link: "/seller/shifts",
+        metadata: { totalDistanceKm: res.shift.totalDistanceKm },
+      });
       setTimeout(() => setActionSuccess(null), 5000);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to end shift.";

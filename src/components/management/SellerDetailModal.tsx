@@ -27,6 +27,7 @@ import { adminApi } from "@/lib/api/admin";
 import { managerApi } from "@/lib/api/manager";
 import { ApiError } from "@/lib/api/client";
 import type { SellerItem, ManagerItem } from "@/lib/api/types";
+import { webNotificationService } from "@/lib/notifications/webNotifications";
 import {
   validateMobileNumber,
   validateEmail,
@@ -218,6 +219,19 @@ export function SellerDetailModal({
       populateForm(updatedSeller);
       setSaveSuccess(true);
       setIsEditing(false);
+
+      webNotificationService.addNotification({
+        recipientRole: role === "Super Admin" ? "SUPER_ADMIN" : "MANAGER",
+        title: "Officer Profile Updated",
+        message: `Profile details for "${updatedSeller.name}" have been updated.`,
+        category: "OFFICERS",
+        kind: "OFFICER_UPDATED",
+        link: role === "Super Admin" ? "/admin/sellers" : "/manager/sellers",
+        metadata: {
+          sellerId: updatedSeller.id,
+          name: updatedSeller.name,
+        },
+      });
 
       if (onSellerUpdated) {
         onSellerUpdated(updatedSeller);

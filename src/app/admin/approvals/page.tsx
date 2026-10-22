@@ -8,6 +8,7 @@ import { adminNavigation } from "@/components/management/navigation";
 import { adminApi } from "@/lib/api/admin";
 import type { SaleItem } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
+import { webNotificationService } from "@/lib/notifications/webNotifications";
 
 type ApprovalStatus = "Pending" | "Approved" | "Rejected";
 type Filter = "All" | ApprovalStatus;
@@ -45,6 +46,19 @@ export default function AdminApprovalsPage() {
         prev.map((s) => (s.id === sale.id ? { ...s, status: "CONFIRMED" } : s))
       );
       setNotice(`Sale for ${sale.customer?.shopName || sale.id} approved.`);
+      webNotificationService.addNotification({
+        recipientRole: "SUPER_ADMIN",
+        title: "Sale Approved",
+        message: `Special price sale for "${sale.customer?.shopName || "Customer"}" (₹${(sale.totalPaise / 100).toFixed(0)}) has been approved.`,
+        category: "APPROVALS",
+        kind: "SALE_APPROVED",
+        link: "/admin/approvals",
+        metadata: {
+          saleId: sale.id,
+          customer: sale.customer?.shopName,
+          total: sale.totalPaise / 100,
+        },
+      });
     } catch (err: unknown) {
       setNotice(err instanceof Error ? err.message : "Unable to approve sale.");
     } finally {
@@ -62,6 +76,18 @@ export default function AdminApprovalsPage() {
         prev.map((s) => (s.id === sale.id ? { ...s, status: "REJECTED" } : s))
       );
       setNotice(`Sale for ${sale.customer?.shopName || sale.id} rejected.`);
+      webNotificationService.addNotification({
+        recipientRole: "SUPER_ADMIN",
+        title: "Sale Rejected",
+        message: `Special price sale for "${sale.customer?.shopName || "Customer"}" was rejected (below operating floor).`,
+        category: "APPROVALS",
+        kind: "SALE_REJECTED",
+        link: "/admin/approvals",
+        metadata: {
+          saleId: sale.id,
+          customer: sale.customer?.shopName,
+        },
+      });
     } catch (err: unknown) {
       setNotice(err instanceof Error ? err.message : "Unable to reject sale.");
     } finally {

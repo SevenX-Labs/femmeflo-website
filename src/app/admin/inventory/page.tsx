@@ -42,6 +42,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { clearApiCache } from "@/lib/api/client";
 import { adminApi } from "@/lib/api/admin";
+import { webNotificationService } from "@/lib/notifications/webNotifications";
 import type {
   InventorySummaryData,
   StockTransactionItem,
@@ -81,7 +82,28 @@ export default function AdminInventoryPage() {
   const [txTotalPages, setTxTotalPages] = useState(cachedTxPagination.totalPages);
 
   // Filter tabs for locations & warehouses
-  const [activeTab, setActiveTab] = useState<"all" | "hq" | "warehouses" | "sellers" | "zero">("all");
+  const searchParams = useSearchParams();
+  const tabQuery = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<"all" | "hq" | "warehouses" | "sellers" | "zero">(() => {
+    if (tabQuery && ["all", "hq", "warehouses", "sellers", "zero"].includes(tabQuery)) {
+      return tabQuery as any;
+    }
+    return "all";
+  });
+
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t && ["all", "hq", "warehouses", "sellers", "zero"].includes(t)) {
+      setActiveTab(t as any);
+      const timer = setTimeout(() => {
+        if (ledgerRef.current) {
+          ledgerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
@@ -110,7 +132,6 @@ export default function AdminInventoryPage() {
   const [inwardError, setInwardError] = useState("");
 
   // Create warehouse modal state
-  const searchParams = useSearchParams();
   const [showWarehouseModal, setShowWarehouseModal] = useState(
     searchParams.get("action") === "add-warehouse"
   );
@@ -254,6 +275,19 @@ export default function AdminInventoryPage() {
       });
 
       setEditStockNotice(`Stock balance updated to ${num.toLocaleString("en-IN")} packets.`);
+      webNotificationService.addNotification({
+        recipientRole: "SUPER_ADMIN",
+        title: "Stock Balance Adjusted",
+        message: `Inventory balance for ${editingLocation.name} updated to ${num.toLocaleString("en-IN")} packets.`,
+        category: "INVENTORY",
+        kind: "STOCK_ADJUSTED",
+        link: "/admin/inventory",
+        metadata: {
+          location: editingLocation.name,
+          balance: num,
+          reason: editStockReason.trim(),
+        },
+      });
       await fetchSummary();
       await fetchTransactions(1, historyFilterType === "ALL" ? undefined : historyFilterType);
 
@@ -302,6 +336,18 @@ export default function AdminInventoryPage() {
         });
         const totalQty = validItems.reduce((s, it) => s + Number(it.quantity), 0);
         setInwardNotice(`Successfully inwarded ${totalQty.toLocaleString("en-IN")} packets to HQ Central.`);
+        webNotificationService.addNotification({
+          recipientRole: "SUPER_ADMIN",
+          title: "Stock Inward Recorded",
+          message: `Inwarded ${totalQty.toLocaleString("en-IN")} packets into HQ Central.`,
+          category: "INVENTORY",
+          kind: "STOCK_INWARD",
+          link: "/admin/inventory",
+          metadata: {
+            totalQty,
+            itemCount: validItems.length,
+          },
+        });
         setInwardItems(inwardProducts.length > 0 ? [{ productId: inwardProducts[0].id, quantity: 500 }] : []);
         await fetchAllData();
         setTimeout(() => {
@@ -327,6 +373,17 @@ export default function AdminInventoryPage() {
       try {
         await adminApi.addReceipt({ quantity: qty });
         setInwardNotice(`Successfully inwarded ${qty.toLocaleString("en-IN")} packets to HQ Central.`);
+        webNotificationService.addNotification({
+          recipientRole: "SUPER_ADMIN",
+          title: "Stock Inward Recorded",
+          message: `Inwarded ${qty.toLocaleString("en-IN")} packets into HQ Central.`,
+          category: "INVENTORY",
+          kind: "STOCK_INWARD",
+          link: "/admin/inventory",
+          metadata: {
+            totalQty: qty,
+          },
+        });
         setInwardQty(500);
         await fetchAllData();
         setTimeout(() => {
@@ -356,6 +413,17 @@ export default function AdminInventoryPage() {
     try {
       await adminApi.createWarehouse({ name: trimmed });
       setWarehouseNotice(`Successfully created warehouse "${trimmed}".`);
+      webNotificationService.addNotification({
+        recipientRole: "SUPER_ADMIN",
+        title: "New Warehouse Created",
+        message: `Warehouse "${trimmed}" has been created and registered in inventory tracking.`,
+        category: "INVENTORY",
+        kind: "WAREHOUSE_CREATED",
+        link: "/admin/inventory",
+        metadata: {
+          warehouseName: trimmed,
+        },
+      });
       setWarehouseName("");
       await fetchAllData();
       setTimeout(() => {

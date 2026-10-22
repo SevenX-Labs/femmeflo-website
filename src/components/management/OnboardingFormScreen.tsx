@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { AlertCircle, ArrowLeft, Camera, CheckCircle2, ExternalLink, Image as ImageIcon, Loader2, MapPin, Mic, MicOff, Sparkles, Trash2, Upload, Volume2, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AlertCircle, ArrowLeft, Camera, Check, CheckCircle2, ChevronDown, ExternalLink, Image as ImageIcon, Loader2, MapPin, Mic, MicOff, Search, Sparkles, Trash2, Upload, Users, Volume2, X } from "lucide-react";
 import { DashboardShell, PageHeading, SectionCard } from "./DashboardShell";
 import type { NavigationItem } from "./DashboardShell";
 import { adminApi } from "@/lib/api/admin";
@@ -16,6 +16,7 @@ import { validateMobileNumber, validateEmail, validateAadharNumber, validateDriv
 import { reverseGeocode } from "@/lib/geocoding";
 import { geoApi } from "@/lib/api/geo";
 import { compressImageToWebp } from "@/lib/imageCompression";
+import { webNotificationService } from "@/lib/notifications/webNotifications";
 
 type Props = {
   role: "Super Admin" | "Manager" | "Seller";
@@ -52,6 +53,66 @@ export function OnboardingFormScreen({
   // Seller / Field Officer specific fields
   const [managers, setManagers] = useState<ManagerItem[]>([]);
   const [selectedManagerId, setSelectedManagerId] = useState("");
+  const [managerSearchQuery, setManagerSearchQuery] = useState("");
+  const [isManagerDropdownOpen, setIsManagerDropdownOpen] = useState(false);
+  const managerDropdownRef = useRef<HTMLDivElement>(null);
+  const managerSearchInputRef = useRef<HTMLInputElement>(null);
+
+  const selectedManager = useMemo(() => {
+    return managers.find((m) => m.id === selectedManagerId) || null;
+  }, [managers, selectedManagerId]);
+
+  const filteredManagers = useMemo(() => {
+    const q = managerSearchQuery.trim().toLowerCase();
+    if (!q) return managers;
+    return managers.filter((m) => {
+      const name = (m.name || "").toLowerCase();
+      const phone = (m.phone || "").toLowerCase();
+      const email = (m.email || "").toLowerCase();
+      const empCode = (m.employeeCode || "").toLowerCase();
+      const district = (m.district || "").toLowerCase();
+      const state = (m.state || "").toLowerCase();
+      const village = (m.village || "").toLowerCase();
+      const designation = (m.designation || "").toLowerCase();
+      return (
+        name.includes(q) ||
+        phone.includes(q) ||
+        email.includes(q) ||
+        empCode.includes(q) ||
+        district.includes(q) ||
+        state.includes(q) ||
+        village.includes(q) ||
+        designation.includes(q)
+      );
+    });
+  }, [managers, managerSearchQuery]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (managerDropdownRef.current && !managerDropdownRef.current.contains(event.target as Node)) {
+        setIsManagerDropdownOpen(false);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsManagerDropdownOpen(false);
+      }
+    }
+    if (isManagerDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isManagerDropdownOpen]);
+
+  useEffect(() => {
+    if (isManagerDropdownOpen) {
+      managerSearchInputRef.current?.focus();
+    }
+  }, [isManagerDropdownOpen]);
   const [designation, setDesignation] = useState("Field Sales Officer");
   const [employeeCode, setEmployeeCode] = useState("");
   const [alternatePhone, setAlternatePhone] = useState("");
@@ -153,13 +214,13 @@ export function OnboardingFormScreen({
           }
 
           if (role === "Super Admin") {
-            const sellersRes = await adminApi.listSellers().catch(() => ({ sellers: [] }));
+            const sellersRes = await adminApi.listSellers({ pageSize: 100 }).catch(() => ({ sellers: [] }));
             if (active && sellersRes.sellers.length > 0) {
               setSellers(sellersRes.sellers);
               setSelectedSellerId(sellersRes.sellers[0].id);
             }
           } else if (role === "Manager") {
-            const sellersRes = await managerApi.listSellers().catch(() => ({ sellers: [] }));
+            const sellersRes = await managerApi.listSellers({ pageSize: 100 }).catch(() => ({ sellers: [] }));
             if (active && sellersRes.sellers.length > 0) {
               setSellers(sellersRes.sellers);
               setSelectedSellerId(sellersRes.sellers[0].id);
@@ -168,7 +229,7 @@ export function OnboardingFormScreen({
         } else {
           // Onboarding a Seller
           if (role === "Super Admin") {
-            const mgrRes = await adminApi.listManagers().catch(() => ({ managers: [] }));
+            const mgrRes = await adminApi.listManagers({ pageSize: 100 }).catch(() => ({ managers: [] }));
             if (active && mgrRes.managers.length > 0) {
               setManagers(mgrRes.managers);
               setSelectedManagerId(mgrRes.managers[0].id);
@@ -639,6 +700,21 @@ export function OnboardingFormScreen({
         } else {
           await managerApi.createSeller(sellerPayload);
         }
+
+        webNotificationService.addNotification({
+          recipientRole: role === "Super Admin" ? "SUPER_ADMIN" : "MANAGER",
+          title: "Field Officer Onboarded",
+          message: `${name.trim()} (${designation.trim() || "Field Officer"}) has been successfully onboarded.`,
+          category: "OFFICERS",
+          kind: "OFFICER_ONBOARDED",
+          link: role === "Super Admin" ? "/admin/sellers" : "/manager/sellers",
+          metadata: {
+            name: name.trim(),
+            phone: phoneVal.normalized,
+            district: district.trim(),
+            state: state.trim(),
+          },
+        });
       } else {
         // If Manager or Admin, sellerId is required
         if (role === "Super Admin" || role === "Manager") {
@@ -700,6 +776,31 @@ export function OnboardingFormScreen({
         if (finalPhotoUrl) {
           setUploadedPhotoUrl(finalPhotoUrl);
         }
+
+        const locationSnippet = [village, district].filter(Boolean).join(", ");
+        webNotificationService.addNotification({
+          recipientRole:
+            role === "Super Admin"
+              ? "SUPER_ADMIN"
+              : role === "Manager"
+              ? "MANAGER"
+              : "SELLER",
+          title: "New Customer / Shop Onboarded",
+          message: `Shop "${name.trim()}" ${locationSnippet ? `(${locationSnippet})` : ""} was successfully registered.`,
+          category: "CUSTOMERS",
+          kind: "CUSTOMER_ONBOARDED",
+          link:
+            role === "Super Admin"
+              ? "/admin/customers"
+              : role === "Manager"
+              ? "/manager/customers"
+              : "/seller/customers",
+          metadata: {
+            shopName: name.trim(),
+            contactName: contactName.trim() || name.trim(),
+            phone: phoneVal.normalized,
+          },
+        });
       }
 
       setSaved(true);
@@ -863,40 +964,161 @@ export function OnboardingFormScreen({
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-700">
-                      Assigned Reporting Manager *
-                      {role === "Super Admin" ? (
-                        managers.length > 0 ? (
-                          <>
-                          <select
-                            required
-                            value={selectedManagerId}
-                            onChange={(e) => {
-                              setSelectedManagerId(e.target.value);
-                            }}
-                            className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300"
-                          >
-                            <option value="">Select Reporting Manager</option>
-                            {managers.map((m) => (
-                              <option key={m.id} value={m.id}>
-                                {m.name} ({[m.district, m.state].filter(Boolean).join(", ") || "Territory"})
-                              </option>
-                            ))}
-                          </select>
-
-                          </>
-                        ) : (
-                          <p className="mt-1.5 rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
-                            No regional managers registered. Onboard a manager first.
-                          </p>
-                        )
-                      ) : (
-                        <div className="mt-1.5 flex h-11 items-center rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 text-xs font-bold text-[#156035]">
-                          Assigned to your territory supervision ({userName})
-                        </div>
+                  <div className="space-y-1.5" ref={managerDropdownRef}>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-zinc-700">
+                        Assigned Reporting Manager *
+                      </label>
+                      {role === "Super Admin" && managers.length > 0 && (
+                        <span className="text-[11px] font-semibold text-zinc-400">
+                          {managers.length} available {managers.length === 1 ? "manager" : "managers"}
+                        </span>
                       )}
-                    </label>
+                    </div>
+
+                    {role === "Super Admin" ? (
+                      managers.length > 0 ? (
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsManagerDropdownOpen((prev) => {
+                                if (!prev) setManagerSearchQuery("");
+                                return !prev;
+                              });
+                            }}
+                            className={`flex h-11 w-full items-center justify-between rounded-xl border bg-[#FAF8F5] px-3.5 text-left text-sm font-semibold transition-all outline-none ${
+                              isManagerDropdownOpen
+                                ? "border-rose-400 bg-white ring-2 ring-rose-100"
+                                : "border-zinc-200 hover:border-zinc-300 hover:bg-white"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              <div
+                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                                  selectedManager ? "bg-rose-50 text-[#E61C5D]" : "bg-zinc-100 text-zinc-400"
+                                }`}
+                              >
+                                <Users className="h-4 w-4" />
+                              </div>
+                              {selectedManager ? (
+                                <div className="truncate">
+                                  <span className="font-bold text-zinc-900">{selectedManager.name}</span>
+                                  <span className="ml-2 text-xs font-normal text-zinc-500">
+                                    ({[selectedManager.district, selectedManager.state].filter(Boolean).join(", ") || "Territory"})
+                                    {selectedManager.phone && ` · ${selectedManager.phone}`}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-zinc-400 font-normal">
+                                  Select or search reporting manager...
+                                </span>
+                              )}
+                            </div>
+
+                            <ChevronDown
+                              className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform duration-200 ${
+                                isManagerDropdownOpen ? "rotate-180 text-[#E61C5D]" : ""
+                              }`}
+                            />
+                          </button>
+
+                          {/* Dropdown Menu */}
+                          {isManagerDropdownOpen && (
+                            <div className="absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl ring-1 ring-black/5 animate-in fade-in-50 duration-150">
+                              {/* Search input header */}
+                              <div className="border-b border-zinc-100 bg-[#FAF8F5] p-2.5">
+                                <div className="relative flex items-center rounded-lg border border-zinc-200 bg-white px-2.5 py-2 shadow-inner focus-within:border-rose-400 focus-within:ring-2 focus-within:ring-rose-100">
+                                  <Search className="mr-2 h-4 w-4 shrink-0 text-zinc-400" />
+                                  <input
+                                    ref={managerSearchInputRef}
+                                    type="text"
+                                    value={managerSearchQuery}
+                                    onChange={(e) => setManagerSearchQuery(e.target.value)}
+                                    placeholder="Search manager by name, phone, territory, district..."
+                                    className="w-full bg-transparent text-xs font-semibold text-zinc-800 placeholder:text-zinc-400 placeholder:font-normal outline-none"
+                                  />
+                                  {managerSearchQuery && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setManagerSearchQuery("")}
+                                      className="rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* List of matching managers */}
+                              <div className="max-h-60 overflow-y-auto p-1.5 space-y-0.5">
+                                {filteredManagers.length === 0 ? (
+                                  <div className="py-6 text-center">
+                                    <Users className="mx-auto h-6 w-6 text-zinc-300" />
+                                    <p className="mt-1.5 text-xs font-semibold text-zinc-700">No managers found</p>
+                                    <p className="mt-0.5 text-[11px] text-zinc-400">
+                                      {managerSearchQuery
+                                        ? `No manager matches "${managerSearchQuery}"`
+                                        : "No regional managers registered"}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  filteredManagers.map((m) => {
+                                    const isSelected = m.id === selectedManagerId;
+                                    return (
+                                      <button
+                                        key={m.id}
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedManagerId(m.id);
+                                          setManagerSearchQuery("");
+                                          setIsManagerDropdownOpen(false);
+                                        }}
+                                        className={`flex w-full items-center justify-between rounded-lg p-2.5 text-left text-xs transition-colors ${
+                                          isSelected
+                                            ? "bg-[#FFF8FA] text-[#E61C5D] font-bold"
+                                            : "text-zinc-700 hover:bg-zinc-50"
+                                        }`}
+                                      >
+                                        <div className="min-w-0 pr-2">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="font-bold text-zinc-900 truncate">{m.name}</span>
+                                            {m.employeeCode && (
+                                              <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-600">
+                                                {m.employeeCode}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] font-normal text-zinc-500">
+                                            {m.phone && <span>Phone: {m.phone}</span>}
+                                            {(m.district || m.state) && (
+                                              <span>Territory: {[m.district, m.state].filter(Boolean).join(", ")}</span>
+                                            )}
+                                            {m.email && <span>{m.email}</span>}
+                                          </div>
+                                        </div>
+                                        {isSelected && <Check className="h-4 w-4 shrink-0 text-[#E61C5D]" />}
+                                      </button>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Hidden input for form validation */}
+                          <input type="hidden" name="managerId" value={selectedManagerId} required={role === "Super Admin"} />
+                        </div>
+                      ) : (
+                        <p className="mt-1.5 rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+                          No regional managers registered. Onboard a manager first.
+                        </p>
+                      )
+                    ) : (
+                      <div className="mt-1.5 flex h-11 items-center rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 text-xs font-bold text-[#156035]">
+                        Assigned to your territory supervision ({userName})
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -27,6 +27,7 @@ import { adminApi } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
 import type { ManagerItem, SellerItem, UpdateUserPayload } from "@/lib/api/types";
 import { validateAadharNumber, validateDrivingLicense, validateMobileNumber } from "@/lib/validation";
+import { webNotificationService } from "@/lib/notifications/webNotifications";
 import {
   MANAGER_PERMISSIONS,
   PERMISSION_METADATA,
@@ -301,6 +302,19 @@ export function ManagerDetailModal({
 
       setManager(fullUpdated);
       setSaveSuccess("Manager profile and operational permissions updated successfully!");
+
+      webNotificationService.addNotification({
+        recipientRole: "SUPER_ADMIN",
+        title: "Manager Profile Updated",
+        message: `Profile and permissions for Manager "${fullUpdated.name}" have been updated.`,
+        category: "OFFICERS",
+        kind: "OFFICER_UPDATED",
+        link: "/admin/managers",
+        metadata: {
+          managerId: fullUpdated.id,
+          name: fullUpdated.name,
+        },
+      });
 
       if (onManagerUpdated) {
         onManagerUpdated(fullUpdated);

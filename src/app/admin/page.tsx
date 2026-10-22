@@ -786,6 +786,7 @@ export default function AdminOverviewDashboard() {
           }
           icon="rupee"
           tone="green"
+          href="/admin/sales"
         />
         <MetricCard
           label="Packets Sold"
@@ -799,6 +800,7 @@ export default function AdminOverviewDashboard() {
           }
           icon="packages"
           tone="rose"
+          href="/admin/sales"
         />
         <MetricCard
           label="Total Inventory"
@@ -806,6 +808,7 @@ export default function AdminOverviewDashboard() {
           note="HQ, warehouses & field team"
           icon="package"
           tone="amber"
+          href="/admin/inventory"
         />
         <MetricCard
           label="Active Field Officers"
@@ -813,6 +816,7 @@ export default function AdminOverviewDashboard() {
           note={`Supervised by ${metrics.totalManagers} managers`}
           icon="chart"
           tone="green"
+          href="/admin/sellers"
         />
       </div>
 
@@ -824,44 +828,59 @@ export default function AdminOverviewDashboard() {
           className="lg:col-span-2"
         >
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-rose-100 bg-[#FFF8FA] p-5">
+            <Link
+              href="/admin/inventory?tab=hq"
+              className="group block rounded-2xl border border-rose-100 bg-[#FFF8FA] p-5 transition-all duration-200 hover:-translate-y-1 hover:border-rose-300 hover:shadow-[0_12px_32px_rgba(104,48,66,0.08)] cursor-pointer"
+            >
               <div className="flex items-center justify-between">
-                <span className="rounded-xl bg-white p-2.5 text-[#E61C5D] shadow-sm">
+                <span className="rounded-xl bg-white p-2.5 text-[#E61C5D] shadow-sm group-hover:scale-105 transition-transform">
                   <Layers className="h-5 w-5" />
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700">HQ Central</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700 group-hover:text-[#E61C5D] transition-colors">
+                  HQ Central &rarr;
+                </span>
               </div>
-              <p className="mt-4 text-3xl font-bold font-sans tracking-tight text-zinc-900">
+              <p className="mt-4 text-3xl font-bold font-sans tracking-tight text-zinc-900 group-hover:text-[#E61C5D] transition-colors">
                 {metrics.hqStock.toLocaleString("en-IN")}
               </p>
               <p className="mt-1 text-xs text-zinc-800">Packets in central warehouse</p>
-            </div>
+            </Link>
 
-            <div className="rounded-2xl border border-rose-100 bg-[#FFF8FA] p-5">
+            <Link
+              href="/admin/inventory?tab=warehouses"
+              className="group block rounded-2xl border border-rose-100 bg-[#FFF8FA] p-5 transition-all duration-200 hover:-translate-y-1 hover:border-amber-300 hover:shadow-[0_12px_32px_rgba(104,48,66,0.08)] cursor-pointer"
+            >
               <div className="flex items-center justify-between">
-                <span className="rounded-xl bg-white p-2.5 text-amber-600 shadow-sm">
+                <span className="rounded-xl bg-white p-2.5 text-amber-600 shadow-sm group-hover:scale-105 transition-transform">
                   <Package className="h-5 w-5" />
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700">Regional Depots</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700 group-hover:text-amber-700 transition-colors">
+                  Regional Depots &rarr;
+                </span>
               </div>
-              <p className="mt-4 text-3xl font-bold font-sans tracking-tight text-zinc-900">
+              <p className="mt-4 text-3xl font-bold font-sans tracking-tight text-zinc-900 group-hover:text-amber-700 transition-colors">
                 {metrics.warehouseStock.toLocaleString("en-IN")}
               </p>
               <p className="mt-1 text-xs text-zinc-800">Packets in district storage</p>
-            </div>
+            </Link>
 
-            <div className="rounded-2xl border border-rose-100 bg-[#FFF8FA] p-5">
+            <Link
+              href="/admin/inventory?tab=sellers"
+              className="group block rounded-2xl border border-rose-100 bg-[#FFF8FA] p-5 transition-all duration-200 hover:-translate-y-1 hover:border-emerald-300 hover:shadow-[0_12px_32px_rgba(104,48,66,0.08)] cursor-pointer"
+            >
               <div className="flex items-center justify-between">
-                <span className="rounded-xl bg-white p-2.5 text-[#156035] shadow-sm">
+                <span className="rounded-xl bg-white p-2.5 text-[#156035] shadow-sm group-hover:scale-105 transition-transform">
                   <PackageCheck className="h-5 w-5" />
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700">With Field Officers</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700 group-hover:text-[#156035] transition-colors">
+                  With Officers &rarr;
+                </span>
               </div>
-              <p className="mt-4 text-3xl font-bold font-sans tracking-tight text-zinc-900">
+              <p className="mt-4 text-3xl font-bold font-sans tracking-tight text-zinc-900 group-hover:text-[#156035] transition-colors">
                 {metrics.sellerStock.toLocaleString("en-IN")}
               </p>
               <p className="mt-1 text-xs text-zinc-800">Packets with officers ready to sell</p>
-            </div>
+            </Link>
           </div>
 
           <div className="mt-6 flex flex-wrap gap-4 border-t border-zinc-100 pt-5">
@@ -886,50 +905,74 @@ export default function AdminOverviewDashboard() {
           description="Total shops connected, active officers, and commission paid"
         >
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-xl border border-zinc-100 p-4">
+            <Link
+              href="/admin/customers"
+              className="group flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50/40 hover:shadow-xs cursor-pointer"
+            >
               <div className="flex items-center gap-3">
-                <span className="rounded-xl bg-emerald-50 p-2.5 text-[#156035]">
+                <span className="rounded-xl bg-emerald-50 p-2.5 text-[#156035] group-hover:scale-105 transition-transform">
                   <ShoppingBag className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-bold text-zinc-800">Retailers / Shops</p>
+                  <p className="text-sm font-bold text-zinc-800 group-hover:text-[#156035] transition-colors">Retailers / Shops</p>
                   <p className="text-xs text-zinc-700">Total verified retail shop partners</p>
                 </div>
               </div>
-              <span className="text-xl font-bold font-sans tracking-tight text-[#156035]">
-                {metrics.totalShops}
-              </span>
-            </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold font-sans tracking-tight text-[#156035]">
+                  {metrics.totalShops}
+                </span>
+                <span className="text-xs font-bold text-[#156035] opacity-0 group-hover:opacity-100 transition-opacity">
+                  &rarr;
+                </span>
+              </div>
+            </Link>
 
-            <div className="flex items-center justify-between rounded-xl border border-zinc-100 p-4">
+            <Link
+              href="/admin/sellers"
+              className="group flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-50/40 hover:shadow-xs cursor-pointer"
+            >
               <div className="flex items-center gap-3">
-                <span className="rounded-xl bg-rose-50 p-2.5 text-[#E61C5D]">
+                <span className="rounded-xl bg-rose-50 p-2.5 text-[#E61C5D] group-hover:scale-105 transition-transform">
                   <Users className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-bold text-zinc-800">Field Officers</p>
+                  <p className="text-sm font-bold text-zinc-800 group-hover:text-[#E61C5D] transition-colors">Field Officers</p>
                   <p className="text-xs text-zinc-700">Active team members in the field</p>
                 </div>
               </div>
-              <span className="text-xl font-bold font-sans tracking-tight text-[#E61C5D]">
-                {metrics.totalSellers}
-              </span>
-            </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold font-sans tracking-tight text-[#E61C5D]">
+                  {metrics.totalSellers}
+                </span>
+                <span className="text-xs font-bold text-[#E61C5D] opacity-0 group-hover:opacity-100 transition-opacity">
+                  &rarr;
+                </span>
+              </div>
+            </Link>
 
-            <div className="flex items-center justify-between rounded-xl border border-zinc-100 p-4">
+            <Link
+              href="/admin/incentives"
+              className="group flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50/40 hover:shadow-xs cursor-pointer"
+            >
               <div className="flex items-center gap-3">
-                <span className="rounded-xl bg-amber-50 p-2.5 text-amber-700">
+                <span className="rounded-xl bg-amber-50 p-2.5 text-amber-700 group-hover:scale-105 transition-transform">
                   <DollarSign className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-bold text-zinc-800">Incentives Earned</p>
+                  <p className="text-sm font-bold text-zinc-800 group-hover:text-amber-700 transition-colors">Incentives Earned</p>
                   <p className="text-xs text-zinc-700">Total commission earned on confirmed sales</p>
                 </div>
               </div>
-              <span className="text-xl font-bold font-sans tracking-tight text-amber-700">
-                ₹{metrics.totalIncentiveRupees.toLocaleString("en-IN")}
-              </span>
-            </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold font-sans tracking-tight text-amber-700">
+                  ₹{metrics.totalIncentiveRupees.toLocaleString("en-IN")}
+                </span>
+                <span className="text-xs font-bold text-amber-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                  &rarr;
+                </span>
+              </div>
+            </Link>
           </div>
         </SectionCard>
       </div>

@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, IndianRupee, Loader2, PackageCheck, Plus, ShieldAlert, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Check, ChevronDown, IndianRupee, Loader2, PackageCheck, Plus, Search, ShieldAlert, Store, Trash2, X } from "lucide-react";
 import { DashboardShell, PageHeading, SectionCard } from "@/components/management/DashboardShell";
 import { sellerNavigation } from "@/components/management/navigation";
 import { sellerApi } from "@/lib/api/seller";
 import type { CustomerItem } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/context/AuthContext";
+import { webNotificationService } from "@/lib/notifications/webNotifications";
 
 interface ProductOption {
   id: string;
@@ -41,6 +42,10 @@ export default function NewSellerSalePage() {
 
   const [customers, setCustomers] = useState<CustomerItem[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [customerSearchQuery, setCustomerSearchQuery] = useState("");
+  const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
+  const customerDropdownRef = useRef<HTMLDivElement>(null);
+  const customerSearchInputRef = useRef<HTMLInputElement>(null);
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [productStocks, setProductStocks] = useState<ProductStock[]>([]);
   const [totalBalance, setTotalBalance] = useState(0);
@@ -94,12 +99,70 @@ export default function NewSellerSalePage() {
 
   const hasStockError = Object.keys(stockErrors).length > 0;
 
+  const uniqueCustomers = useMemo(() => {
+    return Array.from(new Map(customers.map((c) => [c.id, c])).values());
+  }, [customers]);
+
+  const selectedCustomer = useMemo(() => {
+    return uniqueCustomers.find((c) => c.id === selectedCustomerId) || null;
+  }, [uniqueCustomers, selectedCustomerId]);
+
+  const filteredCustomers = useMemo(() => {
+    const q = customerSearchQuery.trim().toLowerCase();
+    if (!q) return uniqueCustomers;
+    return uniqueCustomers.filter((c) => {
+      const shopName = (c.shopName || "").toLowerCase();
+      const contactName = (c.contactName || "").toLowerCase();
+      const phone = (c.phone || "").toLowerCase();
+      const village = (c.village || "").toLowerCase();
+      const district = (c.district || "").toLowerCase();
+      const address = (c.address || "").toLowerCase();
+      const category = (c.category?.name || "").toLowerCase();
+      return (
+        shopName.includes(q) ||
+        contactName.includes(q) ||
+        phone.includes(q) ||
+        village.includes(q) ||
+        district.includes(q) ||
+        address.includes(q) ||
+        category.includes(q)
+      );
+    });
+  }, [uniqueCustomers, customerSearchQuery]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (customerDropdownRef.current && !customerDropdownRef.current.contains(event.target as Node)) {
+        setIsCustomerDropdownOpen(false);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsCustomerDropdownOpen(false);
+      }
+    }
+    if (isCustomerDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isCustomerDropdownOpen]);
+
+  useEffect(() => {
+    if (isCustomerDropdownOpen) {
+      customerSearchInputRef.current?.focus();
+    }
+  }, [isCustomerDropdownOpen]);
+
   useEffect(() => {
     let active = true;
     async function loadFormContext() {
       try {
         const [custRes, invRes, prodRes] = await Promise.all([
-          sellerApi.listCustomers().catch(() => ({ customers: [] })),
+          sellerApi.listCustomers({ pageSize: 100 }).catch(() => ({ customers: [] })),
           sellerApi.getInventory().catch(() => null),
           sellerApi.listProducts().catch(() => ({ items: [] })),
         ]);
@@ -170,6 +233,10 @@ export default function NewSellerSalePage() {
     e.preventDefault();
     if (isSubmitting || submitted) return;
     if (hasStockError) return;
+    if (!selectedCustomerId) {
+      setError("Please select a customer / shop.");
+      return;
+    }
 
     const validLines = lineItems.filter((li) => li.productId && li.quantity > 0);
     if (validLines.length === 0) {
@@ -203,6 +270,21 @@ export default function NewSellerSalePage() {
           requestKey,
         });
       }
+      const custName = selectedCustomer?.shopName || selectedCustomer?.contactName || "Customer";
+      webNotificationService.addNotification({
+        recipientRole: "SELLER",
+        title: "New Sale Recorded",
+        message: `Sale of ${totalPackets} packet${totalPackets > 1 ? "s" : ""} (₹${grandTotal.toLocaleString("en-IN")}) for "${custName}" was recorded.`,
+        category: "SALES",
+        kind: "SALE_SUBMITTED",
+        link: "/seller/sales",
+        metadata: {
+          customerName: custName,
+          totalPackets,
+          grandTotal,
+          paymentMode: payment,
+        },
+      });
 
       setSubmitted(true);
       setTimeout(() => {
@@ -250,25 +332,150 @@ export default function NewSellerSalePage() {
             </p>
           )}
 
-          <label className="block text-xs font-bold text-zinc-700">
-            Customer / shop *
-            <select
-              required
-              value={selectedCustomerId}
-              onChange={(e) => setSelectedCustomerId(e.target.value)}
-              className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm font-semibold outline-none focus:border-rose-300"
-            >
-              {customers.length === 0 ? (
-                <option value="">No registered stores found</option>
-              ) : (
-                Array.from(new Map(customers.map((c) => [c.id, c])).values()).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.shopName} ({c.contactName || c.village || "Store"})
-                  </option>
-                ))
+          <div className="space-y-1.5" ref={customerDropdownRef}>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-zinc-700">
+                Customer / shop *
+              </label>
+              {uniqueCustomers.length > 0 && (
+                <span className="text-[11px] font-semibold text-zinc-400">
+                  {uniqueCustomers.length} registered {uniqueCustomers.length === 1 ? "store" : "stores"}
+                </span>
               )}
-            </select>
-          </label>
+            </div>
+
+            {/* Custom Searchable Combobox */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCustomerDropdownOpen((prev) => {
+                    if (!prev) setCustomerSearchQuery("");
+                    return !prev;
+                  });
+                }}
+                className={`flex h-12 w-full items-center justify-between rounded-xl border bg-[#FAF8F5] px-3.5 text-left text-sm font-semibold transition-all outline-none ${
+                  isCustomerDropdownOpen
+                    ? "border-rose-400 bg-white ring-2 ring-rose-100"
+                    : "border-zinc-200 hover:border-zinc-300 hover:bg-white"
+                }`}
+              >
+                <div className="flex items-center gap-2.5 overflow-hidden">
+                  <div
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                      selectedCustomer ? "bg-rose-50 text-[#E61C5D]" : "bg-zinc-100 text-zinc-400"
+                    }`}
+                  >
+                    <Store className="h-4 w-4" />
+                  </div>
+                  {selectedCustomer ? (
+                    <div className="truncate">
+                      <span className="font-bold text-zinc-900">{selectedCustomer.shopName}</span>
+                      <span className="ml-2 text-xs font-normal text-zinc-500">
+                        ({[selectedCustomer.contactName, selectedCustomer.village || selectedCustomer.district].filter(Boolean).join(" · ") || "Store"})
+                        {selectedCustomer.phone && ` · ${selectedCustomer.phone}`}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-zinc-400 font-normal">
+                      {uniqueCustomers.length === 0 ? "No registered stores found" : "Select or search customer / shop..."}
+                    </span>
+                  )}
+                </div>
+
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform duration-200 ${
+                    isCustomerDropdownOpen ? "rotate-180 text-[#E61C5D]" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown Menu */}
+              {isCustomerDropdownOpen && (
+                <div className="absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl ring-1 ring-black/5">
+                  {/* Search input header */}
+                  <div className="border-b border-zinc-100 bg-[#FAF8F5] p-2.5">
+                    <div className="relative flex items-center rounded-lg border border-zinc-200 bg-white px-2.5 py-2 shadow-inner focus-within:border-rose-400 focus-within:ring-2 focus-within:ring-rose-100">
+                      <Search className="mr-2 h-4 w-4 shrink-0 text-zinc-400" />
+                      <input
+                        ref={customerSearchInputRef}
+                        type="text"
+                        value={customerSearchQuery}
+                        onChange={(e) => setCustomerSearchQuery(e.target.value)}
+                        placeholder="Search shop name, contact, phone, village..."
+                        className="w-full bg-transparent text-xs font-semibold text-zinc-800 placeholder:text-zinc-400 placeholder:font-normal outline-none"
+                      />
+                      {customerSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setCustomerSearchQuery("")}
+                          className="rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* List of matching stores */}
+                  <div className="max-h-60 overflow-y-auto p-1.5 space-y-0.5">
+                    {filteredCustomers.length === 0 ? (
+                      <div className="py-7 text-center">
+                        <Store className="mx-auto h-6 w-6 text-zinc-300" />
+                        <p className="mt-1.5 text-xs font-semibold text-zinc-700">No stores found</p>
+                        <p className="mt-0.5 text-[11px] text-zinc-400">
+                          {customerSearchQuery
+                            ? `No store matches "${customerSearchQuery}"`
+                            : "No stores registered for your account"}
+                        </p>
+                      </div>
+                    ) : (
+                      filteredCustomers.map((c) => {
+                        const isSelected = c.id === selectedCustomerId;
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedCustomerId(c.id);
+                              setCustomerSearchQuery("");
+                              setIsCustomerDropdownOpen(false);
+                            }}
+                            className={`flex w-full items-center justify-between rounded-lg p-2.5 text-left text-xs transition-colors ${
+                              isSelected
+                                ? "bg-[#FFF8FA] text-[#E61C5D] font-bold"
+                                : "text-zinc-700 hover:bg-zinc-50"
+                            }`}
+                          >
+                            <div className="min-w-0 pr-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-zinc-900 truncate">{c.shopName}</span>
+                                {c.category?.name && (
+                                  <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-600">
+                                    {c.category.name}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] font-normal text-zinc-500">
+                                {c.contactName && <span>Contact: {c.contactName}</span>}
+                                {c.phone && <span>Phone: {c.phone}</span>}
+                                {(c.village || c.district) && (
+                                  <span>Loc: {[c.village, c.district].filter(Boolean).join(", ")}</span>
+                                )}
+                              </div>
+                            </div>
+                            {isSelected && <Check className="h-4 w-4 shrink-0 text-[#E61C5D]" />}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Hidden input for standard form semantics */}
+            <input type="hidden" name="customerId" value={selectedCustomerId} required />
+          </div>
 
           {/* Line Items */}
           <div className="space-y-3">

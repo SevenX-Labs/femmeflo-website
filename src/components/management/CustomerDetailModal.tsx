@@ -37,6 +37,7 @@ import { categoryApi } from "@/lib/api/categories";
 import type { Category } from "@/lib/api/types";
 import type { CustomerItem, SaleItem, InvoiceItem } from "@/lib/api/types";
 import { compressImageToWebp } from "@/lib/imageCompression";
+import { webNotificationService } from "@/lib/notifications/webNotifications";
 
 export interface CustomerDetailModalProps {
   role: "Super Admin" | "Manager" | "Seller";
@@ -380,6 +381,22 @@ export function CustomerDetailModal({
 
       setCustomer(res.customer);
       setSaveSuccess("Customer details updated successfully!");
+      webNotificationService.addNotification({
+        title: "Customer Details Updated",
+        message: `Profile details for "${res.customer.shopName || res.customer.contactName}" have been updated.`,
+        category: "CUSTOMERS",
+        kind: "CUSTOMER_UPDATED",
+        link:
+          role === "Super Admin"
+            ? "/admin/customers"
+            : role === "Manager"
+            ? "/manager/customers"
+            : "/seller/customers",
+        metadata: {
+          customerId: res.customer.id,
+          shopName: res.customer.shopName,
+        },
+      });
       if (onCustomerUpdated) {
         onCustomerUpdated(res.customer);
       }
@@ -425,6 +442,22 @@ export function CustomerDetailModal({
       const updated = { ...customer, photoPath: res.photoUrl || (res.customer?.photoPath ?? customer.photoPath) };
       setCustomer(updated);
       setPhotoMessage("Storefront photo saved successfully!");
+      webNotificationService.addNotification({
+        title: "Storefront Photo Uploaded",
+        message: `New storefront photo saved for "${customer.shopName || customer.contactName}".`,
+        category: "CUSTOMERS",
+        kind: "CUSTOMER_UPDATED",
+        link:
+          role === "Super Admin"
+            ? "/admin/customers"
+            : role === "Manager"
+            ? "/manager/customers"
+            : "/seller/customers",
+        metadata: {
+          customerId: customer.id,
+          shopName: customer.shopName,
+        },
+      });
       if (onCustomerUpdated) onCustomerUpdated(updated);
     } catch {
       setPhotoMessage("Failed to upload photo. Please try again.");

@@ -10,6 +10,7 @@ import { adminApi } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
 import { syncPermissionAliases } from "@/lib/permissions";
 import { validateMobileNumber, validateEmail, validateAadharNumber, validateDrivingLicense } from "@/lib/validation";
+import { webNotificationService } from "@/lib/notifications/webNotifications";
 
 export default function AdminAddManagerPage() {
   const router = useRouter();
@@ -115,6 +116,19 @@ export default function AdminAddManagerPage() {
         education: education.trim() || undefined,
         permissions: syncPermissionAliases(permissions),
         isSeller,
+      });
+      webNotificationService.addNotification({
+        recipientRole: "SUPER_ADMIN",
+        title: "Manager Created",
+        message: `Area Manager "${name.trim()}" has been onboarded to your team.`,
+        category: "OFFICERS",
+        kind: "OFFICER_ONBOARDED",
+        link: "/admin/managers",
+        metadata: {
+          name: name.trim(),
+          district,
+          state,
+        },
       });
       setSaved(true);
       setTimeout(() => {
