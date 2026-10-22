@@ -1016,6 +1016,13 @@ export interface InventoryReportData {
 
 export type ShiftStatus = "ACTIVE" | "COMPLETED" | "CANCELLED";
 
+export interface ShiftTimingSummary {
+  totalShiftMins: number | null;
+  totalVisitMins: number;
+  travelMins: number | null;
+  visitCount: number;
+}
+
 export interface ShiftVisit {
   id: string;
   shiftId: string;
@@ -1025,6 +1032,8 @@ export interface ShiftVisit {
   latitude: number;
   longitude: number;
   checkInTime: string;
+  checkOutTime?: string | null;
+  durationMins?: number | null;
   notes?: string | null;
   createdAt: string;
 }
@@ -1045,6 +1054,7 @@ export interface Shift {
   status: ShiftStatus;
   notes?: string | null;
   visits: ShiftVisit[];
+  timing?: ShiftTimingSummary | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1060,6 +1070,13 @@ export interface CheckInPayload {
   longitude: number;
   shopName: string;
   customerId?: string;
+  notes?: string;
+}
+
+export interface CheckOutPayload {
+  visitId: string;
+  latitude: number;
+  longitude: number;
   notes?: string;
 }
 

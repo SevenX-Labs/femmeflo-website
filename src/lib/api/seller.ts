@@ -20,6 +20,7 @@ import type {
   ShiftVisit,
   StartShiftPayload,
   CheckInPayload,
+  CheckOutPayload,
   EndShiftPayload,
   ListShiftsQuery,
 } from "./types";
@@ -333,6 +334,13 @@ export const sellerApi = {
 
   async checkIn(payload: CheckInPayload): Promise<{ visit: ShiftVisit }> {
     return apiRequest<{ visit: ShiftVisit }>("seller/shifts/check-in", {
+      method: "POST",
+      body: payload,
+    });
+  },
+
+  async checkOut(payload: CheckOutPayload): Promise<{ success: boolean; message: string; data?: { visit: ShiftVisit }; visit?: ShiftVisit }> {
+    return apiRequest<{ success: boolean; message: string; data?: { visit: ShiftVisit }; visit?: ShiftVisit }>("seller/shifts/check-out", {
       method: "POST",
       body: payload,
     });

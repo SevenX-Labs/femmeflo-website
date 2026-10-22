@@ -43,6 +43,14 @@ function getLocalDateRange(fromStr: string, toStr: string) {
   return { from: start.toISOString(), to: end.toISOString() };
 }
 
+function formatMinutes(mins: number | null | undefined): string {
+  if (mins === null || mins === undefined) return "In progress";
+  const h = Math.floor(mins / 60);
+  const m = Math.round(mins % 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m} min`;
+}
+
 function formatDuration(startTime: string, endTime?: string | null): string {
   if (!endTime) return "In Progress";
   const start = new Date(startTime).getTime();
@@ -831,6 +839,46 @@ export default function SellerShiftsPage() {
               </button>
             </div>
 
+            {/* TIMING SUMMARY CARD */}
+            {selectedShiftForDetails.timing && (
+              <div className="mt-3 shrink-0 rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50/50 via-white to-pink-50/30 p-3.5 shadow-2xs">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-[#E61C5D]" /> Shift Timing Breakdown
+                  </span>
+                  <span className="text-[11px] font-semibold text-zinc-500">
+                    {selectedShiftForDetails.timing.visitCount} {selectedShiftForDetails.timing.visitCount === 1 ? "shop visited" : "shops visited"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                  <div className="rounded-xl bg-white border border-zinc-200/70 p-2 shadow-2xs">
+                    <span className="text-[10px] uppercase font-bold text-zinc-600 block">Total Shift</span>
+                    <span className="font-extrabold text-xs text-zinc-900 font-mono mt-0.5 block">
+                      {formatMinutes(selectedShiftForDetails.timing.totalShiftMins)}
+                    </span>
+                  </div>
+                  <div className="rounded-xl bg-white border border-emerald-200/80 p-2 shadow-2xs">
+                    <span className="text-[10px] uppercase font-bold text-emerald-700 block">Time at Shops</span>
+                    <span className="font-extrabold text-xs text-emerald-700 font-mono mt-0.5 block">
+                      {formatMinutes(selectedShiftForDetails.timing.totalVisitMins)}
+                    </span>
+                  </div>
+                  <div className="rounded-xl bg-white border border-amber-200/80 p-2 shadow-2xs">
+                    <span className="text-[10px] uppercase font-bold text-amber-700 block">Travel Time</span>
+                    <span className="font-extrabold text-xs text-amber-700 font-mono mt-0.5 block">
+                      {formatMinutes(selectedShiftForDetails.timing.travelMins)}
+                    </span>
+                  </div>
+                  <div className="rounded-xl bg-white border border-zinc-200/70 p-2 shadow-2xs">
+                    <span className="text-[10px] uppercase font-bold text-zinc-600 block">Shops Visited</span>
+                    <span className="font-extrabold text-xs text-zinc-900 font-mono mt-0.5 block">
+                      {selectedShiftForDetails.timing.visitCount}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="mt-4 overflow-y-auto flex-1 pr-1 space-y-3">
               {/* Timeline */}
               <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-rose-100">
@@ -853,27 +901,74 @@ export default function SellerShiftsPage() {
                 </div>
 
                 {/* 2. Shop Visits */}
-                {selectedShiftForDetails.visits?.map((v, idx) => (
-                  <div key={v.id} className="relative">
-                    <span className="absolute -left-6 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#E61C5D] text-white text-[10px] font-bold shadow-xs">
-                      {idx + 1}
-                    </span>
-                    <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-zinc-900">{v.shopName}</span>
-                        <span className="font-mono text-[11px] text-zinc-500">
-                          {new Date(v.checkInTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                        </span>
+                {selectedShiftForDetails.visits?.map((v, idx) => {
+                  const hasCheckOut = Boolean(v.checkOutTime);
+                  const isOngoing = !hasCheckOut && selectedShiftForDetails.status === "ACTIVE";
+                  const arrivedStr = new Date(v.checkInTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+                  const leftStr = v.checkOutTime
+                    ? new Date(v.checkOutTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+                    : (isOngoing ? "At Shop" : "—");
+
+                  return (
+                    <div key={v.id} className="relative">
+                      <span className={`absolute -left-6 top-0.5 flex h-5 w-5 items-center justify-center rounded-full text-white text-[10px] font-bold shadow-xs ${
+                        isOngoing ? "bg-emerald-500 animate-pulse" : "bg-[#E61C5D]"
+                      }`}>
+                        {idx + 1}
+                      </span>
+                      <div className={`rounded-xl border p-3 ${
+                        isOngoing
+                          ? "border-emerald-300 bg-emerald-50/50"
+                          : "border-zinc-200/80 bg-zinc-50/70"
+                      }`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-xs text-zinc-900">{v.shopName}</span>
+                              {isOngoing && (
+                                <span className="rounded-full bg-emerald-100 border border-emerald-200 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800">
+                                  Current
+                                </span>
+                              )}
+                            </div>
+                            {v.customer?.phone && (
+                              <span className="text-[10px] text-zinc-500">Ph: {v.customer.phone}</span>
+                            )}
+                          </div>
+                          <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-mono font-bold ${
+                            isOngoing
+                              ? "bg-emerald-100 text-emerald-800"
+                              : v.durationMins != null
+                              ? "bg-white border border-zinc-200 text-zinc-800"
+                              : "bg-zinc-100 text-zinc-500"
+                          }`}>
+                            <Clock className="h-3 w-3" />
+                            {v.durationMins != null ? formatMinutes(v.durationMins) : (isOngoing ? "In progress" : "No timing data")}
+                          </span>
+                        </div>
+
+                        {/* Timing details row */}
+                        <div className="mt-2 grid grid-cols-2 gap-2 rounded-lg bg-white/80 border border-zinc-200/60 p-2 text-[11px]">
+                          <div>
+                            <span className="text-[10px] text-zinc-600 font-bold uppercase block">Arrived</span>
+                            <span className="font-mono text-zinc-800 font-semibold">{arrivedStr}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-zinc-600 font-bold uppercase block">Left</span>
+                            <span className="font-mono text-zinc-800 font-semibold">{leftStr}</span>
+                          </div>
+                        </div>
+
+                        {v.notes && (
+                          <p className="text-[11px] text-zinc-600 mt-1.5 italic">&ldquo;{v.notes}&rdquo;</p>
+                        )}
+                        <p className="text-[10px] text-zinc-400 mt-1 font-mono">
+                          GPS: {v.latitude.toFixed(4)}, {v.longitude.toFixed(4)}
+                        </p>
                       </div>
-                      {v.notes && (
-                        <p className="text-[11px] text-zinc-600 mt-1 italic">&ldquo;{v.notes}&rdquo;</p>
-                      )}
-                      <p className="text-[10px] text-zinc-400 mt-1 font-mono">
-                        GPS: {v.latitude.toFixed(4)}, {v.longitude.toFixed(4)}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {/* 3. End */}
                 {selectedShiftForDetails.endTime ? (
