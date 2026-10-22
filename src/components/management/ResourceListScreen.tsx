@@ -574,8 +574,11 @@ export function ResourceListScreen({
                               ? "bg-emerald-50 text-[#157347] border border-emerald-200/60"
                               : row.status === "Pending" ||
                                 row.status === "Pending payment" ||
-                                row.status === "Approval required"
+                                row.status === "Approval required" ||
+                                row.status === "Pending Approval"
                               ? "bg-amber-50 text-amber-700 border border-amber-200/60"
+                              : row.status === "Rejected"
+                              ? "bg-rose-50 text-rose-700 border border-rose-200/60"
                               : "bg-zinc-100 text-zinc-700 border border-zinc-200/60"
                           }`}
                         >
@@ -584,8 +587,11 @@ export function ResourceListScreen({
                               ? "bg-emerald-500"
                               : row.status === "Pending" ||
                                 row.status === "Pending payment" ||
-                                row.status === "Approval required"
+                                row.status === "Approval required" ||
+                                row.status === "Pending Approval"
                               ? "bg-amber-500"
+                              : row.status === "Rejected"
+                              ? "bg-rose-500"
                               : "bg-zinc-400"
                           }`} />
                           {String(row.status)}
@@ -794,14 +800,17 @@ export function ResourceListScreen({
                       >
                         {column.key === "status" ? (
                           <span
-                            className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                            className={`rounded-full px-2.5 py-1 text-xs font-bold border ${
                               row.status === "Active" || row.status === "Confirmed" || row.status === "Paid"
-                                ? "bg-emerald-50 text-[#157347]"
+                                ? "bg-emerald-50 text-[#157347] border-emerald-200/60"
                                 : row.status === "Pending" ||
                                   row.status === "Pending payment" ||
-                                  row.status === "Approval required"
-                                ? "bg-amber-50 text-amber-700"
-                                : "bg-zinc-100 text-zinc-800"
+                                  row.status === "Approval required" ||
+                                  row.status === "Pending Approval"
+                                ? "bg-amber-50 text-amber-700 border-amber-200/60"
+                                : row.status === "Rejected"
+                                ? "bg-rose-50 text-rose-700 border-rose-200/60"
+                                : "bg-zinc-100 text-zinc-800 border-zinc-200/60"
                             }`}
                           >
                             {String(row[column.key])}
@@ -924,6 +933,14 @@ export function ResourceListScreen({
                         packets: updated.quantity.toString(),
                         amount: `₹${(updated.totalPaise / 100).toLocaleString("en-IN")}`,
                         payment: updated.paymentMode === "CASH" ? "Cash" : updated.paymentMode === "BANK" ? "Bank" : "Pending",
+                        status:
+                          updated.status === "CONFIRMED"
+                            ? "Confirmed"
+                            : updated.status === "PENDING_APPROVAL"
+                            ? "Approval required"
+                            : "Rejected",
+                        invoiceId: updated.invoice?.id || (r as any).invoiceId,
+                        invoiceNumber: updated.invoice?.number || (r as any).invoiceNumber,
                       }
                     : r
                 )

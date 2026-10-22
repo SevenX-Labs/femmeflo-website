@@ -238,13 +238,13 @@ export default function SellerSalesPage() {
                         </div>
                       )}
                       {isRejected && (
-                        <div className="space-y-0.5">
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-[#E61C5D]">
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-[#E61C5D] border border-rose-200/60">
                             <XCircle className="h-3.5 w-3.5" /> Rejected
                           </span>
                           {s.rejectionReason && (
-                            <p className="max-w-[180px] truncate text-[11px] text-rose-600" title={s.rejectionReason}>
-                              {s.rejectionReason}
+                            <p className="max-w-[200px] text-[11px] text-rose-700 font-medium leading-snug line-clamp-2" title={`Rejection reason: ${s.rejectionReason}`}>
+                              <span className="font-bold">Reason:</span> {s.rejectionReason}
                             </p>
                           )}
                         </div>
@@ -270,22 +270,37 @@ export default function SellerSalesPage() {
                         const now = new Date();
                         const createdAt = new Date(s.createdAt);
                         const diffHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-                        const canEdit = diffHours <= 48 && s.status !== "REJECTED";
+                        const isEditableStatus = s.status === "REJECTED" || s.status === "PENDING_APPROVAL";
+                        const canEdit = isEditableStatus && diffHours <= 48;
 
                         return (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedSaleId(s.id)}
-                            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition shadow-2xs cursor-pointer ${
-                              canEdit
-                                ? "border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:border-amber-300"
-                                : "border border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-zinc-100"
-                            }`}
-                            title={canEdit ? `Editable (${Math.floor(48 - diffHours)}h left)` : "View sale details (48h edit period closed)"}
-                          >
-                            <Edit3 className="h-3 w-3" />
-                            <span>{canEdit ? "Edit" : "View"}</span>
-                          </button>
+                          <div className="inline-flex items-center gap-1.5 justify-center">
+                            {canEdit ? (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedSaleId(s.id)}
+                                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition shadow-2xs cursor-pointer ${
+                                  s.status === "REJECTED"
+                                    ? "border border-rose-300 bg-rose-50 text-[#E61C5D] hover:bg-rose-100 hover:border-rose-400"
+                                    : "border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:border-amber-300"
+                                }`}
+                                title={`Editable (${Math.floor(48 - diffHours)}h left)`}
+                              >
+                                <Edit3 className="h-3 w-3" />
+                                <span>{s.status === "REJECTED" ? "Edit & Resubmit" : "Edit"}</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedSaleId(s.id)}
+                                className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-bold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 shadow-2xs cursor-pointer"
+                                title="View sale details"
+                              >
+                                <FileText className="h-3 w-3 text-zinc-500" />
+                                <span>View</span>
+                              </button>
+                            )}
+                          </div>
                         );
                       })()}
                     </td>

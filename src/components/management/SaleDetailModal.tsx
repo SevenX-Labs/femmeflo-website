@@ -17,6 +17,8 @@ import {
   CreditCard,
   Building2,
   ExternalLink,
+  XCircle,
+  RotateCcw,
 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import { managerApi } from "@/lib/api/manager";
@@ -28,6 +30,7 @@ export interface SaleDetailModalProps {
   saleId: string;
   onClose: () => void;
   onSaleUpdated?: (updated: SaleItem) => void;
+  initialEditMode?: boolean;
 }
 
 export function SaleDetailModal({
@@ -35,13 +38,14 @@ export function SaleDetailModal({
   saleId,
   onClose,
   onSaleUpdated,
+  initialEditMode = false,
 }: SaleDetailModalProps) {
   const [sale, setSale] = useState<SaleItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Edit Mode state
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(initialEditMode);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
@@ -105,13 +109,18 @@ export function SaleDetailModal({
     };
   }, [role, saleId]);
 
-  // Calculate 48h validity for Seller
+  // Edit rules:
+  // Show edit ONLY when status is REJECTED or PENDING_APPROVAL. Hide for CONFIRMED sales.
+  // 48h limit applies only for Seller.
   const isSeller = role === "Seller";
   const now = new Date();
   const createdAt = sale ? new Date(sale.createdAt) : new Date();
   const hoursSinceCreation = sale ? (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60) : 0;
-  const sellerCanEdit = !isSeller || hoursSinceCreation <= 48;
+  const sellerWithin48h = !isSeller || hoursSinceCreation <= 48;
   const hoursRemaining = Math.max(0, 48 - hoursSinceCreation);
+
+  const isEditableStatus = sale ? (sale.status === "REJECTED" || sale.status === "PENDING_APPROVAL") : false;
+  const canEdit = isEditableStatus && sellerWithin48h;
 
   const calculatedTotal = Number(editQuantity) * Number(editUnitPrice);
 
@@ -119,7 +128,12 @@ export function SaleDetailModal({
     e.preventDefault();
     if (!sale) return;
 
-    if (isSeller && !sellerCanEdit) {
+    if (!isEditableStatus) {
+      setSaveError("Confirmed sales cannot be edited.");
+      return;
+    }
+
+    if (isSeller && !sellerWithin48h) {
       setSaveError("Editing period expired. Field officers can only edit within 48 hours of sale creation.");
       return;
     }
@@ -157,21 +171,63 @@ export function SaleDetailModal({
         res = await sellerApi.updateSale(sale.id, payload);
       }
 
-      setSale(res.sale);
-      setSaveSuccess("Sale record updated successfully!");
-      if (onSaleUpdated) {
-        onSaleUpdated(res.sale);
+      const updatedSale = res.sale;
+      setSale(updatedSale);
+
+      // Handle State Change Feedback based on returned status:
+      if (updatedSale.status === "CONFIRMED") {
+        setSaveSuccess("Sale confirmed! Price meets minimum policy and invoice was generated.");
+      } else if (updatedSale.status === "PENDING_APPROVAL") {
+        setSaveSuccess("Sale updated and re-submitted for approval.");
+      } else {
+        setSaveSuccess("Sale record updated successfully!");
       }
+
+      if (onSaleUpdated) {
+        onSaleUpdated(updatedSale);
+      }
+
       setTimeout(() => {
         setIsEditMode(false);
         setSaveSuccess(null);
-      }, 1200);
+      }, 1600);
     } catch (err: any) {
       setSaveError(err.message || "Failed to update sale record.");
     } finally {
       setIsSaving(false);
     }
   };
+
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case "CONFIRMED":
+        return {
+          label: "Confirmed",
+          classes: "bg-emerald-50 text-[#157347] border border-emerald-200",
+          icon: <CheckCircle2 className="h-3 w-3" />,
+        };
+      case "PENDING_APPROVAL":
+        return {
+          label: "Pending Approval",
+          classes: "bg-amber-50 text-amber-700 border border-amber-200",
+          icon: <Clock className="h-3 w-3" />,
+        };
+      case "REJECTED":
+        return {
+          label: "Rejected",
+          classes: "bg-rose-50 text-rose-700 border border-rose-200",
+          icon: <XCircle className="h-3 w-3" />,
+        };
+      default:
+        return {
+          label: status || "—",
+          classes: "bg-zinc-100 text-zinc-700 border border-zinc-200",
+          icon: null,
+        };
+    }
+  };
+
+  const statusBadge = getStatusBadge(sale?.status);
 
   return (
     <div
@@ -196,21 +252,10 @@ export function SaleDetailModal({
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#E61C5D]">
                   Sale Record
                 </span>
-                {sale?.status === "CONFIRMED" ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Confirmed
-                  </span>
-                ) : sale?.status === "PENDING_APPROVAL" ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
-                    <Clock className="h-3 w-3" />
-                    Approval Required
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-200">
-                    Rejected
-                  </span>
-                )}
+                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${statusBadge.classes}`}>
+                  {statusBadge.icon}
+                  {statusBadge.label}
+                </span>
               </div>
               <h2 className="font-playfair text-xl sm:text-2xl font-bold text-zinc-900 leading-tight">
                 {sale?.customer?.shopName || "Sale Details"}
@@ -218,7 +263,8 @@ export function SaleDetailModal({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {sale && (
+            {/* Show edit button ONLY when status is REJECTED or PENDING_APPROVAL. Hide for CONFIRMED. */}
+            {canEdit && (
               <button
                 type="button"
                 onClick={() => {
@@ -232,22 +278,25 @@ export function SaleDetailModal({
                   setSaveError(null);
                   setSaveSuccess(null);
                 }}
-                disabled={isSeller && !sellerCanEdit}
-                title={
-                  isSeller && !sellerCanEdit
-                    ? "Editing window expired (exceeded 48 hours)"
-                    : "Edit sale details"
-                }
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition shadow-xs cursor-pointer ${
-                  isSeller && !sellerCanEdit
-                    ? "bg-zinc-100 text-zinc-400 cursor-not-allowed border border-zinc-200"
-                    : isEditMode
+                  isEditMode
                     ? "bg-zinc-800 text-white hover:bg-zinc-900"
-                    : "border border-rose-200 bg-white text-[#E61C5D] hover:bg-rose-50"
+                    : sale?.status === "REJECTED"
+                    ? "border border-rose-300 bg-rose-50 text-[#E61C5D] hover:bg-rose-100"
+                    : "border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
                 }`}
               >
-                <Edit3 className="h-3.5 w-3.5" />
-                <span>{isEditMode ? "Cancel Edit" : "Edit Sale"}</span>
+                {sale?.status === "REJECTED" ? (
+                  <>
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    <span>{isEditMode ? "Cancel Edit" : "Edit & Resubmit"}</span>
+                  </>
+                ) : (
+                  <>
+                    <Edit3 className="h-3.5 w-3.5" />
+                    <span>{isEditMode ? "Cancel Edit" : "Edit Sale"}</span>
+                  </>
+                )}
               </button>
             )}
             <button
@@ -261,10 +310,10 @@ export function SaleDetailModal({
         </div>
 
         {/* 48-Hour Timer Badge for Seller */}
-        {sale && isSeller && (
+        {sale && isSeller && isEditableStatus && (
           <div
             className={`px-6 py-2 border-b text-xs flex items-center justify-between ${
-              sellerCanEdit
+              sellerWithin48h
                 ? "bg-amber-50/80 border-amber-200 text-amber-900 font-medium"
                 : "bg-rose-50 border-rose-200 text-rose-900 font-semibold"
             }`}
@@ -272,7 +321,7 @@ export function SaleDetailModal({
             <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 shrink-0" />
               <span>
-                {sellerCanEdit ? (
+                {sellerWithin48h ? (
                   <>
                     Seller edit window active:{" "}
                     <strong>{Math.floor(hoursRemaining)}h {Math.round((hoursRemaining % 1) * 60)}m</strong> remaining
@@ -316,6 +365,20 @@ export function SaleDetailModal({
                   <div className="flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-900 shadow-xs">
                     <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
                     <span>{saveError}</span>
+                  </div>
+                )}
+
+                {/* Rejection notice in Edit mode */}
+                {sale.status === "REJECTED" && sale.rejectionReason && (
+                  <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-3.5 text-xs text-rose-900">
+                    <div className="flex items-center gap-1.5 font-bold mb-1 text-rose-800">
+                      <XCircle className="h-4 w-4 text-rose-600" />
+                      <span>Rejection Reason to Address:</span>
+                    </div>
+                    <p className="italic pl-5">&ldquo;{sale.rejectionReason}&rdquo;</p>
+                    <p className="text-[11px] text-rose-700/80 pl-5 mt-1">
+                      Adjust your unit price or quantity. If the new price satisfies the minimum threshold, the sale will be auto-confirmed and an invoice issued immediately.
+                    </p>
                   </div>
                 )}
 
@@ -427,7 +490,7 @@ export function SaleDetailModal({
                     ) : (
                       <>
                         <Save className="h-3.5 w-3.5" />
-                        <span>Save Sale Changes</span>
+                        <span>{sale.status === "REJECTED" ? "Update & Resubmit" : "Save Sale Changes"}</span>
                       </>
                     )}
                   </button>
@@ -438,6 +501,76 @@ export function SaleDetailModal({
               /* VIEW MODE                                                 */
               /* ========================================================= */
               <div className="space-y-5">
+                {/* Rejection Banner with Edit & Resubmit callout */}
+                {sale.status === "REJECTED" && (
+                  <div className="rounded-2xl border border-rose-200 bg-gradient-to-r from-rose-50 via-white to-rose-50/50 p-4 shadow-2xs space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-700">
+                          <XCircle className="h-4 w-4" />
+                        </span>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-rose-900">
+                          Sale Rejected
+                        </h4>
+                      </div>
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditCustomerId(sale.customerId);
+                            setEditQuantity(sale.quantity);
+                            setEditUnitPrice(sale.unitPricePaise / 100);
+                            setEditPaymentMode(sale.paymentMode as any);
+                            setIsEditMode(true);
+                            setSaveError(null);
+                            setSaveSuccess(null);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-[#E61C5D] px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#c91550] transition cursor-pointer"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          <span>Edit &amp; Resubmit</span>
+                        </button>
+                      )}
+                    </div>
+                    {sale.rejectionReason ? (
+                      <p className="text-xs text-rose-800 leading-relaxed pl-9">
+                        <strong>Reason:</strong> &ldquo;{sale.rejectionReason}&rdquo;
+                      </p>
+                    ) : (
+                      <p className="text-xs text-rose-700 pl-9">
+                        This sale was rejected during review. Click Edit &amp; Resubmit to revise prices.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Pending Approval Banner */}
+                {sale.status === "PENDING_APPROVAL" && (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-3.5 text-xs text-amber-900 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-amber-600 shrink-0" />
+                      <span>
+                        Awaiting manager or admin price approval. You can still modify details before decision.
+                      </span>
+                    </div>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditCustomerId(sale.customerId);
+                          setEditQuantity(sale.quantity);
+                          setEditUnitPrice(sale.unitPricePaise / 100);
+                          setEditPaymentMode(sale.paymentMode as any);
+                          setIsEditMode(true);
+                        }}
+                        className="shrink-0 rounded-lg border border-amber-300 bg-white px-2.5 py-1 text-xs font-bold text-amber-900 hover:bg-amber-100 transition cursor-pointer"
+                      >
+                        Edit Price/Qty
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 {/* Sale Quick Summary Cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="rounded-xl border border-zinc-100 bg-[#FAF8F5] p-3 text-center">
@@ -470,9 +603,9 @@ export function SaleDetailModal({
                 <div className="rounded-2xl border border-zinc-200 bg-white p-4.5 space-y-3 text-xs">
                   <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
                     <span className="font-bold uppercase tracking-wider text-zinc-700">
-                      Customer & Officer Details
+                      Customer &amp; Officer Details
                     </span>
-                    <span className="text-zinc-400">
+                    <span className="text-zinc-400 font-mono text-[11px]">
                       ID: {sale.id.slice(0, 8)}...
                     </span>
                   </div>
@@ -499,7 +632,7 @@ export function SaleDetailModal({
                     </div>
 
                     <div>
-                      <span className="text-zinc-400 block font-medium">Recorded Date & Time</span>
+                      <span className="text-zinc-400 block font-medium">Recorded Date &amp; Time</span>
                       <strong className="text-zinc-800">
                         {new Date(sale.createdAt).toLocaleDateString("en-IN", {
                           day: "numeric",
@@ -525,7 +658,9 @@ export function SaleDetailModal({
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       ) : (
-                        <span className="text-zinc-400">Pending Invoice</span>
+                        <span className="text-zinc-400">
+                          {sale.status === "CONFIRMED" ? "Invoice generating..." : "Pending approval / invoice"}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -538,10 +673,11 @@ export function SaleDetailModal({
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-zinc-100 bg-[#FAF8F5] px-6 py-3.5">
           <p className="text-xs text-zinc-500">
-            Femmeflo Sales Ledger • {isSeller ? (sellerCanEdit ? "Editable within 48h" : "48h edit period closed") : "Manager/Admin editable"}
+            Femmeflo Sales Ledger • {isSeller ? (sellerWithin48h ? "Editable within 48h" : "48h edit period closed") : "Manager/Admin editable"}
           </p>
           <div className="flex items-center gap-2.5">
-            {!isEditMode && sale && (!isSeller || sellerCanEdit) && (
+            {/* Show edit button ONLY when status is REJECTED or PENDING_APPROVAL. Hide for CONFIRMED. */}
+            {!isEditMode && sale && canEdit && (
               <button
                 type="button"
                 onClick={() => {
@@ -553,10 +689,23 @@ export function SaleDetailModal({
                   setSaveError(null);
                   setSaveSuccess(null);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-4 py-2 text-xs font-bold text-[#E61C5D] hover:bg-rose-50 transition cursor-pointer"
+                className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                  sale.status === "REJECTED"
+                    ? "border border-rose-300 bg-rose-50 text-[#E61C5D] hover:bg-rose-100"
+                    : "border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                }`}
               >
-                <Edit3 className="h-3.5 w-3.5" />
-                <span>Edit Sale</span>
+                {sale.status === "REJECTED" ? (
+                  <>
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    <span>Edit &amp; Resubmit</span>
+                  </>
+                ) : (
+                  <>
+                    <Edit3 className="h-3.5 w-3.5" />
+                    <span>Edit Sale</span>
+                  </>
+                )}
               </button>
             )}
             <button
