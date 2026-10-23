@@ -30,9 +30,16 @@ import { adminApi } from "@/lib/api/admin";
 import type { AdminDashboardData, DashboardFilterOptions } from "@/lib/api/types";
 import { useAuth } from "@/context/AuthContext";
 
+import { registerSessionCache } from "@/lib/api/sessionCaches";
+
 // In-memory cache for admin overview to prevent reloading flashes on section changes
 let cachedAdminDashboard: AdminDashboardData | null = null;
 let cachedFilterOptions: DashboardFilterOptions | null = null;
+
+registerSessionCache(() => {
+  cachedAdminDashboard = null;
+  cachedFilterOptions = null;
+});
 
 export default function AdminOverviewDashboard() {
   const [data, setData] = useState<AdminDashboardData | null>(cachedAdminDashboard);

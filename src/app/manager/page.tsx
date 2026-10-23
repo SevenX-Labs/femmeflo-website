@@ -31,10 +31,18 @@ import {
   canViewInventory,
 } from "@/lib/permissions";
 
+import { registerSessionCache } from "@/lib/api/sessionCaches";
+
 // Persistent cache for manager dashboard
 let cachedManagerDashboard: ManagerDashboardData | null = null;
 let cachedManagerSales: SaleItem[] = [];
 let cachedManagerSellers: SellerItem[] = [];
+
+registerSessionCache(() => {
+  cachedManagerDashboard = null;
+  cachedManagerSales = [];
+  cachedManagerSellers = [];
+});
 
 export default function ManagerOverviewDashboard() {
   const [data, setData] = useState<ManagerDashboardData | null>(cachedManagerDashboard);

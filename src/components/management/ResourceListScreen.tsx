@@ -44,6 +44,8 @@ const EMPTY_ROWS: ResourceRow[] = [];
 // Persistent in-memory cache for resource lists to prevent blank flashes when switching sections
 const resourceCache = new Map<string, ResourceRow[]>();
 
+import { registerSessionCache } from "@/lib/api/sessionCaches";
+
 export function clearResourceListCache(keySubstr?: string) {
   if (!keySubstr) {
     resourceCache.clear();
@@ -54,6 +56,63 @@ export function clearResourceListCache(keySubstr?: string) {
       resourceCache.delete(k);
     }
   }
+}
+
+// Auto-register in global session cache registry
+registerSessionCache(() => clearResourceListCache());
+
+function parseRowDate(row: ResourceRow): Date | null {
+  // 1. Prefer rawDate if provided (ISO string or timestamp)
+  if (row.rawDate) {
+    if (typeof row.rawDate === "number") {
+      const d = new Date(row.rawDate);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const rawStr = String(row.rawDate).trim();
+    const d = new Date(rawStr);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  // 2. Check createdAt
+  if (row.createdAt) {
+    if (typeof row.createdAt === "number") {
+      const d = new Date(row.createdAt);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const cStr = String(row.createdAt).trim();
+    const d = new Date(cStr);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  // 3. Fallback to row.date display string
+  if (!row.date) return null;
+  const str = String(row.date).trim();
+
+  // If string contains "-" or ".", only use direct new Date() if it strictly matches ISO yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  // Handle DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY (en-IN default)
+  const parts = str.split(/[/.-]/);
+  if (parts.length === 3) {
+    const p0 = parseInt(parts[0], 10);
+    const p1 = parseInt(parts[1], 10);
+    const p2 = parseInt(parts[2], 10);
+    // If p2 is 4-digit year: DD/MM/YYYY
+    if (p2 >= 1000 && p1 >= 1 && p1 <= 12 && p0 >= 1 && p0 <= 31) {
+      const d = new Date(p2, p1 - 1, p0);
+      if (!isNaN(d.getTime())) return d;
+    }
+    // If p0 is 4-digit year: YYYY/MM/DD
+    if (p0 >= 1000 && p1 >= 1 && p1 <= 12 && p2 >= 1 && p2 <= 31) {
+      const d = new Date(p0, p1 - 1, p2);
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+
+  return null;
 }
 
 export function ResourceListScreen({
@@ -79,6 +138,17 @@ export function ResourceListScreen({
     if (cachedRows && cachedRows.length > 0) return cachedRows;
     return fetchData ? [] : initialRows;
   });
+
+  const updateDataRowsAndCache = useCallback(
+    (updater: (prev: ResourceRow[]) => ResourceRow[]) => {
+      setDataRows((prev) => {
+        const next = updater(prev);
+        resourceCache.set(cacheKey, next);
+        return next;
+      });
+    },
+    [cacheKey]
+  );
   const [isLoading, setIsLoading] = useState<boolean>(() => {
     if (cachedRows && cachedRows.length > 0) return false;
     return Boolean(fetchData);
@@ -243,7 +313,7 @@ export function ResourceListScreen({
 
       if (res?.photoUrl) {
         setSelectedRow((prev) => (prev ? { ...prev, photoPath: res.photoUrl } : null));
-        setDataRows((prev) =>
+        updateDataRowsAndCache((prev) =>
           prev.map((r) => (r.id === customerId ? { ...r, photoPath: res.photoUrl } : r))
         );
         setPhotoUploadMessage("Storefront photo successfully saved!");
@@ -305,11 +375,6 @@ export function ResourceListScreen({
     loadData(true);
   }, [cacheKey, loadData]);
 
-  const mountedRef = useRef(true);
-  useEffect(() => {
-    return () => { mountedRef.current = false; };
-  }, []);
-
   const fetchDataRef = useRef(fetchData);
   fetchDataRef.current = fetchData;
 
@@ -323,7 +388,9 @@ export function ResourceListScreen({
 
   useEffect(() => {
     if (!fetchData) {
-      setDataRows(initialRows);
+      queueMicrotask(() => {
+        setDataRows(initialRows);
+      });
     }
   }, [fetchData, initialRows]);
 
@@ -334,8 +401,24 @@ export function ResourceListScreen({
     return dataRows.filter((row) => {
       if (status !== "All status" && String(row.status) !== status) return false;
       if (dateRange !== "All time") {
-        const date = String(row.date ?? "").toLowerCase();
-        if (dateRange === "This month" ? date.includes("sep") : !date.includes("sep")) return false;
+        const rowDate = parseRowDate(row);
+        if (!rowDate) return false;
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        if (dateRange === "This month") {
+          if (rowDate.getFullYear() !== currentYear || rowDate.getMonth() !== currentMonth) {
+            return false;
+          }
+        } else if (dateRange === "Last month") {
+          const prevMonthDate = new Date(currentYear, currentMonth - 1, 1);
+          if (
+            rowDate.getFullYear() !== prevMonthDate.getFullYear() ||
+            rowDate.getMonth() !== prevMonthDate.getMonth()
+          ) {
+            return false;
+          }
+        }
       }
       if (q) {
         const searchable = Object.values(row).join(" ").toLowerCase();
@@ -924,7 +1007,7 @@ export function ResourceListScreen({
             saleId={String(selectedRow.id)}
             onClose={() => setSelectedRow(null)}
             onSaleUpdated={(updated) => {
-              setDataRows((prev) =>
+              updateDataRowsAndCache((prev) =>
                 prev.map((r) =>
                   r.id === updated.id
                     ? {
@@ -953,7 +1036,7 @@ export function ResourceListScreen({
             customerId={String(selectedRow.id)}
             onClose={() => setSelectedRow(null)}
             onCustomerUpdated={(updated) => {
-              setDataRows((prev) =>
+              updateDataRowsAndCache((prev) =>
                 prev.map((r) =>
                   r.id === updated.id
                     ? {
@@ -974,7 +1057,7 @@ export function ResourceListScreen({
             managerId={String(selectedRow.id)}
             onClose={() => setSelectedRow(null)}
             onManagerUpdated={(updated) => {
-              setDataRows((prev) =>
+              updateDataRowsAndCache((prev) =>
                 prev.map((r) =>
                   r.id === updated.id
                     ? {
@@ -1001,7 +1084,7 @@ export function ResourceListScreen({
             sellerId={String(selectedRow.id)}
             onClose={() => setSelectedRow(null)}
             onSellerUpdated={(updated) => {
-              setDataRows((prev) =>
+              updateDataRowsAndCache((prev) =>
                 prev.map((r) =>
                   r.id === updated.id
                     ? {

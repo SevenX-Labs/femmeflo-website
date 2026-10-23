@@ -107,6 +107,7 @@ export const tokenStorage = {
 
 export class ApiError extends Error {
   statusCode: number;
+  status: number;
   data?: unknown;
   isNetworkError: boolean;
   isRateLimited: boolean;
@@ -123,6 +124,7 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
     this.statusCode = statusCode;
+    this.status = statusCode;
     this.data = data;
     this.isNetworkError = isNetworkError;
     this.isRateLimited = isRateLimited || statusCode === 429;
@@ -150,6 +152,8 @@ interface ApiCacheEntry {
 const apiGetCache = new Map<string, ApiCacheEntry>();
 const inFlightGetRequests = new Map<string, Promise<unknown>>();
 
+import { registerSessionCache } from "./sessionCaches";
+
 /**
  * Clear client-side API response cache.
  * When endpointSubstr is provided, only matching keys are cleared.
@@ -157,6 +161,7 @@ const inFlightGetRequests = new Map<string, Promise<unknown>>();
 export function clearApiCache(endpointSubstr?: string): void {
   if (!endpointSubstr) {
     apiGetCache.clear();
+    inFlightGetRequests.clear();
     return;
   }
   for (const key of Array.from(apiGetCache.keys())) {
@@ -165,6 +170,9 @@ export function clearApiCache(endpointSubstr?: string): void {
     }
   }
 }
+
+// Auto-register in global session cache registry
+registerSessionCache(() => clearApiCache());
 
 /**
  * Synchronously peek cached API response data without triggering network request

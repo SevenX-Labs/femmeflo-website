@@ -44,6 +44,8 @@ function formatDuration(startTime: string, endTime?: string | null): string {
   return `${h}h ${m}m`;
 }
 
+import { registerSessionCache } from "@/lib/api/sessionCaches";
+
 // Module-level persistent cache for admin shifts
 let cachedAdminShifts: Shift[] = [];
 let cachedShiftsPagination: PaginationMeta = {
@@ -52,6 +54,16 @@ let cachedShiftsPagination: PaginationMeta = {
   total: 0,
   totalPages: 1,
 };
+
+registerSessionCache(() => {
+  cachedAdminShifts = [];
+  cachedShiftsPagination = {
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    totalPages: 1,
+  };
+});
 
 export default function AdminShiftsPage() {
   const { user } = useAuth();

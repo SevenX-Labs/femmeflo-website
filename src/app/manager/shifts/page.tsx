@@ -41,6 +41,8 @@ function formatDuration(startTime: string, endTime?: string | null): string {
   return `${h}h ${m}m`;
 }
 
+import { registerSessionCache } from "@/lib/api/sessionCaches";
+
 // Persistent cache for manager shifts
 let cachedManagerShifts: Shift[] = [];
 let cachedManagerShiftsPagination: PaginationMeta = {
@@ -49,6 +51,16 @@ let cachedManagerShiftsPagination: PaginationMeta = {
   total: 0,
   totalPages: 1,
 };
+
+registerSessionCache(() => {
+  cachedManagerShifts = [];
+  cachedManagerShiftsPagination = {
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    totalPages: 1,
+  };
+});
 
 export default function ManagerShiftsPage() {
   const { user } = useAuth();

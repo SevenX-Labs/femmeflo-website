@@ -51,6 +51,8 @@ import type {
   AdminIncentivesResponse,
 } from "@/lib/api/types";
 
+import { registerSessionCache } from "@/lib/api/sessionCaches";
+
 // Module-level persistent cache for admin inventory to prevent reload flashes
 let cachedInventorySummary: InventorySummaryData | null = null;
 let cachedTransactions: StockTransactionItem[] = [];
@@ -58,6 +60,15 @@ let cachedTxPagination = { total: 0, totalPages: 1 };
 let cachedDashData: AdminDashboardData | null = null;
 let cachedIncentiveData: AdminIncentivesResponse | null = null;
 let cachedInwardProducts: Array<{ id: string; name: string; sku: string | null }> = [];
+
+registerSessionCache(() => {
+  cachedInventorySummary = null;
+  cachedTransactions = [];
+  cachedTxPagination = { total: 0, totalPages: 1 };
+  cachedDashData = null;
+  cachedIncentiveData = null;
+  cachedInwardProducts = [];
+});
 
 export default function AdminInventoryPage() {
   const ledgerRef = useRef<HTMLDivElement>(null);

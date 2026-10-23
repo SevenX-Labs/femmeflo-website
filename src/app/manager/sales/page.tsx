@@ -28,6 +28,7 @@ export default function ManagerSalesPage() {
       amount: `₹${(s.totalPaise / 100).toLocaleString("en-IN")}`,
       payment: s.paymentMode === "CASH" ? "Cash" : s.paymentMode === "BANK" ? "Bank" : "Pending",
       date: new Date(s.createdAt).toLocaleDateString("en-IN"),
+      rawDate: s.createdAt,
       status:
         s.status === "CONFIRMED"
           ? "Confirmed"

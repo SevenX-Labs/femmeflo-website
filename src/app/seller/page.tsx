@@ -29,8 +29,14 @@ import type { SellerDashboardData } from "@/lib/api/types";
 import { useAuth } from "@/context/AuthContext";
 import { SellerShiftWidget } from "@/components/shifts/SellerShiftWidget";
 
+import { registerSessionCache } from "@/lib/api/sessionCaches";
+
 // Persistent cache for seller dashboard
 let cachedSellerDashboard: SellerDashboardData | null = null;
+
+registerSessionCache(() => {
+  cachedSellerDashboard = null;
+});
 
 export default function SellerOverviewDashboard() {
   const [data, setData] = useState<SellerDashboardData | null>(cachedSellerDashboard);
