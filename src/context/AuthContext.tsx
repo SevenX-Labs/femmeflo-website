@@ -93,7 +93,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setIsVerified(false);
             }
           } else {
-            console.warn("authApi.me() background verification deferred (non-auth error):", err);
+            if (process.env.NODE_ENV === "development") {
+              console.debug("authApi.me() background verification deferred (non-auth error):", err);
+            }
           }
         });
     } else if (storedToken) {
@@ -131,16 +133,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             // Retry up to 2 times on network errors / cold starts / 5xx
             if (retriesLeft > 0 && isMounted) {
-              console.warn(
-                `authApi.me() failed (status ${status ?? "unknown"}). Retrying in ${delayMs}ms... (${retriesLeft} retries left)`
-              );
+              if (process.env.NODE_ENV === "development") {
+                console.debug(
+                  `authApi.me() failed (status ${status ?? "unknown"}). Retrying in ${delayMs}ms... (${retriesLeft} retries left)`
+                );
+              }
               setTimeout(() => {
                 if (isMounted) {
                   resolveMeWithRetry(retriesLeft - 1, delayMs * 2);
                 }
               }, delayMs);
             } else {
-              console.warn("authApi.me() resolution failed after retries (non-auth error):", err);
+              if (process.env.NODE_ENV === "development") {
+                console.debug("authApi.me() resolution deferred after retries (non-auth error):", err);
+              }
               if (isMounted) {
                 setIsLoading(false);
               }

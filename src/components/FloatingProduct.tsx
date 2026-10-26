@@ -198,7 +198,7 @@ export default function FloatingProduct() {
               width={650}
               height={650}
               sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 40vw"
-              loading="lazy"
+              priority
               className="w-full h-auto object-contain pointer-events-none max-h-[500px] sm:max-h-[560px] lg:max-h-[620px]"
             />
           </div>
