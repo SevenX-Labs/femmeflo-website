@@ -179,6 +179,7 @@ export const managerApi = {
     return apiRequest<{ customer: CustomerItem; photoUrl?: string }>("manager/customers", {
       method: "POST",
       body: payload,
+      timeoutMs: 90000,
     });
   },
 

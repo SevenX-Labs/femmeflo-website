@@ -266,6 +266,11 @@ export interface CustomerItem {
   district: string;
   village: string;
   photoPath?: string | null;
+  noPhotoReason?: string | null;
+  createdDate?: string | null;
+  createdTime?: string | null;
+  createdDateTime?: string | null;
+  createdAtIST?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   active: boolean;
@@ -291,10 +296,13 @@ export interface CreateCustomerPayload {
   district: string;
   village: string;
   photoPath?: string;
+  noPhotoReason?: string;
   photoUrl?: string;
   imageUrl?: string;
   latitude?: number;
   longitude?: number;
+  date?: string;
+  time?: string;
 }
 
 export interface PincodeLookupResponse {

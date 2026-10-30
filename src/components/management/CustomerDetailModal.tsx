@@ -415,9 +415,12 @@ export function CustomerDetailModal({
     const file = e.target.files?.[0];
     if (!file || !customer) return;
 
-    const allowed = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(file.type)) {
-      setPhotoMessage("Please upload a JPG, PNG, or WebP photo.");
+    const isImage =
+      file.type.startsWith("image/") ||
+      /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name) ||
+      file.type === "";
+    if (!isImage) {
+      setPhotoMessage("Please upload a JPG, PNG, WebP, or HEIC photo.");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -875,7 +878,13 @@ export function CustomerDetailModal({
                       ) : (
                         <div className="flex flex-col items-center text-zinc-700 p-4 text-center">
                           <Store className="h-10 w-10 text-zinc-300 mb-1" />
-                          <p className="text-xs">No shop photo uploaded yet</p>
+                          <p className="text-xs font-semibold text-zinc-700">No storefront photo uploaded</p>
+                          {customer.noPhotoReason && (
+                            <div className="mt-2.5 rounded-lg bg-amber-50 border border-amber-200/80 px-3 py-2 text-left max-w-xs shadow-xs">
+                              <span className="text-[10px] uppercase font-bold text-amber-800 block">Exemption Reason:</span>
+                              <p className="text-xs text-amber-950 font-medium leading-relaxed">{customer.noPhotoReason}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -887,7 +896,7 @@ export function CustomerDetailModal({
                       {isUploadingPhoto ? "Uploading..." : customer.photoPath ? "Replace photo" : "Upload photo"}
                       <input
                         type="file"
-                        accept="image/jpeg,image/png,image/webp"
+                        accept="image/*,image/jpeg,image/png,image/webp,image/heic,image/heif"
                         capture="environment"
                         disabled={isUploadingPhoto}
                         className="sr-only"
@@ -975,15 +984,15 @@ export function CustomerDetailModal({
                       </div>
 
                       <div className="space-y-1">
-                        <span className="text-zinc-700 block font-medium">Customer Since</span>
+                        <span className="text-zinc-700 block font-medium">Customer Onboarded (Live IST)</span>
                         <strong className="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
                           <Calendar className="h-3.5 w-3.5 text-zinc-700 shrink-0" />
-                          {customer.createdAt
-                            ? new Date(customer.createdAt).toLocaleDateString("en-IN", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              })
+                          {customer.createdDate
+                            ? `${customer.createdDate}${customer.createdTime ? ` · ${customer.createdTime}` : ""}`
+                            : customer.createdAtIST
+                            ? customer.createdAtIST
+                            : customer.createdAt
+                            ? `${new Date(customer.createdAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })} · ${new Date(customer.createdAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true })}`
                             : "—"}
                         </strong>
                       </div>

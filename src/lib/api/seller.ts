@@ -124,6 +124,7 @@ export const sellerApi = {
     return apiRequest<{ customer: CustomerItem; photoUrl?: string }>("seller/customers", {
       method: "POST",
       body: payload,
+      timeoutMs: 90000,
     });
   },
 

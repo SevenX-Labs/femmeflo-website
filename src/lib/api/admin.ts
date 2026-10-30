@@ -309,6 +309,7 @@ export const adminApi = {
     return apiRequest<{ customer: CustomerItem; photoUrl?: string }>("admin/customers", {
       method: "POST",
       body: payload,
+      timeoutMs: 90000,
     });
   },
 

@@ -219,7 +219,7 @@ export async function apiRequest<T = unknown>(
     body,
     params,
     skipAuth = false,
-    timeoutMs = 15000,
+    timeoutMs,
     skipClientThrottle = false,
     skipCache = false,
     cacheTtlMs = 120000,
@@ -311,9 +311,11 @@ export async function apiRequest<T = unknown>(
     }
   }
 
-  // Setup abort controller for timeout
+  // Setup abort controller with generous mobile / cold-start timeouts
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const effectiveTimeoutMs = timeoutMs ?? (isFormData ? 90000 : 45000);
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = setTimeout(() => controller.abort(), effectiveTimeoutMs);
 
   try {
     const response = await fetch(url, {
@@ -408,13 +410,21 @@ export async function apiRequest<T = unknown>(
     }
 
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new ApiError("Request timed out. Please check your network and try again.", 408, null, true);
+      throw new ApiError(
+        "Request timed out. The server or network took too long to respond. Please check your internet connection and try again.",
+        408,
+        null,
+        true
+      );
     }
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Failed to connect to Femmeflo server. Check that the backend is running.";
+    const rawMessage = error instanceof Error ? error.message : "";
+    let message = "Failed to connect to Femmeflo server. Check that your network is active.";
+    if (rawMessage.toLowerCase().includes("failed to fetch") || rawMessage.toLowerCase().includes("networkerror")) {
+      message = "Network connection error: Unable to reach server. Please check your mobile data or Wi-Fi.";
+    } else if (rawMessage) {
+      message = rawMessage;
+    }
 
     throw new ApiError(message, 503, null, true);
   } finally {

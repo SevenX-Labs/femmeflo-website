@@ -134,6 +134,10 @@ export function OnboardingFormScreen({
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
   const [submissionStep, setSubmissionStep] = useState<string>("");
 
+  // Reason box state when shopkeeper photo is not added
+  const [noPhotoReason, setNoPhotoReason] = useState("");
+  const [noPhotoReasonError, setNoPhotoReasonError] = useState("");
+
   // Speech-to-Text state for specific Customer fields
   const [isListening, setIsListening] = useState(false);
   const [activeSpeechField, setActiveSpeechField] = useState<string | null>(null);
@@ -261,16 +265,22 @@ export function OnboardingFormScreen({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setPhotoError(null);
+    setNoPhotoReasonError("");
     if (!file) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      setPhotoError("Please select a valid image (JPEG, PNG, or WebP).");
+    // Support JPEG, PNG, WebP, HEIC/HEIF (Apple iOS photos), or any standard image type
+    const isImage =
+      file.type.startsWith("image/") ||
+      /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name) ||
+      file.type === "";
+
+    if (!isImage) {
+      setPhotoError("Please select a valid image file (JPEG, PNG, WebP, or HEIC).");
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setPhotoError("Image size must be 10 MB or less.");
+    if (file.size > 15 * 1024 * 1024) {
+      setPhotoError("Image size must be 15 MB or less.");
       return;
     }
 
@@ -284,7 +294,9 @@ export function OnboardingFormScreen({
       setPhotoFile(compressed);
       setPhotoPreview(URL.createObjectURL(compressed));
     } catch {
-      setPhotoError("Failed to compress image. Please try a different photo.");
+      // Safe fallback to original file so device never fails
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
     } finally {
       setIsCompressing(false);
     }
@@ -299,10 +311,9 @@ export function OnboardingFormScreen({
     setPhotoError(null);
   };
 
-  // Capturing Live GPS Location in Frontend + Reverse Geocoding for Address Auto-fill
+  // Capturing Live GPS Location in Frontend + Reverse Geocoding with Apple iOS fallback
   const handleGetCurrentLocation = () => {
     if (!navigator.geolocation) {
-      showErrorModal("Geolocation is not supported by your browser/device.", "Location Access Error");
       setLocationError("Geolocation is not supported by your browser/device.");
       return;
     }
@@ -310,75 +321,84 @@ export function OnboardingFormScreen({
     setIsLocating(true);
     setLocationError(null);
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const latitude = Number(position.coords.latitude.toFixed(6));
-        const longitude = Number(position.coords.longitude.toFixed(6));
-        const gpsAccuracy = position.coords.accuracy;
+    const onLocationSuccess = async (position: GeolocationPosition) => {
+      const latitude = Number(position.coords.latitude.toFixed(6));
+      const longitude = Number(position.coords.longitude.toFixed(6));
+      const gpsAccuracy = position.coords.accuracy;
 
-        setLat(latitude);
-        setLng(longitude);
-        setAccuracy(gpsAccuracy);
-        setLocation(`${latitude}, ${longitude}`);
-        setVerifiedAddress(null);
+      setLat(latitude);
+      setLng(longitude);
+      setAccuracy(gpsAccuracy);
+      setLocation(`${latitude}, ${longitude}`);
+      setVerifiedAddress(null);
 
-        console.log("Captured GPS Location:", { latitude, longitude, accuracy: gpsAccuracy });
-
-        // Only auto-fill address from GPS when accuracy is good (<= 500m).
-        // Poor accuracy (IP-based) gives wrong addresses — don't overwrite user-entered data.
-        if (gpsAccuracy <= 500) {
-          try {
-            const geoResult = await reverseGeocode(latitude, longitude);
-            if (geoResult) {
-              if (geoResult.formattedAddress) {
-                setLocation(geoResult.formattedAddress);
-              }
-              if (geoResult.state) setState(geoResult.state);
-              if (geoResult.district) setDistrict(geoResult.district);
-              if (geoResult.village) {
-                setVillage(geoResult.village);
-                setAvailableVillages((prev) => Array.from(new Set([...prev, geoResult.village])));
-              }
-              if (geoResult.pincode) {
-                setPincode(geoResult.pincode);
-                setPincodeMessage(`Auto-filled from GPS: ${geoResult.village ? geoResult.village + ", " : ""}${geoResult.district}`);
-              }
-              if (geoResult.streetName && !streetName) setStreetName(geoResult.streetName);
-              if (geoResult.shopNumber && !shopNumber) setShopNumber(geoResult.shopNumber);
+      // Only auto-fill address from GPS when accuracy is good (<= 500m).
+      if (gpsAccuracy <= 500) {
+        try {
+          const geoResult = await reverseGeocode(latitude, longitude);
+          if (geoResult) {
+            if (geoResult.formattedAddress) {
+              setLocation(geoResult.formattedAddress);
             }
-          } catch {
-            console.warn("Reverse geocoding failed (non-blocking)");
+            if (geoResult.state) setState(geoResult.state);
+            if (geoResult.district) setDistrict(geoResult.district);
+            if (geoResult.village) {
+              setVillage(geoResult.village);
+              setAvailableVillages((prev) => Array.from(new Set([...prev, geoResult.village])));
+            }
+            if (geoResult.pincode) {
+              setPincode(geoResult.pincode);
+              setPincodeMessage(`Auto-filled from GPS: ${geoResult.village ? geoResult.village + ", " : ""}${geoResult.district}`);
+            }
+            if (geoResult.streetName && !streetName) setStreetName(geoResult.streetName);
+            if (geoResult.shopNumber && !shopNumber) setShopNumber(geoResult.shopNumber);
           }
-        } else {
-          setLocation("");
+        } catch {
+          console.warn("Reverse geocoding failed (non-blocking)");
         }
+      } else {
+        setLocation("");
+      }
 
-        setIsLocating(false);
-      },
+      setIsLocating(false);
+    };
+
+    // First attempt: High accuracy GPS with 8s timeout
+    navigator.geolocation.getCurrentPosition(
+      onLocationSuccess,
       (error) => {
-        setIsLocating(false);
-        let errorMsg = "An unknown error occurred while retrieving location.";
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMsg = "Location permission denied. Please allow location access in your browser settings.";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMsg = "Location information is unavailable. Ensure device GPS is on.";
-            break;
-          case error.TIMEOUT:
-            errorMsg = "Location request timed out.";
-            break;
-          default:
-            errorMsg = "An unknown error occurred while retrieving location.";
-            break;
+        // If high-accuracy timed out or is unavailable (common on Apple devices indoors),
+        // fallback to standard WiFi/cellular tower location
+        if (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE) {
+          navigator.geolocation.getCurrentPosition(
+            onLocationSuccess,
+            (fallbackErr) => {
+              setIsLocating(false);
+              const msg =
+                fallbackErr.code === fallbackErr.PERMISSION_DENIED
+                  ? "Location permission denied in browser settings."
+                  : "Device GPS could not acquire coordinates indoors. You can still enter address fields manually.";
+              setLocationError(msg);
+            },
+            {
+              enableHighAccuracy: false,
+              timeout: 10000,
+              maximumAge: 300000,
+            }
+          );
+        } else {
+          setIsLocating(false);
+          setLocationError(
+            error.code === error.PERMISSION_DENIED
+              ? "Location permission denied. Please allow location access in your browser settings."
+              : "Unable to retrieve device location. You can enter address fields manually."
+          );
         }
-        setLocationError(errorMsg);
-        showErrorModal(errorMsg, "Location Error");
       },
       {
         enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
+        timeout: 8000,
+        maximumAge: 10000,
       }
     );
   };
@@ -729,6 +749,17 @@ export function OnboardingFormScreen({
           }
         }
 
+        // Check mandatory photo rule: If no photo, reason is MANDATORY!
+        if (!photoFile && (!noPhotoReason || noPhotoReason.trim().length === 0)) {
+          setNoPhotoReasonError("Please provide a reason explaining why the shopkeeper photo was not added.");
+          showErrorModal(
+            "Shopkeeper / storefront photo is required. If unavailable due to network, customer refusal, or camera issue, please provide a reason in Section C.",
+            "Photo or Exemption Reason Required"
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
         // Submitting Customer with Photo & Location (Single Request multipart/form-data)
         const formData = new FormData();
 
@@ -755,6 +786,11 @@ export function OnboardingFormScreen({
         // Storefront Photo File (Captured via camera or file picker)
         if (photoFile) {
           formData.append("photo", photoFile);
+        }
+
+        // Reason why photo was not added (or optional photo remarks)
+        if (noPhotoReason && noPhotoReason.trim()) {
+          formData.append("noPhotoReason", noPhotoReason.trim());
         }
 
         if ((role === "Super Admin" || role === "Manager") && selectedSellerId) {
@@ -1868,7 +1904,7 @@ export function OnboardingFormScreen({
                             Change
                             <input
                               type="file"
-                              accept="image/jpeg,image/png,image/webp"
+                              accept="image/*,image/jpeg,image/png,image/webp,image/heic,image/heif"
                               capture="environment"
                               className="sr-only"
                               onChange={handleFileChange}
@@ -1892,11 +1928,11 @@ export function OnboardingFormScreen({
                         <span className="text-xs font-bold">Upload / capture shop photo</span>
                       </div>
                       <span className="text-[11px] text-zinc-700">
-                        JPEG, PNG, WebP — auto-compressed to WebP &lt; 1 MB
+                        JPEG, PNG, WebP, HEIC — auto-compressed &lt; 1 MB
                       </span>
                       <input
                         type="file"
-                        accept="image/jpeg,image/png,image/webp"
+                        accept="image/*,image/jpeg,image/png,image/webp,image/heic,image/heif"
                         capture="environment"
                         className="sr-only"
                         onChange={handleFileChange}
@@ -2053,6 +2089,98 @@ export function OnboardingFormScreen({
                       <p className="text-[11px] font-medium text-rose-600">{locationError}</p>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* Photo Exemption / Remarks Reason Box */}
+              <div
+                className={`rounded-xl border p-3.5 transition-all ${
+                  !photoFile && !photoPreview
+                    ? "border-amber-300 bg-amber-50/70 shadow-xs"
+                    : "border-zinc-200 bg-[#FAF8F5]"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`text-xs font-bold ${
+                        !photoFile && !photoPreview ? "text-amber-950" : "text-zinc-800"
+                      }`}
+                    >
+                      {!photoFile && !photoPreview ? (
+                        <>
+                          Reason for not adding shopkeeper photo{" "}
+                          <span className="text-rose-600 font-extrabold">* (Mandatory)</span>
+                        </>
+                      ) : (
+                        <>Additional photo remarks / notes <span className="text-zinc-700 font-normal">(Optional)</span></>
+                      )}
+                    </span>
+                  </div>
+                  {!photoFile && !photoPreview && (
+                    <span className="rounded-full bg-amber-200/80 px-2.5 py-0.5 text-[10px] font-bold text-amber-900 border border-amber-300">
+                      Required when photo missing
+                    </span>
+                  )}
+                </div>
+
+                <p className="mt-1 text-[11px] text-zinc-700 leading-relaxed">
+                  {!photoFile && !photoPreview
+                    ? "Since no shopkeeper/storefront photo is attached, please state why (e.g., poor network connectivity, customer declined photo, shop closed)."
+                    : "Optional note or observation about the shopkeeper photo or storefront."}
+                </p>
+
+                {/* Quick preset selector buttons for fast field entry on mobile */}
+                {!photoFile && !photoPreview && (
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    {[
+                      "Poor network connectivity",
+                      "Customer refused photo",
+                      "Shopkeeper not present / closed",
+                      "Camera / device malfunction",
+                      "Indoor shop / poor lighting",
+                    ].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => {
+                          setNoPhotoReason(preset);
+                          setNoPhotoReasonError("");
+                        }}
+                        className={`rounded-md border px-2 py-1 text-[11px] font-semibold transition cursor-pointer ${
+                          noPhotoReason === preset
+                            ? "border-amber-600 bg-amber-200 text-amber-950 font-bold"
+                            : "border-amber-200 bg-white text-amber-900 hover:bg-amber-100/60"
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-2.5">
+                  <textarea
+                    value={noPhotoReason}
+                    onChange={(e) => {
+                      setNoPhotoReason(e.target.value);
+                      if (noPhotoReasonError) setNoPhotoReasonError("");
+                    }}
+                    rows={2}
+                    placeholder={
+                      !photoFile && !photoPreview
+                        ? "Enter reason why shopkeeper image was not added (e.g. low network bandwidth in village, customer requested no photos)..."
+                        : "Optional note or remarks..."
+                    }
+                    className={`w-full rounded-lg border bg-white px-3 py-2 text-xs text-zinc-800 placeholder:text-zinc-600 focus:outline-none focus:ring-2 ${
+                      noPhotoReasonError
+                        ? "border-rose-400 focus:ring-rose-200"
+                        : "border-zinc-300 focus:ring-amber-200"
+                    }`}
+                  />
+                  {noPhotoReasonError && (
+                    <p className="mt-1 text-xs font-semibold text-rose-600">{noPhotoReasonError}</p>
+                  )}
                 </div>
               </div>
             </div>
