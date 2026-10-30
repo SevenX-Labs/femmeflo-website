@@ -24,6 +24,8 @@ import {
 import { adminApi } from "@/lib/api/admin";
 import { managerApi } from "@/lib/api/manager";
 import { sellerApi } from "@/lib/api/seller";
+import { VoiceFeedbackTranslator } from "@/components/common/VoiceFeedbackTranslator";
+
 import type { CustomerItem, SaleItem } from "@/lib/api/types";
 
 export interface SaleDetailModalProps {
@@ -460,16 +462,20 @@ export function SaleDetailModal({
                       </select>
                     </div>
 
-                    <div className="sm:col-span-2">
-                      <label className="block font-bold text-zinc-700 mb-1">
-                        Customer Feedback &amp; Remarks (Optional)
-                      </label>
-                      <textarea
-                        rows={2}
+                    <div className="sm:col-span-2 rounded-xl border border-zinc-200/80 bg-[#FAF8F5] p-3">
+                      <VoiceFeedbackTranslator
                         value={editCustomerFeedback}
-                        onChange={(e) => setEditCustomerFeedback(e.target.value)}
+                        onChange={setEditCustomerFeedback}
+                        label="Customer Feedback & Remarks (Optional)"
+                        sublabel="Speak in Hindi or Hinglish — automatically translates to English"
+                        rows={2}
+                        quickChips={[
+                          "Customer requested repeat order",
+                          "Payment cleared via UPI",
+                          "High satisfaction with XL absorption",
+                          "Next delivery scheduled for next visit",
+                        ]}
                         placeholder="e.g. Customer requested repeat order, satisfied with trial..."
-                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden resize-none"
                       />
                     </div>
 

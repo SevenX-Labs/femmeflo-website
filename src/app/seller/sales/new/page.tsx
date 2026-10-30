@@ -7,6 +7,8 @@ import { ArrowLeft, Check, ChevronDown, IndianRupee, Loader2, MessageSquare, Pac
 import { DashboardShell, PageHeading, SectionCard } from "@/components/management/DashboardShell";
 import { sellerNavigation } from "@/components/management/navigation";
 import { sellerApi } from "@/lib/api/seller";
+import { VoiceFeedbackTranslator } from "@/components/common/VoiceFeedbackTranslator";
+
 import type { CustomerItem } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/context/AuthContext";
@@ -609,46 +611,23 @@ export default function NewSellerSalePage() {
             </label>
           </div>
 
-          {/* Customer Feedback (Optional) */}
-          <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
-                <MessageSquare className="h-4 w-4 text-[#E61C5D]" />
-                <span>Customer Feedback &amp; Remarks</span>
-                <span className="text-[10px] text-zinc-400 font-normal">(Optional)</span>
-              </label>
-            </div>
-
-            <div className="flex flex-wrap gap-1.5">
-              {[
+          {/* Customer Feedback with Voice Translation (Hindi/Hinglish -> English) */}
+          <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-2xs">
+            <VoiceFeedbackTranslator
+              value={customerFeedback}
+              onChange={setCustomerFeedback}
+              label="Customer Feedback & Remarks (Optional)"
+              sublabel="Speak in Hindi or Hinglish — automatically translates to English for daily sales reports"
+              rows={2}
+              quickChips={[
                 "Repeat order client",
                 "Cash paid instantly",
                 "High product demand",
                 "Requested weekly dispatch",
                 "Trial packet received positively",
                 "Price negotiated with shopkeeper",
-              ].map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => setCustomerFeedback(chip)}
-                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold border transition cursor-pointer ${
-                    customerFeedback === chip
-                      ? "bg-rose-50 border-[#E61C5D] text-[#E61C5D]"
-                      : "bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100"
-                  }`}
-                >
-                  {chip}
-                </button>
-              ))}
-            </div>
-
-            <textarea
-              rows={2}
-              value={customerFeedback}
-              onChange={(e) => setCustomerFeedback(e.target.value)}
+              ]}
               placeholder="e.g. Shopkeeper was happy with last batch, requested delivery every Monday..."
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-800 outline-none focus:border-rose-300 resize-none"
             />
           </div>
 

@@ -24,6 +24,7 @@ export default function SellerCustomersPage() {
         c.address ||
         [c.shopNumber, c.streetName, c.village, c.district, c.state, c.pincode].filter(Boolean).join(", ") ||
         [c.village, c.district, c.state].filter(Boolean).join(", "),
+      onboardedAt: (c as any).createdDateTime || ((c as any).createdDate ? `${(c as any).createdDate}${(c as any).createdTime ? ` · ${(c as any).createdTime}` : ""}` : c.createdAt ? new Date(c.createdAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" }) : "—"),
       status: c.active ? "Active" : "Inactive",
       photoPath: c.photoPath,
       latitude: c.latitude,
@@ -49,6 +50,7 @@ export default function SellerCustomersPage() {
         { key: "contact", label: "Contact" },
         { key: "category", label: "Category" },
         { key: "location", label: "Location" },
+        { key: "onboardedAt", label: "Onboarded (IST)" },
         { key: "status", label: "Status" },
       ]}
       fetchData={fetchCustomers}

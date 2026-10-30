@@ -32,6 +32,7 @@ export default function ManagerCustomersPage() {
         [c.shopNumber, c.streetName, c.village, c.district, c.state, c.pincode].filter(Boolean).join(", ") ||
         [c.village, c.district, c.state].filter(Boolean).join(", "),
       category: c.category?.name || "General trade",
+      onboardedAt: (c as any).createdDateTime || ((c as any).createdDate ? `${(c as any).createdDate}${(c as any).createdTime ? ` · ${(c as any).createdTime}` : ""}` : c.createdAt ? new Date(c.createdAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" }) : "—"),
       status: c.active ? "Active" : "Inactive",
       photoPath: c.photoPath,
       latitude: c.latitude,

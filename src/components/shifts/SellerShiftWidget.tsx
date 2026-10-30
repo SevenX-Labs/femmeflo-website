@@ -27,6 +27,8 @@ import type { CustomerItem, Shift, ShiftVisit, ProductItem, PaymentMode } from "
 import { webNotificationService } from "@/lib/notifications/webNotifications";
 import { useAuth } from "@/context/AuthContext";
 import { FaceVerificationModal, type FaceVerificationResult } from "./FaceVerificationModal";
+import { VoiceFeedbackTranslator } from "@/components/common/VoiceFeedbackTranslator";
+
 
 function getCurrentCoordinates(): Promise<{ latitude: number; longitude: number }> {
   return new Promise((resolve, reject) => {
@@ -1123,24 +1125,21 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
                 </div>
               ) : null}
 
-              {/* CUSTOMER FEEDBACK (OPTIONAL) */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-zinc-800 flex items-center gap-1.5">
-                    <MessageSquare className="h-3.5 w-3.5 text-[#E61C5D]" />
-                    <span>Customer Feedback / Visit Reason</span>
-                    <span className="text-[10px] text-zinc-400 font-normal">(Optional)</span>
-                  </label>
-                </div>
-
-                {/* Preset Chips */}
-                <div className="flex flex-wrap gap-1.5">
-                  {(checkOutSaleDone
+              {/* CUSTOMER FEEDBACK WITH VOICE-TO-ENGLISH TRANSLATION */}
+              <VoiceFeedbackTranslator
+                value={checkOutFeedback}
+                onChange={setCheckOutFeedback}
+                label="Customer Feedback / Visit Reason"
+                sublabel="Speak in Hindi or Hinglish — automatically translates to English for reports"
+                rows={2}
+                quickChips={
+                  checkOutSaleDone
                     ? [
                         "Repeat order client",
                         "Cash paid instantly",
                         "High product demand",
                         "Satisfied with quality",
+                        "Requested weekly restocking",
                       ]
                     : [
                         "Stock already sufficient",
@@ -1150,34 +1149,13 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
                         "Sample provided for trial",
                         "Previous payment pending",
                       ]
-                  ).map((chip) => (
-                    <button
-                      key={chip}
-                      type="button"
-                      onClick={() => setCheckOutFeedback(chip)}
-                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold border transition cursor-pointer ${
-                        checkOutFeedback === chip
-                          ? "bg-rose-50 border-[#E61C5D] text-[#E61C5D]"
-                          : "bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100"
-                      }`}
-                    >
-                      {chip}
-                    </button>
-                  ))}
-                </div>
-
-                <textarea
-                  rows={2}
-                  value={checkOutFeedback}
-                  onChange={(e) => setCheckOutFeedback(e.target.value)}
-                  placeholder={
-                    checkOutSaleDone
-                      ? "Optional customer remarks (e.g. Shopkeeper liked packaging, requested weekly re-stock)..."
-                      : "Optional visit feedback (e.g. Will place order on Saturday once owner returns)..."
-                  }
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-800 outline-none focus:border-rose-300 resize-none"
-                />
-              </div>
+                }
+                placeholder={
+                  checkOutSaleDone
+                    ? "Optional customer remarks (e.g. Shopkeeper liked packaging, requested weekly re-stock)..."
+                    : "Optional visit feedback (e.g. Will place order on Saturday once owner returns)..."
+                }
+              />
 
               {/* Departure Notes (Optional) */}
               <div>

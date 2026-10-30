@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, ArrowLeft, Camera, Check, CheckCircle2, ChevronDown, ExternalLink, Image as ImageIcon, Loader2, MapPin, Mic, MicOff, Search, Sparkles, Trash2, Upload, Users, Volume2, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, Calendar, Camera, Check, CheckCircle2, ChevronDown, Clock, ExternalLink, Image as ImageIcon, Loader2, MapPin, Mic, MicOff, Search, Sparkles, Trash2, Upload, Users, Volume2, X } from "lucide-react";
 import { DashboardShell, PageHeading, SectionCard } from "./DashboardShell";
 import type { NavigationItem } from "./DashboardShell";
 import { adminApi } from "@/lib/api/admin";
@@ -181,6 +181,39 @@ export function OnboardingFormScreen({
   // Status
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
+  const [savedCustomerDetails, setSavedCustomerDetails] = useState<{
+    name: string;
+    contactName: string;
+    phone: string;
+    dateIST: string;
+    timeIST: string;
+    location: string;
+    photoUrl?: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const istFormattedDate = currentTime.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  const istFormattedTime = currentTime.toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
   const [errorMessage, setErrorMessage] = useState("");
   const [errorDialog, setErrorDialog] = useState<{ title: string; message: string; details?: string } | null>(null);
 
@@ -769,6 +802,7 @@ export function OnboardingFormScreen({
         formData.append("phone", phoneVal.normalized);
         if (email) formData.append("email", email);
         formData.append("categoryId", selectedCategoryId);
+        formData.append("createdAt", currentTime.toISOString());
 
         // Address fields
         if (shopNumber) formData.append("shopNumber", shopNumber);
@@ -842,7 +876,7 @@ export function OnboardingFormScreen({
       setSaved(true);
       setTimeout(() => {
         router.push(backHref);
-      }, 700);
+      }, 2200);
     } catch (err: unknown) {
       const msg =
         err instanceof ApiError
@@ -1471,6 +1505,43 @@ export function OnboardingFormScreen({
                 </div>
               )}
 
+              {/* Live Indian Standard Time (IST) Status Banner */}
+              <div className="rounded-2xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-white p-4 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
+                      <Clock className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
+                        </span>
+                        <span className="text-[11px] font-extrabold tracking-wider uppercase text-emerald-800">
+                          Live Indian Standard Time (IST)
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-zinc-700 mt-0.5">
+                        {istFormattedDate}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-xl bg-white/95 border border-emerald-200 px-3.5 py-2 shadow-xs shrink-0 sm:self-auto self-start">
+                    <Calendar className="h-4 w-4 text-emerald-700" />
+                    <span className="font-mono text-base font-extrabold text-emerald-950 tracking-tight">
+                      {istFormattedTime}
+                    </span>
+                    <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                      IST
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-2 text-[11px] text-emerald-900/80 border-t border-emerald-100/90 pt-2 flex items-center gap-1.5 font-medium">
+                  <span>⏱️ Official Onboarding Timestamp: This live date and ticking time will be permanently saved with the shop record.</span>
+                </p>
+              </div>
+
               {/* Section A: Shopkeeper & Store Details */}
               <div className="space-y-4">
                 <div className="border-b border-zinc-200/60 pb-2">
@@ -1483,6 +1554,21 @@ export function OnboardingFormScreen({
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+                      <span className="text-xs font-bold text-zinc-700 flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-zinc-500" />
+                        Onboarding Timestamp (Live IST)
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 font-mono">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                        {istFormattedDate} · {istFormattedTime} IST
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-zinc-500 mt-1">
+                      Synced live with Indian Standard Time. This timestamp is officially attached upon saving.
+                    </p>
+                  </div>
                   <label className="block text-xs font-bold text-zinc-700">
                     <span className="flex items-center justify-between">
                       <span>Store name *</span>
@@ -2188,43 +2274,90 @@ export function OnboardingFormScreen({
 
           {saved ? (
             <div className="space-y-4">
-              <div className="rounded-xl bg-emerald-50 p-4 text-sm font-bold text-[#157347]">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-[#157347]" />
-                  <span>
-                    {seller
-                      ? "Field Officer successfully onboarded! Redirecting to directory..."
-                      : "Customer record successfully saved! Redirecting to directory..."}
-                  </span>
-                </div>
-                {(uploadedPhotoUrl || photoPreview) && (
-                  <div className="mt-3 flex items-center gap-3 rounded-xl border border-emerald-200 bg-white/80 p-2.5">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={uploadedPhotoUrl || photoPreview || ""}
-                      alt="Uploaded storefront"
-                      className="h-14 w-14 rounded-lg object-cover border border-emerald-100 shrink-0"
-                    />
-                    <div className="min-w-0">
-                      <p className="font-bold text-zinc-900 truncate">{name}</p>
-                      <p className="text-xs text-emerald-700 font-semibold">✓ Storefront photo verified</p>
-                      <p className="text-[11px] text-zinc-900 truncate">
-                        {[shopNumber, streetName, village, district, state, pincode].filter(Boolean).join(", ") || `${village}, ${district}`}
-                      </p>
-                      {lat !== undefined && lng !== undefined && (
-                        <a
-                          href={`https://www.google.com/maps?q=${lat},${lng}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline"
-                        >
-                          📍 View on Google Maps ({lat}, {lng})
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      )}
+              <div className="rounded-2xl border-2 border-emerald-500 bg-emerald-50/90 p-5 shadow-sm">
+                <div className="flex items-start gap-3.5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
+                    <CheckCircle2 className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-base font-extrabold text-emerald-950">
+                      {seller ? "Field Officer Successfully Onboarded!" : "Customer Shop Successfully Registered & Saved!"}
+                    </h4>
+                    <p className="text-xs font-medium text-emerald-800 mt-0.5">
+                      {seller
+                        ? "Record has been created in the database. Redirecting..."
+                        : "Customer record has been saved with official Live IST timestamp."}
+                    </p>
+
+                    {!seller && (
+                      <div className="mt-4 grid gap-2.5 sm:grid-cols-2 rounded-xl bg-white border border-emerald-200 p-3.5 shadow-xs">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                            <Calendar className="h-4.5 w-4.5" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-zinc-500 block">Saved Date (Live IST)</span>
+                            <strong className="text-xs font-bold text-zinc-900">
+                              {savedCustomerDetails?.dateIST || istFormattedDate}
+                            </strong>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                            <Clock className="h-4.5 w-4.5" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-zinc-500 block">Saved Time (Live IST)</span>
+                            <strong className="text-xs font-bold text-emerald-900 font-mono">
+                              {savedCustomerDetails?.timeIST || istFormattedTime} IST
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {(uploadedPhotoUrl || photoPreview) && (
+                      <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-emerald-200 bg-white/90 p-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={uploadedPhotoUrl || photoPreview || ""}
+                          alt="Uploaded storefront"
+                          className="h-14 w-14 rounded-lg object-cover border border-emerald-100 shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <p className="font-bold text-zinc-900 truncate">{savedCustomerDetails?.name || name}</p>
+                          <p className="text-xs text-emerald-700 font-semibold">✓ Storefront photo verified</p>
+                          <p className="text-[11px] text-zinc-600 truncate">
+                            {savedCustomerDetails?.location || [shopNumber, streetName, village, district, state, pincode].filter(Boolean).join(", ")}
+                          </p>
+                          {lat !== undefined && lng !== undefined && (
+                            <a
+                              href={`https://www.google.com/maps?q=${lat},${lng}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline"
+                            >
+                              📍 View on Google Maps ({lat}, {lng})
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-4 flex items-center justify-between border-t border-emerald-200/80 pt-3 text-xs">
+                      <span className="text-emerald-800 font-medium">Auto-redirecting to customer directory…</span>
+                      <button
+                        type="button"
+                        onClick={() => router.push(backHref)}
+                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 font-bold text-white hover:bg-emerald-700 shadow-xs cursor-pointer"
+                      >
+                        <span>Go to Directory Now</span>
+                        <ArrowLeft className="h-3.5 w-3.5 rotate-180" />
+                      </button>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
               <Link
                 href={backHref}
