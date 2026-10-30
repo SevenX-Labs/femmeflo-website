@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Sparkles,
   Lock,
+  Smartphone,
 } from "lucide-react";
 
 export interface FaceVerificationResult {
@@ -31,6 +32,38 @@ export interface FaceVerificationModalProps {
 
 type VerificationStep = "INITIALIZING" | "SCANNING" | "MATCHING" | "VERIFIED" | "ERROR";
 
+/**
+ * Universal camera helper that handles Android (Chrome/Samsung/Oppo/Vivo/Xiaomi)
+ * and iOS (Safari/WebKit/Chrome iOS) camera quirks with graceful step-down.
+ */
+async function getUniversalFrontCameraStream(): Promise<MediaStream> {
+  // Strategy 1: Ideal user-facing with square aspect ratio
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "user" },
+        width: { ideal: 640 },
+        height: { ideal: 640 },
+      },
+      audio: false,
+    });
+  } catch {
+    // Strategy 2: Exact user facing (standard for iOS Safari)
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: false,
+      });
+    } catch {
+      // Strategy 3: Generic video stream (budget Androids with custom camera IDs)
+      return await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
+      });
+    }
+  }
+}
+
 export function FaceVerificationModal({
   isOpen,
   mode,
@@ -41,6 +74,7 @@ export function FaceVerificationModal({
 }: FaceVerificationModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const [step, setStep] = useState<VerificationStep>("INITIALIZING");
@@ -65,29 +99,23 @@ export function FaceVerificationModal({
 
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
       setStep("ERROR");
-      setErrorMessage("Camera access is not supported by your browser or device.");
+      setErrorMessage("Live camera stream is not supported in this browser. You can use native camera snapshot below.");
       return;
     }
 
     try {
       stopCamera();
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user",
-          width: { ideal: 640 },
-          height: { ideal: 640 },
-        },
-        audio: false,
-      });
-
+      const stream = await getUniversalFrontCameraStream();
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute("playsinline", "true"); // Critical for iOS Safari
+        videoRef.current.muted = true;
+        videoRef.current.playsInline = true;
+        videoRef.current.setAttribute("playsinline", "true");
+        videoRef.current.setAttribute("webkit-playsinline", "true"); // Critical for iOS WebKit
         videoRef.current.setAttribute("muted", "true");
-        await videoRef.current.play();
+        await videoRef.current.play().catch(() => {});
       }
 
       setStep("SCANNING");
@@ -96,16 +124,30 @@ export function FaceVerificationModal({
       const name = (err as Error)?.name;
       if (name === "NotAllowedError" || name === "PermissionDeniedError") {
         setErrorMessage(
-          "Camera permission was denied. Please allow camera access in your device/browser settings to verify Face ID."
+          "Camera access was denied. Please allow camera permissions in browser settings or use native camera snapshot."
         );
       } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
-        setErrorMessage("No front camera detected on this device. Please connect a camera.");
+        setErrorMessage("No front camera detected on this device. Use device camera snapshot below.");
       } else {
         setErrorMessage(
-          "Unable to start camera for Face ID scan. Please check your camera permissions and try again."
+          "Unable to start camera for Face ID scan. Tap below to use device camera."
         );
       }
     }
+  };
+
+  // Fallback for native camera capture on both iOS & Android
+  const handleNativeCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const photoUrl = reader.result as string;
+      setCapturedPhoto(photoUrl);
+      setStep("MATCHING");
+    };
+    reader.readAsDataURL(file);
   };
 
   // Lifecycle on modal open / close
@@ -141,11 +183,10 @@ export function FaceVerificationModal({
     }
 
     if (step === "MATCHING") {
-      // Capture the live camera frame onto canvas
       timer = setTimeout(() => {
-        let photoDataUrl = "";
+        let photoDataUrl = capturedPhoto || "";
         try {
-          if (videoRef.current && canvasRef.current) {
+          if (!photoDataUrl && videoRef.current && canvasRef.current) {
             const video = videoRef.current;
             const canvas = canvasRef.current;
             canvas.width = video.videoWidth || 480;
@@ -161,7 +202,7 @@ export function FaceVerificationModal({
             }
           }
         } catch {
-          // Canvas capture fallback
+          // Fallback if canvas capture encounters restrictions
         }
 
         setStep("VERIFIED");
@@ -180,7 +221,7 @@ export function FaceVerificationModal({
 
       return () => clearTimeout(timer);
     }
-  }, [step, onVerified]);
+  }, [step, capturedPhoto, onVerified]);
 
   if (!isOpen) return null;
 
@@ -195,6 +236,16 @@ export function FaceVerificationModal({
       {/* Hidden canvas for taking snapshot */}
       <canvas ref={canvasRef} className="hidden" />
 
+      {/* Hidden input for native camera snapshot fallback (iOS + Android) */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="user"
+        className="sr-only"
+        onChange={handleNativeCameraCapture}
+      />
+
       <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-zinc-700/60 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black text-white shadow-2xl">
         {/* Top Header */}
         <div className="flex items-center justify-between border-b border-zinc-800/80 px-5 py-4">
@@ -205,10 +256,10 @@ export function FaceVerificationModal({
             <div>
               <div className="flex items-center gap-1.5">
                 <h3 className="text-sm font-bold tracking-tight text-white">
-                  Apple Face ID Verification
+                  Face ID Verification
                 </h3>
                 <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.2 text-[10px] font-bold text-emerald-300">
-                  Live Biometric
+                  Android &amp; iOS
                 </span>
               </div>
               <p className="text-[11px] text-zinc-400">
@@ -228,7 +279,7 @@ export function FaceVerificationModal({
           </button>
         </div>
 
-        {/* Camera Viewport with Apple Face ID Scanner Reticle */}
+        {/* Camera Viewport with Universal Face ID Scanner Reticle */}
         <div className="relative px-5 pt-4 pb-3 flex flex-col items-center">
           <div className="relative h-64 w-64 sm:h-72 sm:w-72 overflow-hidden rounded-3xl border-2 border-zinc-800 bg-zinc-950 shadow-inner flex items-center justify-center">
             {/* Live Video Feed */}
@@ -242,8 +293,8 @@ export function FaceVerificationModal({
               }`}
             />
 
-            {/* Frozen Frame on Verified */}
-            {step === "VERIFIED" && capturedPhoto && (
+            {/* Frozen Frame on Verified or Snapshot */}
+            {(step === "VERIFIED" || (step === "MATCHING" && capturedPhoto)) && capturedPhoto && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={capturedPhoto}
@@ -252,7 +303,7 @@ export function FaceVerificationModal({
               />
             )}
 
-            {/* Apple Face ID Oval Reticle */}
+            {/* Face ID Oval Reticle */}
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
               <div
                 className={`relative h-48 w-44 sm:h-52 sm:w-48 rounded-[48px] border-2 transition-all duration-300 ${
@@ -295,10 +346,10 @@ export function FaceVerificationModal({
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-zinc-950 p-4 text-center">
                 <RefreshCw className="h-7 w-7 animate-spin text-emerald-400" />
                 <span className="text-xs font-semibold text-zinc-300">
-                  Starting Face ID camera...
+                  Starting camera on {navigator.userAgent.includes("iPhone") || navigator.userAgent.includes("iPad") ? "iOS" : "Android"}...
                 </span>
                 <span className="text-[11px] text-zinc-500">
-                  Please grant camera permission when prompted
+                  Please allow camera permission when prompted
                 </span>
               </div>
             )}
@@ -308,17 +359,26 @@ export function FaceVerificationModal({
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">
                   <AlertCircle className="h-5 w-5" />
                 </div>
-                <span className="text-xs font-bold text-rose-300">Face ID Camera Error</span>
+                <span className="text-xs font-bold text-rose-300">Camera Access Notice</span>
                 <p className="text-[11px] text-zinc-400 leading-relaxed max-w-xs">
-                  {errorMessage || "Camera unavailable. Check permissions."}
+                  {errorMessage || "Live camera unavailable."}
                 </p>
-                <button
-                  type="button"
-                  onClick={startCamera}
-                  className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-500 transition cursor-pointer"
-                >
-                  <RefreshCw className="h-3 w-3" /> Retry Scan
-                </button>
+                <div className="flex flex-col gap-2 mt-1 w-full max-w-xs">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2 px-3 text-xs font-bold text-white shadow-md hover:bg-emerald-500 transition cursor-pointer"
+                  >
+                    <Smartphone className="h-3.5 w-3.5" /> Open Device Camera Snapshot
+                  </button>
+                  <button
+                    type="button"
+                    onClick={startCamera}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800/80 py-1.5 px-3 text-xs font-semibold text-zinc-300 hover:text-white transition cursor-pointer"
+                  >
+                    <RefreshCw className="h-3 w-3" /> Retry Live Feed
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -352,7 +412,7 @@ export function FaceVerificationModal({
                   <span>Scanning Face ({scanProgress}%) · Keep head in frame</span>
                 </>
               ) : (
-                <span>Initializing camera...</span>
+                <span>Initializing camera sensor...</span>
               )}
             </div>
 
@@ -368,10 +428,14 @@ export function FaceVerificationModal({
 
         {/* Bottom Actions */}
         <div className="border-t border-zinc-800/80 bg-zinc-950/80 px-5 py-3.5 flex items-center justify-between text-xs text-zinc-400">
-          <div className="flex items-center gap-1.5">
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
-            <span className="text-[11px]">Protected by Femmeflo Biometrics</span>
-          </div>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center gap-1.5 text-zinc-400 hover:text-emerald-400 transition cursor-pointer"
+          >
+            <Camera className="h-3.5 w-3.5" />
+            <span className="text-[11px] underline">Use Native Camera</span>
+          </button>
 
           <button
             type="button"
