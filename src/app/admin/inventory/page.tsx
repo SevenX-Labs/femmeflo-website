@@ -322,6 +322,9 @@ export default function AdminInventoryPage() {
 
   const handleInwardStock = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isInwardSubmitting) return;
+
+    const requestKey = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `rc_${Date.now()}_${Math.random()}`;
 
     if (inwardProducts.length > 0) {
       const validItems = inwardItems.filter((it) => it.productId && Number(it.quantity) > 0);
@@ -344,6 +347,7 @@ export default function AdminInventoryPage() {
       try {
         await adminApi.addReceipt({
           items: validItems.map((it) => ({ productId: it.productId, quantity: Number(it.quantity) })),
+          requestKey,
         });
         const totalQty = validItems.reduce((s, it) => s + Number(it.quantity), 0);
         setInwardNotice(`Successfully inwarded ${totalQty.toLocaleString("en-IN")} packets to HQ Central.`);
@@ -382,7 +386,7 @@ export default function AdminInventoryPage() {
       setInwardNotice("");
 
       try {
-        await adminApi.addReceipt({ quantity: qty });
+        await adminApi.addReceipt({ quantity: qty, requestKey });
         setInwardNotice(`Successfully inwarded ${qty.toLocaleString("en-IN")} packets to HQ Central.`);
         webNotificationService.addNotification({
           recipientRole: "SUPER_ADMIN",

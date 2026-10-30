@@ -418,12 +418,14 @@ export interface CreateWarehousePayload {
 export interface StockReceiptPayload {
   quantity: number;
   locationId?: string;
+  requestKey?: string;
 }
 
 export interface StockTransferPayload {
   sourceId: string;
   destinationId: string;
   quantity: number;
+  requestKey?: string;
 }
 
 export interface StockTransactionItem {
@@ -551,6 +553,7 @@ export interface StockReceiptMultiPayload {
     productId: string;
     quantity: number;
   }>;
+  requestKey?: string;
 }
 
 export interface StockTransferMultiPayload {
@@ -560,6 +563,7 @@ export interface StockTransferMultiPayload {
     productId: string;
     quantity: number;
   }>;
+  requestKey?: string;
 }
 
 export interface CollectPaymentPayload {

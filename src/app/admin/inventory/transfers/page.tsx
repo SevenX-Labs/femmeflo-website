@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowLeft, ArrowRightLeft, CheckCircle2, Loader2, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { DashboardShell, PageHeading, SectionCard } from "@/components/management/DashboardShell";
@@ -21,6 +22,8 @@ interface TransferItem {
 }
 
 export default function TransfersPage() {
+  const router = useRouter();
+  const isSubmittingRef = useRef(false);
   const [locations, setLocations] = useState<WarehouseItem[]>([]);
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [transactions, setTransactions] = useState<StockTransactionItem[]>([]);
@@ -84,6 +87,8 @@ export default function TransfersPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingRef.current || isSubmitting) return;
+
     if (!sourceId || !destinationId) {
       setError("Please select both a source and destination location.");
       return;
@@ -96,13 +101,17 @@ export default function TransfersPage() {
     setError("");
     setNotice("");
     setIsSubmitting(true);
+    isSubmittingRef.current = true;
 
     try {
+      const requestKey = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `tr_${Date.now()}_${Math.random()}`;
+
       if (products.length > 0) {
         const validItems = transferItems.filter((it) => it.productId && Number(it.quantity) > 0);
         if (validItems.length === 0) {
           setError("Add at least one product with a valid quantity.");
           setIsSubmitting(false);
+          isSubmittingRef.current = false;
           return;
         }
         for (const it of validItems) {
@@ -110,6 +119,7 @@ export default function TransfersPage() {
           if (!Number.isInteger(qty) || qty <= 0) {
             setError("All quantities must be positive integers.");
             setIsSubmitting(false);
+            isSubmittingRef.current = false;
             return;
           }
           const avail = getSourceProductBalance(it.productId);
@@ -117,6 +127,7 @@ export default function TransfersPage() {
             const prod = products.find((p) => p.id === it.productId);
             setError(`Transfer quantity for ${prod?.name || "product"} exceeds available stock (${avail} available).`);
             setIsSubmitting(false);
+            isSubmittingRef.current = false;
             return;
           }
         }
@@ -125,6 +136,7 @@ export default function TransfersPage() {
           sourceId,
           destinationId,
           items: validItems.map((it) => ({ productId: it.productId, quantity: Number(it.quantity) })),
+          requestKey,
         });
 
         const totalQty = validItems.reduce((s, it) => s + Number(it.quantity), 0);
@@ -148,11 +160,13 @@ export default function TransfersPage() {
         if (!numQty || numQty <= 0 || !Number.isInteger(numQty)) {
           setError("Please enter a valid positive packet quantity.");
           setIsSubmitting(false);
+          isSubmittingRef.current = false;
           return;
         }
         if (selectedSource && numQty > selectedSource.balance) {
           setError(`Transfer quantity exceeds available stock (${selectedSource.balance.toLocaleString("en-IN")} packets available at ${selectedSource.name}).`);
           setIsSubmitting(false);
+          isSubmittingRef.current = false;
           return;
         }
 
@@ -160,6 +174,7 @@ export default function TransfersPage() {
           sourceId,
           destinationId,
           quantity: numQty,
+          requestKey,
         });
 
         setNotice(`Successfully recorded transfer of ${numQty} packets from ${selectedSource?.name || "source"} to ${selectedDestination?.name || "destination"}.`);
@@ -179,10 +194,14 @@ export default function TransfersPage() {
       }
 
       await loadData();
+      setTimeout(() => {
+        router.push("/admin/inventory");
+      }, 1500);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to process stock transfer.");
     } finally {
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
