@@ -3,6 +3,8 @@ import type {
   AdminDashboardData,
   BusinessSettings,
   CreateCustomerPayload,
+  CreateBulkCustomersPayload,
+  BulkCustomersResponse,
   CreateManagerPayload,
   CreateProductPayload,
   CreateSellerPayload,
@@ -303,6 +305,16 @@ export const adminApi = {
       village: "",
       villages: [],
     };
+  },
+
+  async createBulkCustomers(
+    payload: CreateBulkCustomersPayload
+  ): Promise<BulkCustomersResponse> {
+    return apiRequest<BulkCustomersResponse>("admin/customers/bulk", {
+      method: "POST",
+      body: payload,
+      timeoutMs: 120000,
+    });
   },
 
   async createCustomer(payload: CreateCustomerPayload | FormData): Promise<{ customer: CustomerItem; photoUrl?: string }> {

@@ -44,6 +44,8 @@ export default function SellerCustomersPage() {
       description="Your shops and customers are the starting point for every sale. Keep their details and GPS coordinates verified."
       primaryAction="Add customer"
       primaryHref="/seller/customers/new"
+      secondaryAction="Add Multiple (Bulk)"
+      secondaryHref="/seller/customers/bulk"
       searchPlaceholder="Search your customers by shop name, contact, or location"
       columns={[
         { key: "name", label: "Customer / shop" },

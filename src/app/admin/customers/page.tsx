@@ -41,6 +41,8 @@ export default function AdminCustomersPage() {
       description="Review every customer relationship across state, district, village, business category, manager, and field officer."
       primaryAction="Add customer"
       primaryHref="/admin/customers/new"
+      secondaryAction="Add Multiple (Bulk)"
+      secondaryHref="/admin/customers/bulk"
       searchPlaceholder="Search customer by shop name, contact, village, or officer"
       columns={[
         { key: "name", label: "Customer / shop" },

@@ -313,6 +313,43 @@ export interface PincodeLookupResponse {
   villages?: string[];
 }
 
+
+export interface BulkCustomerRowPayload {
+  shopName: string;
+  contactName: string;
+  phone: string;
+  email?: string;
+  categoryId?: string;
+  sellerId?: string;
+  shopNumber?: string;
+  streetName?: string;
+  pincode?: string;
+  address?: string;
+  state?: string;
+  district?: string;
+  village?: string;
+  noPhotoReason?: string;
+  photoPath?: string;
+  latitude?: number;
+  longitude?: number;
+  createdAt?: string;
+}
+
+export interface CreateBulkCustomersPayload {
+  customers: BulkCustomerRowPayload[];
+  defaultSellerId?: string;
+  defaultCategoryId?: string;
+  defaultState?: string;
+  defaultDistrict?: string;
+  defaultVillage?: string;
+  defaultNoPhotoReason?: string;
+}
+
+export interface BulkCustomersResponse {
+  count: number;
+  customers: CustomerItem[];
+}
+
 export interface UpdateCustomerPayload extends Partial<CreateCustomerPayload> {
   active?: boolean;
 }

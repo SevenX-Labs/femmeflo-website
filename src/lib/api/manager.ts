@@ -1,6 +1,8 @@
 import { apiRequest, API_BASE_URL, tokenStorage } from "./client";
 import type {
   CreateCustomerPayload,
+  CreateBulkCustomersPayload,
+  BulkCustomersResponse,
   CreateSellerPayload,
   CustomerItem,
   ManagerIncentiveData,
@@ -173,6 +175,16 @@ export const managerApi = {
       village: "",
       villages: [],
     };
+  },
+
+  async createBulkCustomers(
+    payload: CreateBulkCustomersPayload
+  ): Promise<BulkCustomersResponse> {
+    return apiRequest<BulkCustomersResponse>("manager/customers/bulk", {
+      method: "POST",
+      body: payload,
+      timeoutMs: 120000,
+    });
   },
 
   async createCustomer(payload: CreateCustomerPayload | FormData): Promise<{ customer: CustomerItem; photoUrl?: string }> {

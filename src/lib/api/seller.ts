@@ -2,6 +2,8 @@ import { apiRequest, API_BASE_URL, tokenStorage } from "./client";
 import type {
   CollectPaymentPayload,
   CreateCustomerPayload,
+  CreateBulkCustomersPayload,
+  BulkCustomersResponse,
   CreateMultiProductSalePayload,
   CreateSalePayload,
   CustomerItem,
@@ -116,6 +118,16 @@ export const sellerApi = {
       village: "",
       villages: [],
     };
+  },
+
+  async createBulkCustomers(
+    payload: CreateBulkCustomersPayload
+  ): Promise<BulkCustomersResponse> {
+    return apiRequest<BulkCustomersResponse>("seller/customers/bulk", {
+      method: "POST",
+      body: payload,
+      timeoutMs: 120000,
+    });
   },
 
   async createCustomer(

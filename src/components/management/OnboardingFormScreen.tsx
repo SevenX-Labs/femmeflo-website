@@ -907,7 +907,7 @@ export function OnboardingFormScreen({
         <ArrowLeft className="h-4 w-4" />Back to {seller ? "sellers" : "customers"}
       </Link>
 
-      <div className="mt-7">
+      <div className="mt-7 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <PageHeading
           eyebrow={seller ? "Field Team Onboarding" : "Customer onboarding"}
           title={seller ? "Add Field Officer" : "Add customer"}
@@ -917,6 +917,20 @@ export function OnboardingFormScreen({
               : "Create a verified customer / shop record with category, contact, photo, and geolocation coordinates."
           }
         />
+        {!seller && (
+          <div className="inline-flex items-center rounded-xl border border-zinc-200 bg-white p-1 shadow-xs self-start md:self-auto shrink-0">
+            <span className="rounded-lg bg-[#E61C5D] px-3.5 py-1.5 text-xs font-extrabold text-white shadow-xs">
+              Single Shop Form
+            </span>
+            <Link
+              href={role === "Super Admin" ? "/admin/customers/bulk" : role === "Manager" ? "/manager/customers/bulk" : "/seller/customers/bulk"}
+              className="rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-600 hover:text-zinc-900 transition flex items-center gap-1.5"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              <span>Batch Entry (1 to N)</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       <SectionCard

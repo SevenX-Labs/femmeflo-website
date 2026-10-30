@@ -32,6 +32,8 @@ type ResourceListScreenProps = {
   description: string;
   primaryAction?: string;
   primaryHref?: string;
+  secondaryAction?: string;
+  secondaryHref?: string;
   searchPlaceholder: string;
   columns: { key: string; label: string }[];
   rows?: ResourceRow[];
@@ -126,6 +128,8 @@ export function ResourceListScreen({
   description,
   primaryAction,
   primaryHref,
+  secondaryAction,
+  secondaryHref,
   searchPlaceholder,
   columns,
   rows: initialRows = EMPTY_ROWS,
@@ -473,6 +477,14 @@ export function ResourceListScreen({
               >
                 <RefreshCw className={`h-4 w-4 ${(isLoading || isRefreshing) ? "animate-spin text-[#E61C5D]" : ""}`} />
               </button>
+            )}
+            {secondaryAction && secondaryHref && (
+              <Link
+                href={secondaryHref}
+                className="inline-flex h-10 sm:h-11 items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 sm:px-3.5 text-xs sm:text-sm font-bold text-[#E61C5D] shadow-2xs hover:bg-rose-100 transition active:scale-95 shrink-0"
+              >
+                ⚡ {secondaryAction}
+              </Link>
             )}
             {primaryAction ? (
               primaryHref ? (
