@@ -354,6 +354,7 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
           unitPricePaise,
           paymentMode: salePaymentMode,
           requestKey: reqKey,
+          customerFeedback: checkOutFeedback.trim() || undefined,
         } as any);
 
         const createdSale = (saleRes as any)?.sale || (saleRes as any)?.item || saleRes;

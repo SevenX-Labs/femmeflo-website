@@ -486,6 +486,7 @@ export interface UpdateSalePayload {
   quantity?: number;
   unitPricePaise?: number;
   paymentMode?: PaymentMode;
+  customerFeedback?: string;
 }
 
 export interface SaleItem {
@@ -520,6 +521,7 @@ export interface SaleItem {
   confirmedAt?: string | null;
   decidedAt?: string | null;
   rejectionReason?: string | null;
+  customerFeedback?: string | null;
   incentiveRatePaise?: number | null;
   incentiveAmountPaise?: number | null;
   createdAt: string;
@@ -543,6 +545,7 @@ export interface CreateSalePayload {
   unitPricePaise: number;
   paymentMode: PaymentMode;
   requestKey?: string;
+  customerFeedback?: string;
 }
 
 export interface CreateMultiProductSalePayload {
@@ -554,6 +557,7 @@ export interface CreateMultiProductSalePayload {
   }>;
   paymentMode: PaymentMode;
   requestKey?: string;
+  customerFeedback?: string;
 }
 
 export interface StockReceiptMultiPayload {

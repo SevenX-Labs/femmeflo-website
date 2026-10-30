@@ -18,6 +18,7 @@ import {
   Building2,
   ExternalLink,
   XCircle,
+  MessageSquare,
   RotateCcw,
 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
@@ -55,6 +56,7 @@ export function SaleDetailModal({
   const [editQuantity, setEditQuantity] = useState<number | string>(1);
   const [editUnitPrice, setEditUnitPrice] = useState<number | string>(25);
   const [editPaymentMode, setEditPaymentMode] = useState<"CASH" | "BANK" | "PENDING">("CASH");
+  const [editCustomerFeedback, setEditCustomerFeedback] = useState("");
   const [customers, setCustomers] = useState<CustomerItem[]>([]);
 
   useEffect(() => {
@@ -79,6 +81,7 @@ export function SaleDetailModal({
         setEditQuantity(s.quantity);
         setEditUnitPrice(s.unitPricePaise / 100);
         setEditPaymentMode(s.paymentMode as any);
+        setEditCustomerFeedback(s.customerFeedback || "");
 
         // Fetch customer list for customer selection dropdown
         try {
@@ -159,6 +162,7 @@ export function SaleDetailModal({
       quantity: qty,
       unitPricePaise: Math.round(unitPrice * 100),
       paymentMode: editPaymentMode,
+      customerFeedback: editCustomerFeedback.trim() || undefined,
     };
 
     try {
@@ -456,6 +460,19 @@ export function SaleDetailModal({
                       </select>
                     </div>
 
+                    <div className="sm:col-span-2">
+                      <label className="block font-bold text-zinc-700 mb-1">
+                        Customer Feedback &amp; Remarks (Optional)
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={editCustomerFeedback}
+                        onChange={(e) => setEditCustomerFeedback(e.target.value)}
+                        placeholder="e.g. Customer requested repeat order, satisfied with trial..."
+                        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-900 focus:border-[#156035] focus:ring-1 focus:ring-[#156035] focus:outline-hidden resize-none"
+                      />
+                    </div>
+
                     <div className="sm:col-span-2 rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex items-center justify-between text-xs font-semibold text-emerald-950">
                       <span>Calculated Total Amount:</span>
                       <span className="font-extrabold text-sm text-[#156035]">
@@ -598,6 +615,17 @@ export function SaleDetailModal({
                     </strong>
                   </div>
                 </div>
+
+                {/* Customer Feedback Card */}
+                {sale.customerFeedback && (
+                  <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4 text-xs text-blue-900 space-y-1 shadow-2xs">
+                    <div className="flex items-center gap-1.5 font-bold text-blue-800">
+                      <MessageSquare className="h-4 w-4 text-blue-600 shrink-0" />
+                      <span>Customer Feedback &amp; Remarks:</span>
+                    </div>
+                    <p className="italic font-medium pl-5.5 text-zinc-800">&ldquo;{sale.customerFeedback}&rdquo;</p>
+                  </div>
+                )}
 
                 {/* Details Section */}
                 <div className="rounded-2xl border border-zinc-200 bg-white p-4.5 space-y-3 text-xs">
