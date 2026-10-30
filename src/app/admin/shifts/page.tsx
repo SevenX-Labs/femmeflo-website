@@ -16,6 +16,8 @@ import {
   Route,
   ScanFace,
   Search,
+  MessageSquare,
+  ShoppingBag,
   Store,
   Users,
   X,
@@ -684,6 +686,37 @@ export default function AdminShiftsPage() {
                             <span className="font-mono text-zinc-800 font-semibold">{leftStr}</span>
                           </div>
                         </div>
+
+                        {/* Sales & Feedback Status */}
+                        {hasCheckOut && (
+                          <div className="mt-2 space-y-1.5">
+                            {v.saleDone || v.saleId || v.sale ? (
+                              <div className="flex items-center justify-between rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 text-xs text-emerald-900">
+                                <span className="font-bold flex items-center gap-1.5">
+                                  <ShoppingBag className="h-3.5 w-3.5 text-emerald-600" />
+                                  Sale Recorded
+                                </span>
+                                <span className="font-black text-emerald-700">
+                                  ₹{((v.sale?.totalPaise ?? 0) / 100).toLocaleString("en-IN") || "Done"}
+                                  {v.sale?.quantity ? " (" + v.sale.quantity + " pkts" + (v.sale?.paymentMode ? " · " + v.sale.paymentMode : "") + ")" : ""}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 border border-zinc-200/80 px-2 py-0.5 text-[10px] font-bold text-zinc-600">
+                                No Sale Generated
+                              </div>
+                            )}
+
+                            {v.customerFeedback && (
+                              <div className="rounded-lg bg-blue-50/80 border border-blue-200 px-2.5 py-1.5 text-[11px] text-blue-900">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1">
+                                  <MessageSquare className="h-3 w-3" /> Customer Feedback
+                                </span>
+                                <p className="mt-0.5 font-medium italic">&ldquo;{v.customerFeedback}&rdquo;</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {v.notes && (
                           <p className="text-[11px] text-zinc-600 mt-1.5 italic">&ldquo;{v.notes}&rdquo;</p>

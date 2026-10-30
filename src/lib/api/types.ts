@@ -1047,6 +1047,16 @@ export interface ShiftVisit {
   checkOutTime?: string | null;
   durationMins?: number | null;
   notes?: string | null;
+  saleDone?: boolean | null;
+  customerFeedback?: string | null;
+  saleId?: string | null;
+  sale?: {
+    id: string;
+    totalPaise: number;
+    quantity: number;
+    paymentMode: string;
+    status: string;
+  } | null;
   createdAt: string;
 }
 
@@ -1098,6 +1108,9 @@ export interface CheckOutPayload {
   latitude: number;
   longitude: number;
   notes?: string;
+  saleDone?: boolean;
+  customerFeedback?: string;
+  saleId?: string;
 }
 
 export interface EndShiftPayload {

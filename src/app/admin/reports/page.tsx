@@ -237,8 +237,8 @@ export default function AdminReportsPage() {
 
       {/* TERRITORY PERFORMANCE BREAKDOWN */}
       <SectionCard
-        title="Territory performance breakdown"
-        description="Packet sales volume and revenue by assigned regional jurisdiction"
+        title={groupBy === "date" ? "Daily Sales Performance Breakdown" : groupBy === "seller" ? "Field Officer Performance Breakdown" : "Territory Performance Breakdown"}
+        description={groupBy === "date" ? "Aggregated day-by-day packet sales volume, revenue velocity, and regional demand" : "Packet sales volume and revenue by assigned regional jurisdiction"}
         className="mt-8"
         action={
           <div className="flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-[#FAF8F5] p-1 text-xs">
@@ -257,6 +257,14 @@ export default function AdminReportsPage() {
               }`}
             >
               By Seller
+            </button>
+            <button
+              onClick={() => setGroupBy("date")}
+              className={`rounded-lg px-2.5 py-1 font-bold transition ${
+                groupBy === "date" ? "bg-white text-[#E61C5D] shadow-xs" : "text-zinc-800 hover:text-zinc-800"
+              }`}
+            >
+              Daily Sales
             </button>
           </div>
         }
