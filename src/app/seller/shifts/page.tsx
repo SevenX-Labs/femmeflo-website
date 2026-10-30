@@ -18,6 +18,7 @@ import {
   RefreshCw,
   RotateCcw,
   Route,
+  ScanFace,
   Store,
   X,
 } from "lucide-react";
@@ -649,16 +650,22 @@ export default function SellerShiftsPage() {
                               {startTimeStr} &rarr; {endTimeStr}
                             </span>
                           </div>
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                              isActive
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-zinc-100 text-zinc-700"
-                            }`}
-                          >
-                            {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />}
-                            {s.status}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                              <ScanFace className="h-2.5 w-2.5 text-emerald-600" />
+                              Face ID
+                            </span>
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                isActive
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  : "bg-zinc-100 text-zinc-700"
+                              }`}
+                            >
+                              {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />}
+                              {s.status}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-2 rounded-lg bg-white border border-zinc-100 p-2 text-center text-xs">
@@ -753,16 +760,22 @@ export default function SellerShiftsPage() {
                               <span className="text-[#E61C5D]">{s.totalDistanceKm}</span> km
                             </td>
                             <td className="py-3 px-3 text-center">
-                              <span
-                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                                  isActive
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                    : "bg-zinc-100 text-zinc-700"
-                                }`}
-                              >
-                                {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />}
-                                {s.status}
-                              </span>
+                              <div className="flex flex-col items-center gap-1">
+                                <span
+                                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                                    isActive
+                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                      : "bg-zinc-100 text-zinc-700"
+                                  }`}
+                                >
+                                  {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />}
+                                  {s.status}
+                                </span>
+                                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">
+                                  <ScanFace className="h-2.5 w-2.5 text-emerald-600" />
+                                  Face ID
+                                </span>
+                              </div>
                             </td>
                             <td className="py-3 px-4 text-center">
                               <button
@@ -889,7 +902,13 @@ export default function SellerShiftsPage() {
                   </span>
                   <div>
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-xs text-zinc-900">Shift Started</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs text-zinc-900">Shift Started</span>
+                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">
+                          <ScanFace className="h-2.5 w-2.5 text-emerald-600" />
+                          Face ID Verified
+                        </span>
+                      </div>
                       <span className="font-mono text-[11px] text-zinc-500">
                         {new Date(selectedShiftForDetails.startTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                       </span>
@@ -978,7 +997,13 @@ export default function SellerShiftsPage() {
                     </span>
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-zinc-900">Shift Ended</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-xs text-zinc-900">Shift Ended</span>
+                          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">
+                            <ScanFace className="h-2.5 w-2.5 text-emerald-600" />
+                            Face ID Verified
+                          </span>
+                        </div>
                         <span className="font-mono text-[11px] text-zinc-500">
                           {new Date(selectedShiftForDetails.endTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                         </span>

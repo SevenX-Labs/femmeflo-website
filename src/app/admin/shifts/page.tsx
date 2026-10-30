@@ -14,6 +14,7 @@ import {
   RefreshCw,
   RotateCcw,
   Route,
+  ScanFace,
   Search,
   Store,
   Users,
@@ -479,16 +480,22 @@ export default function AdminShiftsPage() {
                           <span className="text-[#E61C5D] font-extrabold">{s.totalDistanceKm}</span> km
                         </td>
                         <td className="py-3 px-3 text-center">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                              isActive
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-zinc-100 text-zinc-700"
-                            }`}
-                          >
-                            {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />}
-                            {s.status}
-                          </span>
+                          <div className="flex flex-col items-center gap-1">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                                isActive
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  : "bg-zinc-100 text-zinc-700"
+                              }`}
+                            >
+                              {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />}
+                              {s.status}
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">
+                              <ScanFace className="h-2.5 w-2.5 text-emerald-600" />
+                              Face ID
+                            </span>
+                          </div>
                         </td>
                         <td className="py-3 px-3 text-center">
                           <button

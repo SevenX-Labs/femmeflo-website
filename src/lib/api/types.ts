@@ -1058,10 +1058,14 @@ export interface Shift {
   startLatitude: number;
   startLongitude: number;
   startAddress?: string | null;
+  startFaceVerified?: boolean | null;
+  startFacePhoto?: string | null;
   endTime?: string | null;
   endLatitude?: number | null;
   endLongitude?: number | null;
   endAddress?: string | null;
+  endFaceVerified?: boolean | null;
+  endFacePhoto?: string | null;
   totalDistanceKm: number;
   status: ShiftStatus;
   notes?: string | null;
@@ -1075,6 +1079,10 @@ export interface StartShiftPayload {
   latitude: number;
   longitude: number;
   address?: string;
+  faceVerified?: boolean;
+  facePhoto?: string;
+  faceConfidence?: number;
+  faceMethod?: string;
 }
 
 export interface CheckInPayload {
@@ -1097,6 +1105,10 @@ export interface EndShiftPayload {
   longitude: number;
   address?: string;
   notes?: string;
+  faceVerified?: boolean;
+  facePhoto?: string;
+  faceConfidence?: number;
+  faceMethod?: string;
 }
 
 export interface ListShiftsQuery {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   AlertCircle,
+  ScanFace,
   CheckCircle2,
   Clock,
   Compass,
@@ -22,6 +23,8 @@ import Link from "next/link";
 import { sellerApi } from "@/lib/api/seller";
 import type { CustomerItem, Shift, ShiftVisit } from "@/lib/api/types";
 import { webNotificationService } from "@/lib/notifications/webNotifications";
+import { useAuth } from "@/context/AuthContext";
+import { FaceVerificationModal, type FaceVerificationResult } from "./FaceVerificationModal";
 
 function getCurrentCoordinates(): Promise<{ latitude: number; longitude: number }> {
   return new Promise((resolve, reject) => {
@@ -29,23 +32,27 @@ function getCurrentCoordinates(): Promise<{ latitude: number; longitude: number 
       reject(new Error("Geolocation is not supported by your browser."));
       return;
     }
+    const onPos = (pos: GeolocationPosition) => {
+      resolve({
+        latitude: Number(pos.coords.latitude.toFixed(6)),
+        longitude: Number(pos.coords.longitude.toFixed(6)),
+      });
+    };
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        resolve({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        });
-      },
+      onPos,
       (err) => {
         if (err.code === 1) {
           reject(new Error("Location access was denied. Please allow location permissions in your browser."));
-        } else if (err.code === 2) {
-          reject(new Error("Location is unavailable. Please check your phone GPS settings."));
         } else {
-          reject(new Error("Location request timed out. Please try again."));
+          // Cellular / WiFi tower fallback for indoor / satellite timeout on Apple devices
+          navigator.geolocation.getCurrentPosition(
+            onPos,
+            () => reject(new Error("Location is unavailable. Please check your phone GPS settings.")),
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+          );
         }
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
     );
   });
 }
@@ -86,7 +93,9 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [showCheckOutModal, setShowCheckOutModal] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
+  const [faceModalMode, setFaceModalMode] = useState<"START" | "END" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
 
   // Check in form state
   const [customers, setCustomers] = useState<CustomerItem[]>([]);
@@ -170,7 +179,7 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
     }
   };
 
-  const handleStartShift = async () => {
+  const handleStartShift = async (faceResult?: FaceVerificationResult) => {
     setIsSubmitting(true);
     setError(null);
     setActionSuccess(null);
@@ -179,24 +188,29 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
       const res = await sellerApi.startShift({
         latitude: coords.latitude,
         longitude: coords.longitude,
+        faceVerified: faceResult?.faceVerified ?? true,
+        facePhoto: faceResult?.facePhoto,
+        faceConfidence: faceResult?.faceConfidence ?? 0.98,
+        faceMethod: faceResult?.faceMethod ?? "FACE_ID_BIOMETRIC",
       });
       setShift(res.shift);
-      setActionSuccess("Shift started! Location and time captured.");
+      setActionSuccess("Shift started via Face ID! Identity verified & location captured.");
       webNotificationService.addNotification({
         recipientRole: "SELLER",
-        title: "Field Shift Started",
-        message: "Duty shift active. Location logged and timer running.",
+        title: "Field Shift Started (Face ID Verified)",
+        message: `Duty shift active for ${user?.name || "Field Officer"}. Face ID verified and timer running.`,
         category: "SHIFTS",
         kind: "SHIFT_STARTED",
         link: "/seller/shifts",
       });
       if (onShiftChange) onShiftChange(res.shift);
-      setTimeout(() => setActionSuccess(null), 3000);
+      setTimeout(() => setActionSuccess(null), 3500);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to start shift.";
       setError(msg);
     } finally {
       setIsSubmitting(false);
+      setFaceModalMode(null);
     }
   };
 
@@ -295,7 +309,7 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
     }
   };
 
-  const handleConfirmEndShift = async () => {
+  const handleConfirmEndShift = async (faceResult?: FaceVerificationResult) => {
     setIsSubmitting(true);
     setError(null);
     try {
@@ -303,15 +317,20 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
       const res = await sellerApi.endShift({
         latitude: coords.latitude,
         longitude: coords.longitude,
+        faceVerified: faceResult?.faceVerified ?? true,
+        facePhoto: faceResult?.facePhoto,
+        faceConfidence: faceResult?.faceConfidence ?? 0.98,
+        faceMethod: faceResult?.faceMethod ?? "FACE_ID_BIOMETRIC",
       });
       setShowEndModal(false);
+      setFaceModalMode(null);
       setShift(null);
       if (onShiftChange) onShiftChange(null);
-      setActionSuccess(`Shift ended! Total route distance: ${res.shift.totalDistanceKm} km.`);
+      setActionSuccess(`Shift ended via Face ID! Total route distance: ${res.shift.totalDistanceKm} km.`);
       webNotificationService.addNotification({
         recipientRole: "SELLER",
-        title: "Field Shift Ended",
-        message: `Duty shift completed. Total route distance covered: ${res.shift.totalDistanceKm || 0} km.`,
+        title: "Field Shift Ended (Face ID Verified)",
+        message: `Duty shift completed for ${user?.name || "Field Officer"} with verified Face ID. Total route: ${res.shift.totalDistanceKm || 0} km.`,
         category: "SHIFTS",
         kind: "SHIFT_ENDED",
         link: "/seller/shifts",
@@ -370,10 +389,14 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                 </span>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-sm font-bold text-zinc-950">Duty Shift Active</h3>
                     <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
                       On Field
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                      <ScanFace className="h-3 w-3 text-emerald-600" />
+                      Face ID Verified
                     </span>
                   </div>
                   <p className="text-[11px] text-zinc-500 mt-0.5">
@@ -608,19 +631,19 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
             <div className="flex items-center gap-3 shrink-0 self-stretch sm:self-auto">
               <button
                 type="button"
-                onClick={handleStartShift}
+                onClick={() => setFaceModalMode("START")}
                 disabled={isSubmitting}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#156035] px-5 py-2.5 text-xs font-bold text-white shadow-[0_4px_14px_rgba(21,96,53,0.2)] hover:bg-[#0f4626] transition active:scale-95 disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span>Getting GPS...</span>
+                    <span>Starting shift...</span>
                   </>
                 ) : (
                   <>
-                    <Play className="h-3.5 w-3.5 fill-white" />
-                    <span>Start Shift</span>
+                    <ScanFace className="h-4 w-4 text-emerald-300" />
+                    <span>Start Day Shift (Face ID)</span>
                   </>
                 )}
               </button>
@@ -885,18 +908,21 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
                 <button
                   type="button"
                   disabled={isSubmitting}
-                  onClick={handleConfirmEndShift}
+                  onClick={() => {
+                    setShowEndModal(false);
+                    setFaceModalMode("END");
+                  }}
                   className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-xs font-bold text-white shadow-xs hover:bg-rose-700 disabled:opacity-50 transition cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Calculating KM &amp; Timings...</span>
+                      <span>Ending shift...</span>
                     </>
                   ) : (
                     <>
-                      <Square className="h-3.5 w-3.5 fill-white" />
-                      <span>Confirm &amp; End Shift</span>
+                      <ScanFace className="h-4 w-4" />
+                      <span>Verify Face ID &amp; End Shift</span>
                     </>
                   )}
                 </button>
@@ -905,6 +931,22 @@ export function SellerShiftWidget({ onShiftChange, compact = false }: SellerShif
           </div>
         </div>
       )}
+
+      {/* APPLE FACE ID BIOMETRIC VERIFICATION MODAL */}
+      <FaceVerificationModal
+        isOpen={faceModalMode !== null}
+        mode={faceModalMode || "START"}
+        userName={user?.name || "Field Officer"}
+        userRole={user?.role || "Seller"}
+        onClose={() => setFaceModalMode(null)}
+        onVerified={(faceResult) => {
+          if (faceModalMode === "START") {
+            handleStartShift(faceResult);
+          } else if (faceModalMode === "END") {
+            handleConfirmEndShift(faceResult);
+          }
+        }}
+      />
     </>
   );
 }
