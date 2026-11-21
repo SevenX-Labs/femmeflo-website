@@ -9,7 +9,7 @@ import { adminNavigation } from "@/components/management/navigation";
 import { adminApi } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
 import { syncPermissionAliases } from "@/lib/permissions";
-import { validateMobileNumber, validateEmail, validateAadharNumber, validateDrivingLicense } from "@/lib/validation";
+import { validateMobileNumber, validateEmail, validateAadharNumber, validateDrivingLicense, validateOnboardingPassword } from "@/lib/validation";
 import { webNotificationService } from "@/lib/notifications/webNotifications";
 
 export default function AdminAddManagerPage() {
@@ -57,6 +57,13 @@ export default function AdminAddManagerPage() {
         setError(emailVal.error || "Please enter a valid email address.");
         return;
       }
+    }
+
+    // Password validation
+    const passVal = validateOnboardingPassword(password);
+    if (!passVal.isValid) {
+      setError(passVal.error || "Password must be at least 7 characters with letters, numbers, and symbols.");
+      return;
     }
 
     // Aadhaar validation (Mandatory)
@@ -233,8 +240,11 @@ export default function AdminAddManagerPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-2 h-12 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                placeholder="At least 12 characters"
+                placeholder="Min. 7 characters with letters, numbers, and symbols"
               />
+              <span className="mt-1 block text-[10px] text-zinc-500 font-normal">
+                Min. 7 characters with letters, numbers, and symbols
+              </span>
             </label>
           </div>
 

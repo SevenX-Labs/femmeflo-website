@@ -182,3 +182,53 @@ export function validateDrivingLicense(raw?: string | null): { isValid: boolean;
     normalized: cleaned,
   };
 }
+
+/**
+ * Validates onboarding passwords for Manager and Seller accounts.
+ * Must have:
+ * - Minimum 7 characters
+ * - At least one letter (a-z, A-Z)
+ * - At least one number (0-9)
+ * - At least one symbol / special character
+ */
+export function validateOnboardingPassword(raw?: string | null): { isValid: boolean; error?: string } {
+  if (!raw || !raw.trim()) {
+    return {
+      isValid: false,
+      error: "Initial password is required.",
+    };
+  }
+
+  const trimmed = raw.trim();
+
+  if (trimmed.length < 7) {
+    return {
+      isValid: false,
+      error: "Initial password must be at least 7 characters.",
+    };
+  }
+
+  if (!/[a-zA-Z]/.test(trimmed)) {
+    return {
+      isValid: false,
+      error: "Password must contain at least one letter (a-z, A-Z).",
+    };
+  }
+
+  if (!/[0-9]/.test(trimmed)) {
+    return {
+      isValid: false,
+      error: "Password must contain at least one number (0-9).",
+    };
+  }
+
+  if (!/[^a-zA-Z0-9]/.test(trimmed)) {
+    return {
+      isValid: false,
+      error: "Password must contain at least one symbol (e.g. @, #, $, !).",
+    };
+  }
+
+  return { isValid: true };
+}
+

@@ -12,7 +12,7 @@ import { sellerApi } from "@/lib/api/seller";
 import { categoryApi } from "@/lib/api/categories";
 import type { Category, ManagerItem, PincodeLookupResponse, SellerItem } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
-import { validateMobileNumber, validateEmail, validateAadharNumber, validateDrivingLicense } from "@/lib/validation";
+import { validateMobileNumber, validateEmail, validateAadharNumber, validateDrivingLicense, validateOnboardingPassword } from "@/lib/validation";
 import { reverseGeocode } from "@/lib/geocoding";
 import { geoApi } from "@/lib/api/geo";
 import { compressImageToWebp } from "@/lib/imageCompression";
@@ -721,6 +721,14 @@ export function OnboardingFormScreen({
         }
         const dlNormalized = dlVal.normalized;
 
+        // Password validation
+        const passVal = validateOnboardingPassword(password);
+        if (!passVal.isValid) {
+          showErrorModal(passVal.error || "Password must be at least 7 characters with letters, numbers, and symbols.", "Invalid Password");
+          setIsSubmitting(false);
+          return;
+        }
+
         // Super Admin must select reporting manager if managers exist
         if (role === "Super Admin" && !selectedManagerId && managers.length > 0) {
           showErrorModal("Please select a reporting Manager for this field officer.", "Missing Reporting Manager");
@@ -1269,10 +1277,10 @@ export function OnboardingFormScreen({
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="mt-1.5 h-11 w-full rounded-xl border border-zinc-200 bg-[#FAF8F5] px-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                      placeholder="Minimum 8 characters"
+                      placeholder="Min. 7 characters with letters, numbers, and symbols"
                     />
                     <span className="mt-1 block text-[10px] text-zinc-500">
-                      Temporary password used by officer to log in
+                      Min. 7 characters with letters, numbers, and symbols
                     </span>
                   </label>
                 </div>
