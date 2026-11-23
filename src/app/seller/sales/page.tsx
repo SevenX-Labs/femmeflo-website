@@ -36,6 +36,7 @@ const SaleDetailModal = dynamic(() =>
   import("@/components/management/SaleDetailModal").then((m) => ({ default: m.SaleDetailModal }))
 );
 import { useAuth } from "@/context/AuthContext";
+import { useRealtimeSync } from "@/lib/realtime/useRealtimeSync";
 
 interface DailyGroup {
   dateKey: string;
@@ -119,6 +120,11 @@ export default function SellerSalesPage() {
   useEffect(() => {
     loadSales(activeTab, page, search);
   }, [activeTab, page]);
+
+  // Real-time synchronization for sale approvals, rejections, and new orders
+  useRealtimeSync(["SALE_STATUS_UPDATE", "APPROVAL_UPDATE"], () => {
+    loadSales(activeTab, page, search, false);
+  });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();

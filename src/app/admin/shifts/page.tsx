@@ -28,6 +28,7 @@ import { clearApiCache } from "@/lib/api/client";
 import { adminApi } from "@/lib/api/admin";
 import type { Shift, PaginationMeta, ShiftStatus } from "@/lib/api/types";
 import { useAuth } from "@/context/AuthContext";
+import { useRealtimeSync } from "@/lib/realtime/useRealtimeSync";
 
 function formatMinutes(mins: number | null | undefined): string {
   if (mins === null || mins === undefined) return "In progress";
@@ -170,6 +171,11 @@ export default function AdminShiftsPage() {
   useEffect(() => {
     fetchShifts(1);
   }, [statusFilter, fromDate, toDate]);
+
+  // Real-time synchronization for active field shifts and store visits
+  useRealtimeSync(["SHIFT_UPDATE"], () => {
+    fetchShifts(pagination.page, false);
+  });
 
   const filteredShifts = useMemo(() => {
     if (!searchQuery.trim()) return shifts;

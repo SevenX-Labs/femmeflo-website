@@ -8,6 +8,7 @@ import { getManagerNavigation } from "@/components/management/navigation";
 import { managerApi } from "@/lib/api/manager";
 import { useAuth } from "@/context/AuthContext";
 import { canViewInventory } from "@/lib/permissions";
+import { useRealtimeSync } from "@/lib/realtime/useRealtimeSync";
 
 interface SellerStockRow {
   seller: {
@@ -57,6 +58,13 @@ export default function ManagerInventoryPage() {
       setLoading(false);
     }
   }, [canInventory]);
+
+  // Real-time synchronization for manager area stock
+  useRealtimeSync(["INVENTORY_UPDATE"], () => {
+    if (canInventory) {
+      loadInventory();
+    }
+  });
 
   if (!canInventory) {
     return (

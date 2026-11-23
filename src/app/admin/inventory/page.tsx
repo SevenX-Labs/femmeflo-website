@@ -43,6 +43,7 @@ import { useSearchParams } from "next/navigation";
 import { clearApiCache } from "@/lib/api/client";
 import { adminApi } from "@/lib/api/admin";
 import { webNotificationService } from "@/lib/notifications/webNotifications";
+import { useRealtimeSync } from "@/lib/realtime/useRealtimeSync";
 import type {
   InventorySummaryData,
   StockTransactionItem,
@@ -249,6 +250,12 @@ export default function AdminInventoryPage() {
     fetchAllData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Real-time auto-synchronization for stock receipts, transfers, and sales deductions
+  useRealtimeSync(["INVENTORY_UPDATE"], () => {
+    fetchSummary();
+    fetchTransactions(1, historyFilterType);
+  });
 
   useEffect(() => {
     const id = setTimeout(() => setDebouncedSearchQuery(searchQuery), 250);

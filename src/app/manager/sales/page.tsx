@@ -25,6 +25,7 @@ import { managerApi } from "@/lib/api/manager";
 import type { SaleItem } from "@/lib/api/types";
 import { useAuth } from "@/context/AuthContext";
 import { canApproveSales } from "@/lib/permissions";
+import { useRealtimeSync } from "@/lib/realtime/useRealtimeSync";
 import dynamic from "next/dynamic";
 const SaleDetailModal = dynamic(() =>
   import("@/components/management/SaleDetailModal").then((m) => ({ default: m.SaleDetailModal }))
@@ -83,6 +84,13 @@ export default function ManagerSalesPage() {
   useEffect(() => {
     loadManagerSales();
   }, [loadManagerSales]);
+
+  // Real-time synchronization for manager sales and order approvals
+  useRealtimeSync(["SALE_STATUS_UPDATE", "APPROVAL_UPDATE"], () => {
+    if (canSales) {
+      loadManagerSales(false);
+    }
+  });
 
   const toggleDateExpand = (dateKey: string) => {
     setExpandedDates((prev) => ({ ...prev, [dateKey]: !prev[dateKey] }));

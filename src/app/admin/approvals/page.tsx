@@ -9,6 +9,7 @@ import { adminApi } from "@/lib/api/admin";
 import type { SaleItem } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
 import { webNotificationService } from "@/lib/notifications/webNotifications";
+import { useRealtimeSync } from "@/lib/realtime/useRealtimeSync";
 
 type ApprovalStatus = "Pending" | "Approved" | "Rejected";
 type Filter = "All" | ApprovalStatus;
@@ -37,6 +38,16 @@ export default function AdminApprovalsPage() {
   useEffect(() => {
     fetchApprovals();
   }, []);
+
+  // Real-time synchronization: automatically updates queue when sales are submitted, approved, or rejected
+  useRealtimeSync(["APPROVAL_UPDATE", "SALE_STATUS_UPDATE"], async () => {
+    try {
+      const res = await adminApi.listApprovals();
+      setSales(res?.pendingSales ?? (res as any)?.items ?? []);
+    } catch {
+      // Keep existing data on background sync glitch
+    }
+  });
 
   const handleApprove = async (sale: SaleItem) => {
     setProcessingId(sale.id);

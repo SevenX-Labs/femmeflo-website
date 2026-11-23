@@ -13,6 +13,7 @@ import { sellerNavigation } from "@/components/management/navigation";
 import { sellerApi } from "@/lib/api/seller";
 import type { StockTransactionItem } from "@/lib/api/types";
 import { useAuth } from "@/context/AuthContext";
+import { useRealtimeSync } from "@/lib/realtime/useRealtimeSync";
 
 interface ProductBalance {
   productId: string;
@@ -85,6 +86,11 @@ export default function SellerInventoryPage() {
   useEffect(() => {
     loadInventory(page, selectedType);
   }, [page, selectedType]);
+
+  // Real-time auto-synchronization for assigned packets, sales deductions, and transfers
+  useRealtimeSync(["INVENTORY_UPDATE"], () => {
+    loadInventory(page, selectedType);
+  });
 
   return (
     <DashboardShell
