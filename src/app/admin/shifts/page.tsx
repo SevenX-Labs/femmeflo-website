@@ -82,6 +82,38 @@ export default function AdminShiftsPage() {
   const [toDate, setToDate] = useState("");
 
   const [selectedShiftForDetails, setSelectedShiftForDetails] = useState<Shift | null>(null);
+  const [isStoppingShift, setIsStoppingShift] = useState(false);
+
+  const handleInspectShift = async (s: Shift) => {
+    setSelectedShiftForDetails(s);
+    try {
+      const res = await adminApi.getShift(s.id);
+      const fullShift = (res as any)?.shift || res;
+      if (fullShift && fullShift.id === s.id) {
+        setSelectedShiftForDetails(fullShift);
+      }
+    } catch (err) {
+      console.warn("Could not load full shift details", err);
+    }
+  };
+
+  const handleStopShift = async (shiftId: string) => {
+    if (isStoppingShift) return;
+    setIsStoppingShift(true);
+    try {
+      const res = await adminApi.endShift(shiftId);
+      const endedShift = (res as any)?.shift || res;
+      if (selectedShiftForDetails?.id === shiftId) {
+        setSelectedShiftForDetails(endedShift);
+      }
+      await fetchShifts(pagination.page, true);
+    } catch (err: any) {
+      console.warn("Failed to stop active shift", err);
+      alert(err.message || "Failed to stop active shift");
+    } finally {
+      setIsStoppingShift(false);
+    }
+  };
 
   // Date preset detection helpers
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -411,7 +443,7 @@ export default function AdminShiftsPage() {
                       <span>{startTimeStr} – {endTimeStr}</span>
                       <button
                         type="button"
-                        onClick={() => setSelectedShiftForDetails(s)}
+                        onClick={() => handleInspectShift(s)}
                         className="font-bold text-[#E61C5D] hover:underline"
                       >
                         Inspect Route &rarr;
@@ -500,13 +532,25 @@ export default function AdminShiftsPage() {
                           </div>
                         </td>
                         <td className="py-3 px-3 text-center">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedShiftForDetails(s)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-bold text-zinc-800 hover:border-rose-200 hover:text-[#E61C5D] hover:bg-rose-50/50 transition cursor-pointer shadow-2xs"
-                          >
-                            <Route className="h-3 w-3 text-zinc-500" /> Audit Stops
-                          </button>
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleInspectShift(s)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-bold text-zinc-800 hover:border-rose-200 hover:text-[#E61C5D] hover:bg-rose-50/50 transition cursor-pointer shadow-2xs"
+                            >
+                              <Route className="h-3 w-3 text-zinc-500" /> Audit Stops
+                            </button>
+                            {s.status === "ACTIVE" && (
+                              <button
+                                type="button"
+                                disabled={isStoppingShift}
+                                onClick={() => handleStopShift(s.id)}
+                                className="inline-flex items-center gap-1 rounded-lg bg-rose-50 border border-rose-200 px-2 py-1 text-[11px] font-bold text-rose-700 hover:bg-rose-100 transition cursor-pointer shadow-2xs disabled:opacity-50"
+                              >
+                                Stop
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -764,13 +808,25 @@ export default function AdminShiftsPage() {
               <span className="text-xs font-bold text-zinc-700">
                 Total Route KM: <span className="text-[#E61C5D] font-extrabold">{selectedShiftForDetails.totalDistanceKm} km</span>
               </span>
-              <button
-                type="button"
-                onClick={() => setSelectedShiftForDetails(null)}
-                className="rounded-xl bg-zinc-100 px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-200 transition cursor-pointer"
-              >
-                Close
-              </button>
+              <div className="flex items-center gap-2">
+                {selectedShiftForDetails.status === "ACTIVE" && (
+                  <button
+                    type="button"
+                    disabled={isStoppingShift}
+                    onClick={() => handleStopShift(selectedShiftForDetails.id)}
+                    className="rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-rose-700 transition cursor-pointer shadow-xs disabled:opacity-50"
+                  >
+                    {isStoppingShift ? "Stopping..." : "Stop Shift"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSelectedShiftForDetails(null)}
+                  className="rounded-xl bg-zinc-100 px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-200 transition cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

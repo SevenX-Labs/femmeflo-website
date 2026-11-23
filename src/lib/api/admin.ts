@@ -759,4 +759,10 @@ export const adminApi = {
       method: "GET",
     });
   },
+
+  async endShift(id: string): Promise<{ shift: Shift }> {
+    return apiRequest<{ shift: Shift }>(`admin/shifts/${id}/end`, {
+      method: "POST",
+    });
+  },
 };
