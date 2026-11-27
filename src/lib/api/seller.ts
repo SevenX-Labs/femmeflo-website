@@ -290,6 +290,16 @@ export const sellerApi = {
     });
   },
 
+  async markPaymentSent(
+    saleId: string,
+    payload: { remark?: string; sentAt?: string }
+  ): Promise<{ sale: SaleItem }> {
+    return apiRequest<{ sale: SaleItem }>(`seller/sales/${saleId}/payment-sent`, {
+      method: "PATCH",
+      body: payload,
+    });
+  },
+
   // ----------------------------------------------------
   // Incentives
   // ----------------------------------------------------

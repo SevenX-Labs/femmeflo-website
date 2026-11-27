@@ -43,7 +43,7 @@ export type StockMovementType = "RECEIPT" | "TRANSFER" | "SALE";
 
 export type PaymentMode = "CASH" | "BANK" | "PENDING";
 
-export type SaleStatus = "PENDING_APPROVAL" | "CONFIRMED" | "REJECTED";
+export type SaleStatus = "PENDING_APPROVAL" | "CONFIRMED" | "COMPLETED" | "REJECTED";
 
 export type DeliveryChannel = "EMAIL" | "WHATSAPP";
 
@@ -561,6 +561,10 @@ export interface SaleItem {
   customerFeedback?: string | null;
   incentiveRatePaise?: number | null;
   incentiveAmountPaise?: number | null;
+  paymentSentAt?: string | null;
+  paymentSentRemark?: string | null;
+  paymentReceivedAt?: string | null;
+  paymentReceivedRemark?: string | null;
   createdAt: string;
   updatedAt: string;
   lineItems?: SaleLineItemData[];

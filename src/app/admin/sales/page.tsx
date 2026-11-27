@@ -129,7 +129,7 @@ export default function AdminSalesPage() {
       else if (s.paymentMode === "BANK") g.bankPaise += s.totalPaise;
       else g.pendingPaise += s.totalPaise;
 
-      if (s.status === "CONFIRMED") g.confirmedCount += 1;
+      if (s.status === "CONFIRMED" || s.status === "COMPLETED") g.confirmedCount += 1;
       else if (s.status === "PENDING_APPROVAL") g.pendingCount += 1;
       else if (s.status === "REJECTED") g.rejectedCount += 1;
 
@@ -163,7 +163,9 @@ export default function AdminSalesPage() {
       amount: "₹" + (s.totalPaise / 100).toLocaleString("en-IN"),
       payment: s.paymentMode === "CASH" ? "Cash" : s.paymentMode === "BANK" ? "Bank" : "Pending",
       status:
-        s.status === "CONFIRMED"
+        s.status === "COMPLETED"
+          ? "Completed"
+          : s.status === "CONFIRMED"
           ? "Confirmed"
           : s.status === "PENDING_APPROVAL"
           ? "Approval required"
@@ -383,13 +385,15 @@ export default function AdminSalesPage() {
                                   <div className="flex items-center gap-2">
                                     <h5 className="text-xs font-bold text-zinc-900">{s.customer?.shopName || "Customer Store"}</h5>
                                     <span className={`rounded-md px-1.5 py-0.2 text-[9px] font-bold ${
-                                      s.status === "CONFIRMED"
+                                      s.status === "COMPLETED"
+                                        ? "bg-teal-50 text-teal-800 border border-teal-200"
+                                        : s.status === "CONFIRMED"
                                         ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                                         : s.status === "PENDING_APPROVAL"
                                         ? "bg-amber-50 text-amber-800 border border-amber-200"
                                         : "bg-rose-50 text-rose-800 border border-rose-200"
                                     }`}>
-                                      {s.status === "CONFIRMED" ? "Confirmed" : s.status === "PENDING_APPROVAL" ? "Pending Approval" : "Rejected"}
+                                      {s.status === "COMPLETED" ? "Completed" : s.status === "CONFIRMED" ? "Confirmed" : s.status === "PENDING_APPROVAL" ? "Pending Approval" : "Rejected"}
                                     </span>
                                   </div>
                                   <p className="text-[11px] text-zinc-500 mt-0.5">

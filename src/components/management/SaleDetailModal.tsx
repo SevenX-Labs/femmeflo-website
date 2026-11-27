@@ -212,6 +212,12 @@ export function SaleDetailModal({
           classes: "bg-emerald-50 text-[#157347] border border-emerald-200",
           icon: <CheckCircle2 className="h-3 w-3" />,
         };
+      case "COMPLETED":
+        return {
+          label: "Completed",
+          classes: "bg-teal-50 text-teal-800 border border-teal-200",
+          icon: <CheckCircle2 className="h-3 w-3" />,
+        };
       case "PENDING_APPROVAL":
         return {
           label: "Pending Approval",

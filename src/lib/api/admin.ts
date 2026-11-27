@@ -537,6 +537,27 @@ export const adminApi = {
     });
   },
 
+  async receiveSalePayment(
+    saleId: string,
+    payload: { remark?: string; receivedAt?: string }
+  ): Promise<{ sale: SaleItem }> {
+    return apiRequest<{ sale: SaleItem }>(`admin/sales/${saleId}/receive-payment`, {
+      method: "PATCH",
+      body: payload,
+    });
+  },
+
+  async bulkCompleteSales(payload: {
+    saleIds: string[];
+    remark?: string;
+    receivedAt?: string;
+  }): Promise<{ sales: SaleItem[]; completedCount: number }> {
+    return apiRequest<{ sales: SaleItem[]; completedCount: number }>("admin/sales/bulk-complete", {
+      method: "POST",
+      body: payload,
+    });
+  },
+
   // ----------------------------------------------------
   // Approvals
   // ----------------------------------------------------
